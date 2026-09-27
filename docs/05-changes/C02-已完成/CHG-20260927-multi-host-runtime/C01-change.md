@@ -1,8 +1,8 @@
 ---
-integrated_revision: pending
-product: pending
-technology: pending
-operations: pending
+integrated_revision: 89954d5f41d75641fb218bb57aaac6b0ab3d63fa
+product: Open Spec Mesh 支持 Codex、OpenCode、Claude Code 三宿主，共用同一 Quick/SDD 产品语义。
+technology: Host Adapter、非破坏性 Installer、三宿主 leaf/session、host-aware Observation 与真实 CLI CI 已落地。
+operations: main/full CI 新增 OpenCode/Claude runtime smoke；不增加常驻服务。
 ---
 # 变更说明
 
@@ -101,9 +101,9 @@ operations: pending
 <!-- SDD:EVIDENCE:BEGIN -->
 ## 验证结果
 
-pending
+AC-01 至 AC-06 均通过。真实 latest OpenCode、Claude Code 与 Codex runtime smoke 均通过且未调用模型；Python 3.11/3.13、Mermaid、Docker、Research Tools 全部通过。
 
 ## 最终结论
 
-pending
+pass
 <!-- SDD:EVIDENCE:END -->
