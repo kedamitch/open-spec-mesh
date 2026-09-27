@@ -58,8 +58,13 @@ class HostAdapterTests(unittest.TestCase):
     def test_rules_and_dispatch_paths_are_host_specific(self):
         open_home = Path("/tmp/open")
         claude_home = Path("/tmp/claude")
-        self.assertIn(str(open_home / "skills"), host_adapter.render_rules(ROOT, "opencode", open_home))
-        self.assertIn("# Open Spec Mesh", host_adapter.render_rules(ROOT, "claude", claude_home))
+        open_rules = host_adapter.render_rules(ROOT, "opencode", open_home)
+        claude_rules = host_adapter.render_rules(ROOT, "claude", claude_home)
+        self.assertIn(str(open_home / "skills"), open_rules)
+        self.assertIn(str(claude_home / "skills"), claude_rules)
+        self.assertNotIn("$CODEX_HOME", open_rules)
+        self.assertNotIn("$CODEX_HOME", claude_rules)
+        self.assertIn("# Open Spec Mesh", claude_rules)
         dispatch = host_adapter.render_role(ROOT, "claude", "architect", claude_home)
         self.assertIn(str(claude_home / "open-spec-mesh" / "dispatch-contract.md"), dispatch)
 

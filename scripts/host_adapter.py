@@ -96,6 +96,18 @@ def _adapt_prompt(text: str, profile: HostProfile) -> str:
     text = text.replace("$CODEX_HOME/agents/dispatch-contract.md", str(dispatch))
     text = text.replace("agents/dispatch-contract.md", str(dispatch))
     text = text.replace("- Skill 根：`$CODEX_HOME/skills/`。", "- " + _host_skill_note(profile))
+    text = text.replace("- Skill 入口：由 Host Adapter 映射到当前宿主的原生 Skill 根。",
+                        "- " + _host_skill_note(profile))
+    if profile.name == "opencode":
+        text = text.replace(
+            "- Agent 路由：由 Host Adapter 映射；角色语义、权限和 SDD 状态机不因宿主变化。",
+            "- Agent：使用 OpenCode 原生 primary/subagent 与 subagent 权限；角色语义和 SDD 状态机不变。"
+        )
+    elif profile.name == "claude":
+        text = text.replace(
+            "- Agent 路由：由 Host Adapter 映射；角色语义、权限和 SDD 状态机不因宿主变化。",
+            "- Agent：使用 Claude Code 原生 Agent/subagent；角色语义和 SDD 状态机不变。"
+        )
     if profile.name == "opencode":
         text = text.replace(
             '- V2：`agent_type` + `fork_turns="none"`；model / effort 由角色 TOML 固定。',
