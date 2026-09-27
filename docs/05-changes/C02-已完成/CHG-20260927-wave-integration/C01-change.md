@@ -1,8 +1,8 @@
 ---
-integrated_revision: pending
-product: pending
-technology: pending
-operations: pending
+integrated_revision: c3b1383121b361e4c548c9b1241e8578f7373ddd
+product: SDD Runtime 支持 accepted/pending wave 一次链式预检与批量集成；observation 记录 wave 级命令事实。
+technology: IntegrationWave 由 Graph + Git ancestry 派生，不新增持久状态；整波预检先于真实 merge。
+operations: 无常驻服务或部署变化；沿用现有本地与 CI 验证入口。
 ---
 # 变更说明
 
@@ -85,9 +85,9 @@ operations: pending
 <!-- SDD:EVIDENCE:BEGIN -->
 ## 验证结果
 
-pending
+AC-01、AC-02、AC-03 已通过真实 Git worktree 生命周期、33 项 runtime 定向测试、13 项 observation 定向测试及项目全量验证。
 
 ## 最终结论
 
-pending
+pass
 <!-- SDD:EVIDENCE:END -->

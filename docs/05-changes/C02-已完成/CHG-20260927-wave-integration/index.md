@@ -1,6 +1,6 @@
 ---
 id: CHG-20260927-wave-integration
-status: active
+status: completed
 created: 2026-09-27
 updated: 2026-09-27
 contract: C01-change.md
