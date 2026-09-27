@@ -10,7 +10,7 @@
 
 诊断包复用既有 observation 内核，不创建观察数据库、不修改研发状态、不自动上传。无日志与部分覆盖明确显示；不会将多个片段猜成同一需求。原始 observe CLI 仍支持精确采集、操作者期望、显式分组和 SQLite 版本汇总。
 
-诊断区分规则限制、实际失败、执行偏差候选和证据不足；每项附源定位和固定最小建议。不从思维链解释动机、不自动改提示词。当前文件指纹不证明历史加载，唤起技能本身仍有正常对话开销。
+诊断区分规则限制、实际失败、执行偏差候选和证据不足；每项附源定位和固定最小建议。不从思维链解释动机、不自动改提示词。当前文件指纹不证明历史加载，唤起技能本身仍有正常对话开销。单 Task integration 与 wave integration 均按实际 CLI 调用记录；`integrate --wave` / `--wave --check` 各自只形成一个 change 级事实，不把内部循环虚构成多个 Task 事件。
 
 当前路由允许 Quick / SDD 都使用 Explorer / Librarian；Quick 不允许 Architect / Worker / Reviewer。SDD 的 Worker 必须在 Architect Task Graph 就绪后才可派发。诊断用于揭示实际执行与这些规则的偏差，不自动修改规则或授权边界。
 
