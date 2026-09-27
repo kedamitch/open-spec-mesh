@@ -14,9 +14,10 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'sdd-do/scripts'))
 from observation.trace import read_rollout, command_fact, output_status, digest
-from observation.collect import collect, snapshot, select
+from observation.collect import collect, collect_host_snapshot, snapshot, select
 from observation.diagnose import diagnose, markdown, summary
 from observation.store import open_store, save, load, all_runs
+import observe as observe_cli
 
 RULES = '''# 工作约定
 | Agent | 调用时机 |
@@ -341,6 +342,53 @@ class ObservationTests(unittest.TestCase):
                                'collect','--run','x','--root',str(self.project),'--session-file',str(path)],capture_output=True,text=True)
         self.assertNotEqual(0,result.returncode)
         self.assertFalse((self.project/'bad.db').exists())
+
+    def test_non_codex_snapshot_reports_partial_without_negative_trace_inference(self):
+        opencode=self.base/'opencode';(opencode/'agents').mkdir(parents=True)
+        (opencode/'AGENTS.md').write_text('# rules')
+        (opencode/'agents/worker.md').write_text('---\ndescription: worker\n---\nbody')
+        raw=collect_host_snapshot(
+            self.project,opencode,'opencode',expected_mode='sdd',
+            expected_roles=('worker',))
+        run=diagnose(raw)
+        self.assertEqual('opencode',run['host']['name'])
+        self.assertEqual('unsupported',run['host']['native_trace'])
+        self.assertEqual('partial',run['coverage']['status'])
+        self.assertIn('opencode_native_trace_unsupported',run['coverage']['issues'])
+        self.assertNotIn('D03',{f['rule'] for f in run['findings']})
+        self.assertNotIn('P01',{f['rule'] for f in run['findings']})
+        self.assertIn('Host：`opencode`',markdown(dict(run,run_id='host')))
+
+    def test_observation_state_home_is_not_codex_home(self):
+        with patch.dict(os.environ,{
+            'HOME':str(self.base/'home'),
+            'CODEX_HOME':str(self.base/'codex'),
+            'XDG_STATE_HOME':str(self.base/'state'),
+        },clear=True):
+            self.assertEqual(
+                self.base/'state/open-spec-mesh',
+                observe_cli.state_home())
+            self.assertNotEqual(
+                Path(os.environ['CODEX_HOME'])/'sdd-observe',
+                observe_cli.state_home())
+
+    def test_cli_non_codex_collect_needs_no_private_trace_and_scan_fails_closed(self):
+        rules=self.base/'claude';rules.mkdir()
+        (rules/'CLAUDE.md').write_text('# rules')
+        prefix=[sys.executable,str(ROOT/'sdd-do/scripts/observe.py'),'--host','claude',
+                '--db',str(self.dbpath)]
+        result=subprocess.run(prefix+['collect','--run','claude-run','--root',str(self.project),
+                                      '--rules-root',str(rules),'--expected-mode','sdd'],
+                              capture_output=True,text=True)
+        self.assertEqual(0,result.returncode,result.stderr)
+        with closing(open_store(self.dbpath)) as db:
+            saved=load(db,'claude-run')
+        self.assertEqual('claude',saved['host']['name'])
+        self.assertIn('claude_native_trace_unsupported',saved['coverage']['issues'])
+        scan=subprocess.run(prefix+['scan','--root',str(self.project),'--rules-root',str(rules)],
+                            capture_output=True,text=True)
+        self.assertNotEqual(0,scan.returncode)
+        self.assertIn('unsupported',scan.stderr)
 
     def test_installed_layout_has_script_modules(self):
         # Installer copies existing managed sdd-do tree; no extra skill or global prompt required.
