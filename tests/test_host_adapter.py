@@ -66,9 +66,6 @@ class HostAdapterTests(unittest.TestCase):
             "tavily": "/tools/tavily-mcp",
         }
         opencode = json.loads(host_adapter.render_mcp_overlay("opencode", commands))
-        self.assertEqual(
-            [" /bad"], [" /bad"]
-        ) if False else None
         servers = opencode["mcp"]["servers"]
         self.assertEqual(["/tools/codegraph", "serve", "--mcp"], servers["codegraph"]["command"])
         self.assertEqual("{env:CONTEXT7_API_KEY}", servers["context7"]["environment"]["CONTEXT7_API_KEY"])
