@@ -53,6 +53,12 @@ class LeanObservationTests(unittest.TestCase):
         self.assertEqual('task.delivery-draft', draft['kind'])
         self.assertEqual('task.deliver', final['kind'])
 
+    def test_integration_actions_are_observed_without_inventing_merge_stages(self):
+        preflight = command_fact(self.command('integrate', '--task', 'C02-01', '--check'))
+        integrate = command_fact(self.command('integrate', '--task', 'C02-01'))
+        self.assertEqual({'kind': 'task.integrate-preflight', 'change_id': CHANGE, 'task_id': 'C02-01'}, preflight)
+        self.assertEqual({'kind': 'task.integrate', 'change_id': CHANGE, 'task_id': 'C02-01'}, integrate)
+
     def test_integration_validation_is_an_observable_single_command(self):
         fact = command_fact(['python3', '-B', VALIDATION, CHANGE, '--revision', 'HEAD'])
         self.assertEqual({'kind': 'change.validate', 'change_id': CHANGE, 'task_id': None}, fact)
