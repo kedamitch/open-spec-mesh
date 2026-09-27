@@ -1,8 +1,8 @@
 ---
-integrated_revision: pending
-product: pending
-technology: pending
-operations: pending
+integrated_revision: f5a7f5bf39ca830c2d7d8e6831663b0e5c8d2023
+product: SDD Planning 保持固定维度；Delivery 使用结构化五节。
+technology: 模板、draft、validator 与 Acceptance 边界已同步。
+operations: 无部署或运行环境变化。
 ---
 # 变更说明
 
@@ -81,9 +81,9 @@ Planning 的问题不是维度太多，而是无变化维度仍生成空表、�
 <!-- SDD:EVIDENCE:BEGIN -->
 ## 验证结果
 
-pending
+AC-01 至 AC-03 的 Task 定向测试与 Main 验收已通过；最终 revision-bound validation 已通过，机器 receipt 绑定 integrated revision。
 
 ## 最终结论
 
-pending
+pass
 <!-- SDD:EVIDENCE:END -->
