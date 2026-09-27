@@ -54,7 +54,7 @@ Task 按业务模块和可验收结果拆分，不为消灭文件冲突继续细
 
 - 实现缺陷且 Contract 不变 → 原 Worker rework。
 - 设计缺口 → 原 Architect 修正；冻结 Contract 变化仍等用户确认后 replan。
-- accepted Task 用 `sdd.py integrate` 按 wave 集成；Git ancestry 判断是否已进入 HEAD，下游仅在上游 revision 已集成后派发。简单冲突由 Main 解决；复杂冲突可回派原 Worker 之一处理，不新增业务 Task。
+- accepted Task 用 `sdd.py integrate` 集成；单 Task 可 `--task`，同一 accepted/pending wave 优先 `--wave --check` 后 `--wave`。Git ancestry 判断是否已进入 HEAD，下游仅在上游 revision 已集成后派发。简单冲突由 Main 解决；复杂冲突可回派原 Worker 之一处理，不新增业务 Task。
 - 证据不足 → 补证据，不直接验收。
 - 多个结果冲突 → Main 以冻结 Contract、真实 diff 和可复验证据收敛，不让 Agent 互相裁决。
 
