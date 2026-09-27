@@ -83,15 +83,26 @@ def main():
 
         agents_text = run([binary, "debug", "agents"], cwd=project, env=env)
         agents = json.loads(agents_text)
-        if isinstance(agents, dict):
-            discovered = set(agents)
-        elif isinstance(agents, list):
-            discovered = {
-                item.get("id") or item.get("name")
-                for item in agents if isinstance(item, dict)
-            }
-        else:
-            raise SystemExit("OpenCode debug agents returned an unexpected shape")
+
+        def discovered_roles(value):
+            found = set()
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key in expected_roles and isinstance(item, dict) and (
+                        "mode" in item or "system" in item or "description" in item
+                    ):
+                        found.add(key)
+                    found.update(discovered_roles(item))
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        name = item.get("id") or item.get("name")
+                        if name in expected_roles:
+                            found.add(name)
+                    found.update(discovered_roles(item))
+            return found
+
+        discovered = discovered_roles(agents)
         missing = sorted(expected_roles - discovered)
         if missing:
             raise SystemExit(
