@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "source": "Open Spec Mesh legacy AGENTS fingerprints",
+  "agents_md": [
+    {
+      "commit": "135d14acf2c9b19e76bcf9c469b60462fe273de5",
+      "blob": "53f26179944944d5698ebcadfba489ec4467d587"
+    },
+    {
+      "commit": "03956913908f4dc1c7bdf79a4741b1f488ebd471",
+      "blob": "5621cdf8eac6a447151850bbd025fc47b9048754"
+    },
+    {
+      "commit": "eef3464790f492624065acd0b1717a61c6b0c253",
+      "blob": "e7a62432a5c3bf5d4375b6e0e3dffd8306fc8f27"
+    },
+    {
+      "commit": "2c0a493f3e85a6b6358a5de09d33c830ca6c1c49",
+      "blob": "5d3492e29148efcf963f3dd7f4f2329baa423265"
+    },
+    {
+      "commit": "17ffbfb64b8c4ce49bce3fc3a2cdb217c5130c5f",
+      "blob": "0ef96f8c85985c125bb3170dc28c33118931ed0a"
+    },
+    {
+      "commit": "b1e4a206061ff8adf9c0bdf35149d1db11b54121",
+      "blob": "0e8ca33075a07bf6333e7c0935a8c196495f3496"
+    },
+    {
+      "commit": "3a940e6a330de023b1d02ea0e6634ebf8a27131a",
+      "blob": "acacbebed73dec6bf241e2e5974955f824e84cc1"
+    },
+    {
+      "commit": "c5e028d6f62d9fd6bc27ff8969baff21713029dd",
+      "blob": "5b880f67c654bee9c28beadb90afab75acd2e044"
+    },
+    {
+      "commit": "8d1f7aa48773ef0dd0a226c9f939116c0f4ccadb",
+      "blob": "1ef3040bcb0df8027bb78e5e9b7187985ee06a7b"
+    },
+    {
+      "commit": "a012d20cf0060a570dc3bf6e4b94098dd06d489d",
+      "blob": "7c672db6791dece29f5699873f3f21dacb4d49f3"
+    },
+    {
+      "commit": "ee83b41f208daef04b54fd05f3a53740cbbcd063",
+      "blob": "ae5f3346b586fc3f9c7aafa15f1614593253cf7b"
+    },
+    {
+      "commit": "a2964a554b2e9fa549c226a14751fa3912421bce",
+      "blob": "bb72d8930cfd27669d2c9ac31ad67600caed4c84"
+    },
+    {
+      "commit": "ae8d990a77d6f1f045c29089daec33680de5f91c",
+      "blob": "e345a50a6c37fb6e4e6dd76e73ab789844271ea5"
+    },
+    {
+      "commit": "4b888fdbfebef3643b1559d5e35d2a900e8e8fd7",
+      "blob": "f7f7e1d6b567b4159fb2157a8964fb3b5aef7e7e"
+    },
+    {
+      "commit": "0ba767a2a0242fa5f132fc69e6aef62b0aa0411b",
+      "blob": "7411106a198861038039d48eb8f25a7367c7e25c"
+    },
+    {
+      "commit": "c0dcf00dd32cfa568704c780dec055d112e7e7d5",
+      "blob": "a4d20893b38ec635fc0a45c16ee9ad4f7a5eb9b0"
+    },
+    {
+      "commit": "8920133d529695ede77cc54941bda073146c2cfc",
+      "blob": "cc45c9de7128bcc0eac246f418aed2a7f1124413"
+    }
+  ]
+}

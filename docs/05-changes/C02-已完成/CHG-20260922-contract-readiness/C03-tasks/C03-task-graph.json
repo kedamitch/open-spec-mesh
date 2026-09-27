@@ -1,0 +1,33 @@
+{
+  "tasks": [
+    {
+      "id": "C03-01",
+      "path": "C03-tasks/C03-01-readiness-gate",
+      "depends_on": [],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "8f7a69cb34b09a8c1e41e0c70b4cea3887e3f229",
+          "attempt": 1,
+          "original_task_id": "C02-01"
+        },
+        {
+          "state": "submitted",
+          "revision": "fd2784fc244d72d3fbca717b645f7b1fa0691f6a",
+          "attempt": 1,
+          "original_task_id": "C02-01"
+        },
+        {
+          "state": "accepted",
+          "reason": "AC-01至AC-05与5文件diff已核对；126项回归和3项角色测试通过",
+          "revision": "fd2784fc244d72d3fbca717b645f7b1fa0691f6a",
+          "original_task_id": "C02-01"
+        }
+      ],
+      "baseline": "8f7a69cb34b09a8c1e41e0c70b4cea3887e3f229",
+      "attempt": 1,
+      "result_revision": "fd2784fc244d72d3fbca717b645f7b1fa0691f6a"
+    }
+  ]
+}

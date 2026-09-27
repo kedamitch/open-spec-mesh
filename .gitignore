@@ -1,0 +1,27 @@
+# Private Codex and application configuration
+auth.json
+config.local.toml
+*.local.toml
+.env
+.env.*
+!.env.example
+
+# Local execution state
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.log
+*.lock
+.tmp/
+tmp/
+sessions/
+shell_snapshots/
+thread-writer-locks/
+
+# Tooling caches
+.DS_Store
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+.venv/

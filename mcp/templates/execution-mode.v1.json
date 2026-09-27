@@ -1,0 +1,18 @@
+{
+  "id": "execution-mode@1",
+  "description": "Quick / SDD 二选一：按是否需要 Worker 分工或独立规划执行判断；Quick 默认。",
+  "required_fields": [
+    "request"
+  ],
+  "questions": {
+    "mode": {
+      "type": "choice",
+      "instructions": "Quick 为默认：Main 能连续完成就选 quick；可按需用 Explorer / Librarian 调查，不改变模式。实现需要 Worker 分工、多个执行单元、并行执行，或需要先形成独立可执行规划时选 sdd。文件数、技术关键词或测试数量本身不触发 SDD。",
+      "criteria": {
+        "quick": "Main 可连续完成；无需 Worker。可按需使用 Explorer / Librarian",
+        "sdd": "需要 Architect 先形成必要 Design + Task Graph，再由一个或多个 Worker 执行",
+        "uncertain": "缺少判断是否需要 Worker 分工或独立规划的必要事实"
+      }
+    }
+  }
+}

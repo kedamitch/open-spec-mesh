@@ -1,0 +1,6 @@
+interface:
+  display_name: "SDD 诊断包"
+  short_description: "一键打包当前项目的执行、委派与 SDD 诊断证据"
+  default_prompt: "使用 $sdd-diagnose 为当前项目生成诊断数据包。"
+policy:
+  allow_implicit_invocation: true

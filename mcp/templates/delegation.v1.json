@@ -1,0 +1,19 @@
+{
+  "id": "delegation@1",
+  "description": "在当前角色已被允许的委派候选中选择下一步执行者；模板本身不暴露全局角色拓扑。",
+  "required_fields": [
+    "request",
+    "current_role",
+    "available_roles"
+  ],
+  "questions": {
+    "executor": {
+      "type": "choice",
+      "instructions": "运行时只注入当前角色和它此刻允许选择的候选；候选集合已经过权限与状态过滤，不要推断未出现的角色。",
+      "criteria": {
+        "main": "当前 Main：负责自己的模式选择、流程控制、派发、集成和验收；已有足够事实且无需专职工作时自己执行。",
+        "uncertain": "现有事实不足以在当前角色和已允许候选之间做可靠选择"
+      }
+    }
+  }
+}
