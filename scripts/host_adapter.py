@@ -50,7 +50,7 @@ def default_home(host: str, env: dict[str, str] | None = None) -> Path:
     if host == "opencode":
         return Path(env.get("OPENCODE_CONFIG_DIR") or home / ".config" / "opencode").expanduser()
     if host == "claude":
-        return Path(env.get("CLAUDE_HOME") or home / ".claude").expanduser()
+        return Path(env.get("CLAUDE_CONFIG_DIR") or home / ".claude").expanduser()
     raise ValueError("Unknown host: " + host)
 
 

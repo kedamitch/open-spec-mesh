@@ -14,7 +14,7 @@ class HostAdapterTests(unittest.TestCase):
         env = {"HOME": "/home/test"}
         self.assertEqual(Path("/home/test/.codex"), host_adapter.default_home("codex", env))
         self.assertEqual(Path("/home/test/.config/opencode"), host_adapter.default_home("opencode", env))
-        self.assertEqual(Path("/home/test/.claude"), host_adapter.default_home("claude", env))
+        self.assertEqual(Path("/home/test/.claude"), host_adapter.default_home("claude", env))\n        env["CLAUDE_CONFIG_DIR"]="/tmp/claude-custom"\n        self.assertEqual(Path("/tmp/claude-custom"), host_adapter.default_home("claude", env))
         self.assertTrue(host_adapter.host_profile("codex", "/tmp/c").native_trace)
         self.assertFalse(host_adapter.host_profile("opencode", "/tmp/o").native_trace)
         self.assertFalse(host_adapter.host_profile("claude", "/tmp/a").native_trace)
