@@ -61,14 +61,21 @@ python3 "$SDD" deliver "$CHG" --root "$WORKSPACE" --attempt "$ATTEMPT" --evidenc
 
 ### integrate：Main 波次集成
 
-Task accepted 后先做只读预检，再执行确定性集成：
+Task accepted 后可按单 Task 或当前 wave 做确定性集成。单 Task：
 
 ```sh
 python3 "$SDD" integrate "$CHG" --root "$PROJECT" --task "$TASK" --check
 python3 "$SDD" integrate "$CHG" --root "$PROJECT" --task "$TASK"
 ```
 
-`status` 的 `integration` 由 Git ancestry 实时推导，不写入 Task Graph：`accepted + result_revision ancestor HEAD = integrated`，否则为 `pending`。实际集成使用保留 Task `result_revision` ancestry 的 merge commit；active Change 的权威运行工件以 Main 当前快照为准，不接受 Worker 工作区里的旧 Graph 覆盖。外部代码冲突返回精确文件；简单冲突由 Main 解决，复杂语义冲突回派原 Worker。存在 `depends_on` 时按 **Execution Wave → Integration Wave → Next Wave** 推进。
+同一 wave 有多个 accepted/pending Task 时优先：
+
+```sh
+python3 "$SDD" integrate "$CHG" --root "$PROJECT" --wave --check
+python3 "$SDD" integrate "$CHG" --root "$PROJECT" --wave
+```
+
+`status` 的 `integration` 由 Git ancestry 实时推导，不写入 Task Graph：`accepted + result_revision ancestor HEAD = integrated`，否则为 `pending`。wave 候选同样不持久化，只按 Graph 顺序从 accepted/pending Task 派生；`--wave --check` 在一个 detached worktree 中链式 merge 整个 wave，因此可在写 Main 前发现 Task 之间的冲突。实际集成继续使用保留 Task `result_revision` ancestry 的 merge commit；active Change 的权威运行工件以 Main 当前快照为准，不接受 Worker 工作区里的旧 Graph 覆盖。外部代码冲突返回精确文件；简单冲突由 Main 解决，复杂语义冲突回派原 Worker。存在 `depends_on` 时按 **Execution Wave → Integration Wave → Next Wave** 推进。
 
 ### close：Main 验收与归档
 
