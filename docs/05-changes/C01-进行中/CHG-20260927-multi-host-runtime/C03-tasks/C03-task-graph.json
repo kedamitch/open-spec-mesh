@@ -70,8 +70,32 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "planned",
-      "history": []
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "e56a4d111e912a8e5e676189562237e85516e1ae",
+          "workspace": "/home/runner/work/_temp/c03-03",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "9a28e483faddfdc4af261a8e8f1d51275f71fb8e",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-03 的 Path Contract、AC、定向测试与实际 diff 已核对",
+          "revision": "9a28e483faddfdc4af261a8e8f1d51275f71fb8e"
+        }
+      ],
+      "contract_digest": "85d9790df87a55659f581aef88acafb00ba77e0d83fd67c92673089802b64bce",
+      "workspace": "/home/runner/work/_temp/c03-03",
+      "baseline": "e56a4d111e912a8e5e676189562237e85516e1ae",
+      "attempt": 1,
+      "agent_session": "finalize-c03-03",
+      "result_revision": "9a28e483faddfdc4af261a8e8f1d51275f71fb8e",
+      "report_digest": "72dd3d21f31339142acf2fe4449e9973cdb9e424a9e9a0d12dc0d6ab35b1265f"
     },
     {
       "id": "C03-04",
