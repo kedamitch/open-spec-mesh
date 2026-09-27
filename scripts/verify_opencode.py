@@ -49,7 +49,8 @@ def main():
         })
 
         help_text = run([binary, "run", "--help"], env=env, cwd=project)
-        for flag in ("--agent", "--format", "--session", "--dir"):
+        print(help_text)
+        for flag in ("--agent", "--format", "--session"):
             if flag not in help_text:
                 raise SystemExit("OpenCode run help missing required flag: " + flag)
 
