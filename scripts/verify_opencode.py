@@ -51,16 +51,6 @@ def main():
             reporter=lambda _: None,
         )
 
-        # Exact OpenCode documentation probes, created before the first config read.
-        (home / "agents" / "probe-global.md").write_text(
-            "---\ndescription: probe global\nmode: subagent\npermission:\n  edit: deny\n---\nprobe\n"
-        )
-        project_agents = project / ".opencode" / "agents"
-        project_agents.mkdir(parents=True)
-        (project_agents / "probe-project.md").write_text(
-            "---\ndescription: probe project\nmode: subagent\npermission:\n  edit: deny\n---\nprobe\n"
-        )
-
         env = os.environ.copy()
         env.update({
             "HOME": str(user_home),
@@ -84,17 +74,14 @@ def main():
         if "model" in overlay:
             raise SystemExit("Open Spec Mesh overlay must not select the user's model")
 
+        expected_roles = {"main", "architect", "worker", "reviewer", "explorer", "librarian"}
+        if set(overlay.get("agents", {})) != expected_roles:
+            raise SystemExit("OpenCode overlay agents map mismatch")
+        for role, definition in overlay["agents"].items():
+            if "model" in definition:
+                raise SystemExit("OpenCode overlay must not override model for " + role)
+
         agents = run([binary, "debug", "agents"], cwd=project, env=env)
-        probe_global = '"id": "probe-global"' in agents
-        probe_project = '"id": "probe-project"' in agents
-        if not probe_global or not probe_project:
-            raise SystemExit(
-                "OpenCode Markdown discovery probe failed"
-                + "\ncustom-dir probe visible=" + str(probe_global)
-                + "\nproject probe visible=" + str(probe_project)
-                + "\nconfig sources:\n" + resolved[-3000:]
-                + "\nagents:\n" + agents[-5000:]
-            )
         missing = [
             role for role in ("main", "architect", "worker", "reviewer", "explorer", "librarian")
             if ('"id": "' + role + '"') not in agents
