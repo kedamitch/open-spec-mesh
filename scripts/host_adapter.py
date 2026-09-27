@@ -50,7 +50,7 @@ def default_home(host: str, env: dict[str, str] | None = None) -> Path:
     if host == "opencode":
         return Path(env.get("OPENCODE_CONFIG_DIR") or home / ".config" / "opencode").expanduser()
     if host == "claude":
-        return Path(env.get("CLAUDE_HOME") or home / ".claude").expanduser()
+        return Path(env.get("CLAUDE_CONFIG_DIR") or home / ".claude").expanduser()
     raise ValueError("Unknown host: " + host)
 
 
@@ -189,7 +189,7 @@ def render_role(source: Path, host: str, role: str,
         ]
     else:
         tools = {
-            "architect": "Agent, Read, Write, Edit, Bash, Glob, Grep, Skill, WebFetch, WebSearch",
+            "architect": "Agent(explorer, librarian), Read, Write, Edit, Bash, Glob, Grep, Skill, WebFetch, WebSearch",
             "worker": "Read, Write, Edit, Bash, Glob, Grep, Skill",
             "reviewer": "Read, Bash, Glob, Grep, Skill",
             "explorer": "Read, Bash, Glob, Grep, Skill",

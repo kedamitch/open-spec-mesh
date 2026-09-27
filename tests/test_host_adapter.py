@@ -15,6 +15,8 @@ class HostAdapterTests(unittest.TestCase):
         self.assertEqual(Path("/home/test/.codex"), host_adapter.default_home("codex", env))
         self.assertEqual(Path("/home/test/.config/opencode"), host_adapter.default_home("opencode", env))
         self.assertEqual(Path("/home/test/.claude"), host_adapter.default_home("claude", env))
+        env["CLAUDE_CONFIG_DIR"] = "/tmp/claude-custom"
+        self.assertEqual(Path("/tmp/claude-custom"), host_adapter.default_home("claude", env))
         self.assertTrue(host_adapter.host_profile("codex", "/tmp/c").native_trace)
         self.assertFalse(host_adapter.host_profile("opencode", "/tmp/o").native_trace)
         self.assertFalse(host_adapter.host_profile("claude", "/tmp/a").native_trace)
@@ -44,7 +46,8 @@ class HostAdapterTests(unittest.TestCase):
         main = host_adapter.render_main(ROOT, "claude", home)
         architect = host_adapter.render_role(ROOT, "claude", "architect", home)
         self.assertIn("Agent(architect, worker, reviewer, explorer, librarian)", main)
-        self.assertIn("tools: Agent,", architect)
+        self.assertIn("tools: Agent(explorer, librarian),", architect)
+        self.assertNotIn("Agent(worker", architect)
         for role in host_adapter.LEAF_ROLES:
             text = host_adapter.render_role(ROOT, "claude", role, home)
             self.assertIn("model: inherit", text)
