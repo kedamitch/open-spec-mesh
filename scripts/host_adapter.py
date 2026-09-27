@@ -124,11 +124,24 @@ def _yaml_scalar(value: str) -> str:
 
 def _opencode_permissions(role: str) -> list[str]:
     allowed = ROLES if role == "main" else (("explorer", "librarian") if role == "architect" else ())
-    lines = ["permission:", "  task:", '    "*": deny']
+    lines = [
+        "permissions:",
+        "  - action: subagent",
+        '    resource: "*"',
+        "    effect: deny",
+    ]
     for name in allowed:
-        lines.append(f"    {name}: allow")
+        lines += [
+            "  - action: subagent",
+            f"    resource: {name}",
+            "    effect: allow",
+        ]
     if role in ("reviewer", "explorer", "librarian"):
-        lines += ["  edit: deny"]
+        lines += [
+            "  - action: edit",
+            '    resource: "*"',
+            "    effect: deny",
+        ]
     return lines
 
 
