@@ -218,6 +218,23 @@ def render_rules(source: Path, host: str, home: str | Path | None = None) -> str
     return text.rstrip() + "\n"
 
 
+def adapt_skill_markdown(text: str, host: str, home: str | Path | None = None) -> str:
+    """Rewrite only host-install path idioms; do not rewrite host-specific explanatory sections."""
+    profile = host_profile(host, home)
+    if host == "codex":
+        return text
+    skill_root = str(profile.skills_path)
+    text = text.replace(
+        'python3 "$CODEX_HOME/skills/sdd-migrate/scripts/migrate_project.py"',
+        f'python3 "{skill_root}/sdd-migrate/scripts/migrate_project.py"',
+    )
+    text = text.replace(
+        '安装后使用 `$CODEX_HOME/skills/` 下对应脚本。',
+        f'安装后使用 `{skill_root}/` 下对应脚本。',
+    )
+    return text
+
+
 def render_dispatch_contract(source: Path, host: str, home: str | Path | None = None) -> str:
     profile = host_profile(host, home)
     return _adapt_prompt(
