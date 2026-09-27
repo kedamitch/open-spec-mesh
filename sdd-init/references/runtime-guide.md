@@ -46,7 +46,7 @@ Worker 首次 spawn 成功后，记录返回的会话 / thread id：
 python3 "$SDD" bind-session "$CHG" --root "$PROJECT" --task "$TASK" --agent-session "$THREAD_ID"
 ```
 
-绑定只用于后续恢复原上下文；不能覆盖成另一个会话，也不是身份认证。多个 ready Task 只要依赖满足即可并行；并行写任务必须各自使用独立 worktree。Path Contract 可以重叠，低/中度重叠留给 Main 集成；高度重合或存在真实语义先后时由 Architect 用 depends_on 串行。完整 Design 和全部 Task Design 必须在首次实现前完成并可 Review；不得等 ready 后补设计。Worker 默认读取 Change + Design + 自己的 Task Design。Design / Graph / Task Design 的 depends_on、AC、Dxxx 引用不一致时拒绝派发。
+绑定只用于后续恢复原上下文；不能覆盖成另一个会话，也不是身份认证。多个 ready Task 只要依赖满足即可并行；并行写任务必须各自使用独立 worktree。Path Contract 可以重叠，低/中度重叠留给 Main 集成；高度重合或存在真实语义先后时由 Architect 用 depends_on 串行。依赖 Task 即使已 accepted，只要其 `result_revision` 尚未进入当前 HEAD，`status` 仍阻止下游 `prepare`。完整 Design 和全部 Task Design 必须在首次实现前完成并可 Review；不得等 ready 后补设计。Worker 默认读取 Change + Design + 自己的 Task Design。Design / Graph / Task Design 的 depends_on、AC、Dxxx 引用不一致时拒绝派发。
 
 ### deliver：Worker 提交交付
 
@@ -59,6 +59,17 @@ python3 "$SDD" deliver "$CHG" --root "$WORKSPACE" --attempt "$ATTEMPT" --evidenc
 
 默认读取 `HEAD`，可用 `--revision` 指定已提交版本。草稿不覆盖已有文件，含占位内容不能交付；必须保留派发时的 attempt，不能自行读取新轮次冒领。交付时会用真实 Git diff 机械检查 Task Path Contract；兄弟 Task 的路径重叠不会被视为越界。Worker 只需要运行当前 Task 的定向测试和必要 build/static check。此动作只写 Worker 报告，不推进 Main 的 submitted / accepted 状态。
 
+### integrate：Main 波次集成
+
+Task accepted 后先做只读预检，再执行确定性集成：
+
+```sh
+python3 "$SDD" integrate "$CHG" --root "$PROJECT" --task "$TASK" --check
+python3 "$SDD" integrate "$CHG" --root "$PROJECT" --task "$TASK"
+```
+
+`status` 的 `integration` 由 Git ancestry 实时推导，不写入 Task Graph：`accepted + result_revision ancestor HEAD = integrated`，否则为 `pending`。实际集成使用保留 Task `result_revision` ancestry 的 merge commit；active Change 的权威运行工件以 Main 当前快照为准，不接受 Worker 工作区里的旧 Graph 覆盖。外部代码冲突返回精确文件；简单冲突由 Main 解决，复杂语义冲突回派原 Worker。存在 `depends_on` 时按 **Execution Wave → Integration Wave → Next Wave** 推进。
+
 ### close：Main 验收与归档
 
 Main 完成验收判断后，自动 submit 或导入原 worktree 报告并登记接受：
@@ -67,7 +78,7 @@ Main 完成验收判断后，自动 submit 或导入原 worktree 报告并登记
 python3 "$SDD" close "$CHG" --root "$PROJECT" --accept --reason "已核对版本、AC 与实际验证"
 ```
 
-随后 Main 合并所有已验收 Task/worktree。普通 merge conflict 由 Main 直接解决；复杂冲突可回派原 Worker 之一修复，不新增业务 Task。集成稳定后先同步受影响的产品 / 技术 / 运维 Current Truth，并把实现与快照提交到同一个最终 HEAD；再把该 HEAD 写入 `integrated_revision`，运行唯一机器验证入口：
+随后 Main 用上面的 `integrate` 完成当前 wave；存在下游依赖时，先让上游 accepted result 进入 HEAD，再派发下一 wave。全部 Task 最终集成后，Main 将完整 integrated diff、历次 Delivery 和验收结果交 Architect 同步受影响 Current Truth，核对后把实现与快照提交到同一个最终 HEAD；再把该 HEAD 写入 `integrated_revision`，运行唯一机器验证入口：
 
 ```sh
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/sdd-close/scripts/run_validation.py" \
