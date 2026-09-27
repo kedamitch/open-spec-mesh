@@ -2,7 +2,9 @@
 
 ## Validation Entry Point
 
-`scripts/sdd_validate.py` 是 SDD 收口唯一的本地全量验证入口。验证 revision 必须等于执行时 HEAD；任何 required check 非零即失败。
+`scripts/sdd_validate.py`
+
+SDD 收口只使用上述版本化 Python 入口。验证 revision 必须等于执行时 HEAD；任何 required check 非零即失败。
 
 ## 验证矩阵
 
