@@ -186,4 +186,114 @@ class InstallerTest(unittest.TestCase):
         self.assertEqual(0,subprocess.run(['bash','-n',str(ROOT/'install.sh')],capture_output=True).returncode)
 
 
+class MultiHostInstallTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.base=Path(self.tmp.name)
+
+    def install_host(self,host,home=None,**kwargs):
+        target=home or self.base/host
+        return installer.install_host(
+            ROOT,host,target,validate=False,install_tools=False,**kwargs)
+
+    def test_opencode_install_preserves_user_config_and_rules(self):
+        home=self.base/'opencode';home.mkdir()
+        user_config='{"model":"user/provider","plugins":["mine"]}\n'
+        (home/'opencode.jsonc').write_text(user_config)
+        (home/'AGENTS.md').write_text('# User rules\nNever deploy.\n')
+        self.install_host('opencode',home)
+        self.assertEqual(user_config,(home/'opencode.jsonc').read_text())
+        rules=(home/'AGENTS.md').read_text()
+        self.assertIn('Never deploy.',rules)
+        self.assertEqual(1,rules.count(installer.BEGIN))
+        self.assertTrue((home/'skills/sdd-change/SKILL.md').is_file())
+        self.assertTrue((home/'agents/main.md').is_file())
+        self.assertTrue((home/'agents/worker.md').is_file())
+        worker=(home/'agents/worker.md').read_text()
+        self.assertIn('mode: subagent',worker)
+        self.assertNotIn('gpt-6-',worker)
+        overlay=json.loads((home/'open-spec-mesh.opencode.json').read_text())
+        self.assertEqual('main',overlay['default_agent'])
+        self.assertIn('servers',overlay['mcp'])
+        self.assertEqual(
+            {'main','architect','worker','reviewer','explorer','librarian'},
+            set(overlay['agents']))
+        self.assertNotIn('model',overlay['agents']['main'])
+        self.assertNotIn('model',overlay['agents']['worker'])
+        self.assertEqual('primary',overlay['agents']['main']['mode'])
+        self.assertEqual('subagent',overlay['agents']['worker']['mode'])
+        self.assertIn(
+            {'action':'subagent','resource':'architect','effect':'allow'},
+            overlay['agents']['main']['permissions'])
+        self.assertIn(
+            {'action':'subagent','resource':'*','effect':'deny'},
+            overlay['agents']['worker']['permissions'])
+        self.install_host('opencode',home)
+        self.assertEqual(1,(home/'AGENTS.md').read_text().count(installer.BEGIN))
+
+    def test_claude_install_preserves_user_files_and_uses_native_layout(self):
+        home=self.base/'claude';home.mkdir()
+        (home/'settings.json').write_text('{"model":"user-choice"}\n')
+        (home/'CLAUDE.md').write_text('# Personal\nKeep this.\n')
+        self.install_host('claude',home)
+        self.assertEqual('{"model":"user-choice"}\n',(home/'settings.json').read_text())
+        self.assertIn('Keep this.',(home/'CLAUDE.md').read_text())
+        self.assertTrue((home/'skills/sdd-do/SKILL.md').is_file())
+        main=(home/'agents/main.md').read_text()
+        self.assertIn('model: inherit',main)
+        self.assertIn('Agent(architect, worker, reviewer, explorer, librarian)',main)
+        self.assertTrue((home/'open-spec-mesh.mcp.json').is_file())
+        manifest=json.loads((home/installer.HOST_MANIFEST).read_text())
+        self.assertEqual('claude',manifest['host'])
+
+    def test_installed_skill_runtime_paths_follow_selected_host(self):
+        open_home=self.base/'open-skill'
+        claude_home=self.base/'claude-skill'
+        self.install_host('opencode',open_home)
+        self.install_host('claude',claude_home)
+        open_migrate=(open_home/'skills/sdd-migrate/SKILL.md').read_text()
+        claude_migrate=(claude_home/'skills/sdd-migrate/SKILL.md').read_text()
+        self.assertIn(
+            str(open_home/'skills/sdd-migrate/scripts/migrate_project.py'),
+            open_migrate)
+        self.assertIn(
+            str(claude_home/'skills/sdd-migrate/scripts/migrate_project.py'),
+            claude_migrate)
+        self.assertNotIn('$CODEX_HOME/skills/sdd-migrate',open_migrate)
+        self.assertNotIn('$CODEX_HOME/skills/sdd-migrate',claude_migrate)
+        open_graph=(open_home/'skills/sdd-change/references/task-graph.md').read_text()
+        self.assertIn(str(open_home/'skills')+'/',open_graph)
+
+    def test_non_codex_laya_fails_closed_before_target_mutation(self):
+        for host in ('opencode','claude'):
+            with self.subTest(host=host):
+                home=self.base/(host+'-laya')
+                with self.assertRaisesRegex(ValueError,'Codex-host only'):
+                    self.install_host(host,home,with_laya=True)
+                self.assertFalse(home.exists())
+
+    def test_unmanaged_host_artifact_is_never_overwritten(self):
+        home=self.base/'opencode';target=home/'skills/sdd-do'
+        target.mkdir(parents=True);(target/'SKILL.md').write_text('mine')
+        before=(target/'SKILL.md').read_text()
+        with self.assertRaisesRegex(ValueError,'Unmanaged host artifact'):
+            self.install_host('opencode',home)
+        self.assertEqual(before,(target/'SKILL.md').read_text())
+
+    def test_host_dry_run_does_not_create_home(self):
+        home=self.base/'absent'
+        self.install_host('claude',home,dry_run=True)
+        self.assertFalse(home.exists())
+
+    def test_cli_selects_non_codex_host_without_reusing_codex_home(self):
+        home=self.base/'open'
+        result=subprocess.run([
+            'bash',str(ROOT/'install.sh'),'--host','opencode','--host-home',str(home),
+            '--dry-run','--skip-tools'
+        ],capture_output=True,text=True)
+        self.assertEqual(0,result.returncode,result.stderr)
+        self.assertIn(str(home),result.stdout)
+        self.assertFalse(home.exists())
+
+
 if __name__=='__main__': unittest.main()
