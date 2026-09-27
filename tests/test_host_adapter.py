@@ -32,7 +32,8 @@ class HostAdapterTests(unittest.TestCase):
         self.assertIn("resource: explorer", architect)
         self.assertIn("resource: librarian", architect)
         self.assertNotIn("resource: worker", architect)
-        self.assertIn('"*": deny', worker)
+        self.assertIn('resource: "*"', worker)
+        self.assertIn("effect: deny", worker)
         self.assertIn("action: edit", host_adapter.render_role(ROOT, "opencode", "reviewer", home))
         for text in (main, architect, worker):
             self.assertNotIn("$CODEX_HOME", text)
