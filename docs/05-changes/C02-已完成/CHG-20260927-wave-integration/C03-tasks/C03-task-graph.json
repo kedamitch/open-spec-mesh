@@ -1,0 +1,64 @@
+{
+  "tasks": [
+    {
+      "id": "C03-01",
+      "path": "C03-tasks/C03-01-wave-runtime",
+      "depends_on": [],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "939731a3589f4635d57f7fc38e2e4eafe09b101e",
+          "workspace": "/home/runner/work/_temp/close-runtime",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "48a07524cd1f2b58f48f44485673c4c5b089a4e7",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-01 AC-01/AC-02、Path Contract 与真实测试已核对",
+          "revision": "48a07524cd1f2b58f48f44485673c4c5b089a4e7"
+        }
+      ],
+      "contract_digest": "3e34e6f5d8b1e74e9f51515dff8469d3ad4c5ebd474d231bfc29da7767207a16",
+      "workspace": "/home/runner/work/_temp/close-runtime",
+      "baseline": "939731a3589f4635d57f7fc38e2e4eafe09b101e",
+      "attempt": 1,
+      "result_revision": "48a07524cd1f2b58f48f44485673c4c5b089a4e7",
+      "report_digest": "407a2a93cd0fce58171f491d2faf3f2a9221241162583f8ca5c58f589b3d47e7"
+    },
+    {
+      "id": "C03-02",
+      "path": "C03-tasks/C03-02-observation",
+      "depends_on": [],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "939731a3589f4635d57f7fc38e2e4eafe09b101e",
+          "workspace": "/home/runner/work/_temp/close-observation",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "4c900e66c9e2494a0e90ccd47200823c6fc8a473",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-02 AC-03、Path Contract 与真实测试已核对",
+          "revision": "4c900e66c9e2494a0e90ccd47200823c6fc8a473"
+        }
+      ],
+      "contract_digest": "55181915d5212f852d26e53259feeaeba00f902fe756fabbd6282d0b07385ae9",
+      "workspace": "/home/runner/work/_temp/close-observation",
+      "baseline": "939731a3589f4635d57f7fc38e2e4eafe09b101e",
+      "attempt": 1,
+      "result_revision": "4c900e66c9e2494a0e90ccd47200823c6fc8a473",
+      "report_digest": "25ae9d4f737f5a4348cbf3490cc68808d8bfe4b2ebb9e35365f7be75a08a3fb7"
+    }
+  ]
+}

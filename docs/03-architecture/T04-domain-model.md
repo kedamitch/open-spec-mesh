@@ -19,7 +19,7 @@ Change 固定包含 C01 Change、C02 Design 和 C03 Task Graph / Task Design。T
 
 ## 不变量
 
-submitted 不解锁下游。accepted 与 integrated 是两个事实：accepted 属于 Task Graph；integrated 不新增状态，只由 `result_revision` 是否为当前 HEAD ancestor 推导。accepted 可显式重新打开但旧验收只在 history；不能成为新契约验收。每次恢复创建新 attempt，旧报告拒收。
+submitted 不解锁下游。accepted 与 integrated 是两个事实：accepted 属于 Task Graph；integrated 不新增状态，只由 `result_revision` 是否为当前 HEAD ancestor 推导。IntegrationWave 同样不是持久对象，只是按 Graph 顺序从 `accepted && pending` Task 派生的当前候选集合；wave 预检先在 detached worktree 链式 merge 全部候选，再决定是否写 Main。accepted 可显式重新打开但旧验收只在 history；不能成为新契约验收。每次恢复创建新 attempt，旧报告拒收。
 replan 不自动停止 Worker 或回滚代码；Main 先停止后执行，并使用 --workers-stopped 确认。该参数是操作者声明，不是进程隔离。
 
 冻结契约实质变化使用 replan，必须先取得用户明确确认并以 --user-confirmed 留审计标记；普通 rework 不能接受摘要漂移。用户确认前只允许保留证据和停止相关工作，不能修改契约或启动新假设的实现。

@@ -109,6 +109,8 @@ class ProcessModeTests(unittest.TestCase):
         self.assertIn('Path Contract 是写入边界，不是互斥锁', architect)
         self.assertIn('不要反复运行项目全量测试', worker)
         self.assertIn('不维护存量失败、已知失败或 baseline failure 豁免', close)
+        self.assertIn('最终全量验证前退役已完成 Worker 的 Git worktree', close)
+        self.assertIn('禁止 `--force` 丢弃', close)
 
         self.assertIn('### Path Contract', task_template)
         self.assertIn('兄弟 Task 可以声明重叠路径', task_template)

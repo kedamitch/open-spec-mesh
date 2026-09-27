@@ -61,14 +61,21 @@ python3 "$SDD" deliver "$CHG" --root "$WORKSPACE" --attempt "$ATTEMPT" --evidenc
 
 ### integrate：Main 波次集成
 
-Task accepted 后先做只读预检，再执行确定性集成：
+Task accepted 后可按单 Task 或当前 wave 做确定性集成。单 Task：
 
 ```sh
 python3 "$SDD" integrate "$CHG" --root "$PROJECT" --task "$TASK" --check
 python3 "$SDD" integrate "$CHG" --root "$PROJECT" --task "$TASK"
 ```
 
-`status` 的 `integration` 由 Git ancestry 实时推导，不写入 Task Graph：`accepted + result_revision ancestor HEAD = integrated`，否则为 `pending`。实际集成使用保留 Task `result_revision` ancestry 的 merge commit；active Change 的权威运行工件以 Main 当前快照为准，不接受 Worker 工作区里的旧 Graph 覆盖。外部代码冲突返回精确文件；简单冲突由 Main 解决，复杂语义冲突回派原 Worker。存在 `depends_on` 时按 **Execution Wave → Integration Wave → Next Wave** 推进。
+同一 wave 有多个 accepted/pending Task 时优先：
+
+```sh
+python3 "$SDD" integrate "$CHG" --root "$PROJECT" --wave --check
+python3 "$SDD" integrate "$CHG" --root "$PROJECT" --wave
+```
+
+`status` 的 `integration` 由 Git ancestry 实时推导，不写入 Task Graph：`accepted + result_revision ancestor HEAD = integrated`，否则为 `pending`。wave 候选同样不持久化，只按 Graph 顺序从 accepted/pending Task 派生；`--wave --check` 在一个 detached worktree 中链式 merge 整个 wave，因此可在写 Main 前发现 Task 之间的冲突。实际集成继续使用保留 Task `result_revision` ancestry 的 merge commit；active Change 的权威运行工件以 Main 当前快照为准，不接受 Worker 工作区里的旧 Graph 覆盖。外部代码冲突返回精确文件；简单冲突由 Main 解决，复杂语义冲突回派原 Worker。存在 `depends_on` 时按 **Execution Wave → Integration Wave → Next Wave** 推进。
 
 ### close：Main 验收与归档
 
@@ -78,7 +85,9 @@ Main 完成验收判断后，自动 submit 或导入原 worktree 报告并登记
 python3 "$SDD" close "$CHG" --root "$PROJECT" --accept --reason "已核对版本、AC 与实际验证"
 ```
 
-随后 Main 用上面的 `integrate` 完成当前 wave；存在下游依赖时，先让上游 accepted result 进入 HEAD，再派发下一 wave。全部 Task 最终集成后，Main 将完整 integrated diff、历次 Delivery 和验收结果交 Architect 同步受影响 Current Truth，核对后把实现与快照提交到同一个最终 HEAD；再把该 HEAD 写入 `integrated_revision`，运行唯一机器验证入口：
+随后 Main 用上面的 `integrate` 完成当前 wave；存在下游依赖时，先让上游 accepted result 进入 HEAD，再派发下一 wave。全部 Task 最终集成后，Main 将完整 integrated diff、历次 Delivery 和验收结果交 Architect 同步受影响 Current Truth，核对后把实现与快照提交到同一个最终 HEAD。
+
+最终验证前退役已完成的 Worker worktree：仅移除已提交且 Delivery 已导入/验收的干净工作区；有未提交实现/证据时先保全，不使用 `--force`。完成后执行 `git worktree prune`，避免已结束 Worker 的 Git 元数据污染项目级测试/清理。再把最终 HEAD 写入 `integrated_revision`，运行唯一机器验证入口：
 
 ```sh
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/sdd-close/scripts/run_validation.py" \

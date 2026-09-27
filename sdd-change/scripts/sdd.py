@@ -414,6 +414,104 @@ def integration_check(root, change_id, task_id):
             )
 
 
+def integration_wave_tasks(root, change_id):
+    """Return accepted Task IDs still pending integration, preserving Graph order."""
+    _, _, _, graph = context(root, change_id)
+    return [
+        task['id'] for task in graph['tasks']
+        if task['state'] == 'accepted' and integration_state(root, task) == 'pending'
+    ]
+
+
+def integration_wave_check(root, change_id):
+    """Preflight the complete current wave as one chained merge without mutating Main."""
+    task_ids = integration_wave_tasks(root, change_id)
+    head = revision(root, 'HEAD')
+    if not task_ids:
+        return {
+            'change': change_id, 'integration': 'integrated', 'tasks': [],
+            'head': head, 'conflicts': [],
+        }
+
+    change = context(root, change_id)[0]
+    relative = change.relative_to(root).as_posix()
+    prefix = relative.rstrip('/') + '/'
+    revisions = []
+    for task_id in task_ids:
+        _, task = validate_accepted_task(root, change_id, task_id)
+        revisions.append((task_id, revision(root, task['result_revision'])))
+
+    with tempfile.TemporaryDirectory(prefix='sdd-wave-') as temporary:
+        location = Path(temporary) / 'preflight'
+        git(root, 'worktree', 'add', '--detach', str(location), head)
+        try:
+            for task_id, result_revision in revisions:
+                if ancestor(location, result_revision, revision(location, 'HEAD')):
+                    continue
+                completed = _merge_attempt(location, result_revision)
+                unmerged = _unmerged_paths(location)
+                external = sorted(path for path in unmerged if not path.startswith(prefix))
+                if external:
+                    return {
+                        'change': change_id, 'integration': 'conflict',
+                        'tasks': task_ids, 'conflict_task': task_id,
+                        'head': head, 'conflicts': external,
+                    }
+                if completed.returncode and not unmerged:
+                    detail = (completed.stderr or completed.stdout).strip()
+                    raise ValueError(
+                        'Integration wave preflight failed'
+                        + (': ' + detail if detail else '')
+                    )
+
+                # Worker result revisions must never replace Main-owned active Change state.
+                _clean_change_to_head(location, location / relative)
+                git(location, 'add', '-A', '--', relative)
+                remaining = _unmerged_paths(location)
+                if remaining:
+                    raise ValueError(
+                        'Unresolved wave preflight conflicts: '
+                        + ', '.join(sorted(remaining))
+                    )
+                git(
+                    location, '-c', 'user.name=Open Spec Mesh',
+                    '-c', 'user.email=open-spec-mesh@example.invalid',
+                    'commit', '-m', f'sdd preflight: {task_id}'
+                )
+            return {
+                'change': change_id, 'integration': 'ready', 'tasks': task_ids,
+                'head': head, 'conflicts': [],
+            }
+        finally:
+            subprocess.run(
+                ['git', '-C', str(location), 'merge', '--abort'],
+                text=True, capture_output=True,
+            )
+            subprocess.run(
+                ['git', '-C', str(root), 'worktree', 'remove', '--force', str(location)],
+                text=True, capture_output=True,
+            )
+
+
+def integrate_wave(root, change_id, *, check_only=False):
+    """Preflight then integrate every Task in the current accepted/pending wave."""
+    preflight = integration_wave_check(root, change_id)
+    if check_only or preflight['integration'] != 'ready':
+        return preflight
+
+    results = []
+    for task_id in preflight['tasks']:
+        results.append(integrate(root, change_id, task_id))
+    return {
+        'change': change_id,
+        'integration': 'integrated',
+        'tasks': preflight['tasks'],
+        'results': results,
+        'head': revision(root, 'HEAD'),
+        'conflicts': [],
+    }
+
+
 def integrate(root, change_id, task_id=None, *, check_only=False):
     """Integrate an accepted result with an ancestry-preserving merge commit."""
     task_id = select_task(root, change_id, task_id)
@@ -544,6 +642,7 @@ def main():
     commands['deliver'].add_argument('--evidence-file', type=Path, required=True)
     commands['deliver'].add_argument('--draft', action='store_true')
     commands['integrate'].add_argument('--check', action='store_true', dest='check_only')
+    commands['integrate'].add_argument('--wave', action='store_true')
     commands['close'].add_argument('--accept', action='store_true', dest='accept_task')
     commands['close'].add_argument('--archive', action='store_true')
     commands['close'].add_argument('--reason', default='')
@@ -562,7 +661,12 @@ def main():
             result = deliver(root, args.change_id, args.task_id, result=args.revision, attempt=args.attempt,
                              evidence_file=args.evidence_file, draft=args.draft)
         elif args.action == 'integrate':
-            result = integrate(root, args.change_id, args.task_id, check_only=args.check_only)
+            if args.wave:
+                if args.task_id:
+                    raise ValueError('--wave and --task are mutually exclusive')
+                result = integrate_wave(root, args.change_id, check_only=args.check_only)
+            else:
+                result = integrate(root, args.change_id, args.task_id, check_only=args.check_only)
         else:
             result = close(root, args.change_id, args.task_id, accept_task=args.accept_task, archive=args.archive,
                            reason=args.reason, from_workspace=args.from_workspace)

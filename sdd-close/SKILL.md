@@ -9,10 +9,11 @@ description: 基于已验收和已集成结果完成收口检查，并在需要�
 ## 收口控制
 
 1. 核对 Task 定向验证并作出验收判断后，用 `sdd.py close --accept --reason ...` 登记接受；入口不会自动合并代码。
-2. Main 对 accepted Task 运行 `sdd.py integrate`；可先用 `--check` 做只读冲突预检。脚本以 Git ancestry 判断结果是否已进入 HEAD，并用保留 `result_revision` ancestry 的 merge commit 集成；存在依赖时按 wave 推进，上游 revision 未进入 HEAD 不派发下游。简单冲突由 Main 解决；复杂冲突可回派原 Worker 之一修复，不新增业务 Task。
+2. Main 对当前 accepted/pending wave 优先运行 `sdd.py integrate --wave --check` 做整波只读链式预检，再用 `sdd.py integrate --wave` 批量集成；单 Task 调试/恢复仍可使用 `--task`。脚本以 Git ancestry 判断结果是否已进入 HEAD，并用保留 `result_revision` ancestry 的 merge commit 集成；存在依赖时按 wave 推进，上游 revision 未进入 HEAD 不派发下游。简单冲突由 Main 解决；复杂冲突可回派原 Worker 之一修复，不新增业务 Task。
 3. 最终集成稳定后，Main 将 integrated diff、历次 Delivery 和验收结果交 Architect 同步受影响的产品 / 技术 / 运维 Current Truth；Architect 只写真实影响，Main 核对并提交，使实现与 Current Truth 落在同一个最终 HEAD。
-4. 将该 HEAD 作为 `integrated_revision`，执行 `python3 sdd-close/scripts/run_validation.py "$CHG" --root "$PROJECT" --revision "$INTEGRATED_REVISION"`。脚本只调用项目 `Q01-validation.md` 声明的单一版本化 Validation Entry Point；该入口必须已提交到待验证 revision，执行期间不得改 HEAD 或项目工件，并负责完成**全量测试 + 全量 build + 全局 static validation**。任一检查失败都必须修到通过；不维护存量失败、已知失败或 baseline failure 豁免。实现或 Current Truth 再变化时必须更新 revision 并重新验证。
-5. receipt 通过后，只补 active Change 内的 `product / technology / operations` 评估、人类可读验证摘要和最终结论，再用 `sdd.py close --archive`。归档重新核对 receipt，并拒绝验证后 active Change 之外的任何项目变化；自然语言 `pass` 不能替代 receipt。
+4. 最终全量验证前退役已完成 Worker 的 Git worktree 并 `git worktree prune`。只移除已提交且 Delivery 已导入/验收的干净 worktree；发现未提交实现或证据时先保全并停止，禁止 `--force` 丢弃。这样最终测试不会继承已结束 Worker 的 Git worktree 元数据。
+5. 将该 HEAD 作为 `integrated_revision`，执行 `python3 sdd-close/scripts/run_validation.py "$CHG" --root "$PROJECT" --revision "$INTEGRATED_REVISION"`。脚本只调用项目 `Q01-validation.md` 声明的单一版本化 Validation Entry Point；该入口必须已提交到待验证 revision，执行期间不得改 HEAD 或项目工件，并负责完成**全量测试 + 全量 build + 全局 static validation**。任一检查失败都必须修到通过；不维护存量失败、已知失败或 baseline failure 豁免。实现或 Current Truth 再变化时必须更新 revision 并重新验证。
+6. receipt 通过后，只补 active Change 内的 `product / technology / operations` 评估、人类可读验证摘要和最终结论，再用 `sdd.py close --archive`。归档重新核对 receipt，并拒绝验证后 active Change 之外的任何项目变化；自然语言 `pass` 不能替代 receipt。
 
 ## 快照编辑
 

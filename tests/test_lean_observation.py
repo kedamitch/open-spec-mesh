@@ -59,6 +59,20 @@ class LeanObservationTests(unittest.TestCase):
         self.assertEqual({'kind': 'task.integrate-preflight', 'change_id': CHANGE, 'task_id': 'C02-01'}, preflight)
         self.assertEqual({'kind': 'task.integrate', 'change_id': CHANGE, 'task_id': 'C02-01'}, integrate)
 
+    def test_wave_integration_is_observed_as_one_change_level_command(self):
+        preflight = command_fact(self.command('integrate', '--wave', '--check'))
+        integrate = command_fact(self.command('integrate', '--wave'))
+        self.assertEqual(
+            {'kind': 'change.integrate-wave-preflight', 'change_id': CHANGE, 'task_id': None},
+            preflight,
+        )
+        self.assertEqual(
+            {'kind': 'change.integrate-wave', 'change_id': CHANGE, 'task_id': None},
+            integrate,
+        )
+        run = self.analyze_command(self.command('integrate', '--wave'))
+        self.assertEqual(1, run['metrics']['sdd_successful_commands'])
+
     def test_integration_validation_is_an_observable_single_command(self):
         fact = command_fact(['python3', '-B', VALIDATION, CHANGE, '--revision', 'HEAD'])
         self.assertEqual({'kind': 'change.validate', 'change_id': CHANGE, 'task_id': None}, fact)

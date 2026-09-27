@@ -17,7 +17,7 @@
 | 派发 | 复用原冻结、基线和 attempt 检查；运行中的同一 Task 返回恢复信息，不生成新 attempt 或第二个执行 |
 | Delivery | 可生成精确 Git 文件表草稿；实际 diff 必须符合当前 Task Path Contract；Worker 只提交定向测试、必要 build/static、自审和剩余问题 |
 | 验收 | Main 明确判断后自动 submit 或导入指定 worktree 报告；Worker 写报告不直接推进权威任务图 |
-| 集成 | `status` 用 Git ancestry 推导 pending / integrated；Main 用 `sdd.py integrate --check` 预检、用 ancestry-preserving merge 按 wave 集成 accepted result；简单冲突由 Main 处理，复杂冲突回原 Worker；最终集成后交 Architect 同步 Current Truth，再对最终 HEAD 做全量验证 |
+| 集成 | `status` 用 Git ancestry 推导 pending / integrated；单 Task 可用 `integrate --task`，同一 accepted/pending wave 可用 `integrate --wave --check` 一次链式预检、再用 `integrate --wave` 批量 ancestry-preserving 集成；wave 候选按 Graph 顺序派生，不新增持久状态；简单冲突由 Main 处理，复杂冲突回原 Worker；最终集成后交 Architect 同步 Current Truth，再对最终 HEAD 做全量验证 |
 | 收口 | run_validation 将入口真实退出结果绑定最终 integration revision；归档拒绝缺失/失败/陈旧 receipt，以及验证后 active Change 之外的任何项目变化 |
 | 恢复 | 普通 rework 保持契约；漂移先获用户确认再由原 Architect 修订并 replan |
 

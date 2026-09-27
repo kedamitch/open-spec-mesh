@@ -138,7 +138,11 @@ def command_fact(value: Any) -> dict:
             elif args[0] == 'deliver':
                 kind = 'task.delivery-draft' if '--draft' in args else 'task.deliver'
             elif args[0] == 'integrate':
-                kind = 'task.integrate-preflight' if '--check' in args else 'task.integrate'
+                if '--wave' in args:
+                    kind = 'change.integrate-wave-preflight' if '--check' in args else 'change.integrate-wave'
+                    task = None
+                else:
+                    kind = 'task.integrate-preflight' if '--check' in args else 'task.integrate'
             elif args[0] == 'close':
                 if '--archive' in args:
                     kind = 'change.close'

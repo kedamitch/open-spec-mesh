@@ -61,16 +61,16 @@ sequenceDiagram
       Main->>CLI: 重新导入 / submit / 核验
     end
     Main->>CLI: accept
-    Main->>CLI: integrate --check
-    CLI->>Git: detached merge preflight + ancestry check
-    alt 外部代码冲突
-      CLI-->>Main: conflict paths
+    Main->>CLI: integrate --wave --check
+    CLI->>Git: derive accepted/pending wave + chained detached merge preflight
+    alt wave 内或对 Main 的代码冲突
+      CLI-->>Main: conflict Task + paths
       Main->>Worker: 复杂语义冲突回派原 Worker；简单冲突 Main 处理
       Worker->>Git: 必要时提交冲突解决并定向复验
-    else 可集成
-      Main->>CLI: integrate
-      CLI->>Git: ancestry-preserving merge commit
-      CLI-->>Main: integrated
+    else 整波可集成
+      Main->>CLI: integrate --wave
+      CLI->>Git: ancestry-preserving merge commits
+      CLI-->>Main: integrated tasks + final HEAD
     end
     opt 受影响快照需要同步
       Main->>Arch: 完整 diff、历次 Delivery、集成结果

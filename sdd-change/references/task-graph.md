@@ -36,14 +36,23 @@ python3 sdd-do/scripts/import_delivery.py "$CHG" "$TASK" --root "$PROJECT" --fro
 python3 sdd-do/scripts/record_acceptance.py "$CHG" "$TASK" accept --root "$PROJECT" --reason "已核对版本、AC 和证据"
 ```
 
-同工作区可直接 `task_graph.py --action submit`。导入核对工作区、契约、baseline、attempt、Git 祖先关系和文件表，只复制当前报告，不导入 Worker 的任务图。submitted 不解锁下游；accepted 只表示验收完成，若存在后续依赖还必须先进入 Main HEAD：
+同工作区可直接 `task_graph.py --action submit`。导入核对工作区、契约、baseline、attempt、Git 祖先关系和文件表，只复制当前报告，不导入 Worker 的任务图。submitted 不解锁下游；accepted 只表示验收完成，若存在后续依赖还必须先进入 Main HEAD。
+
+单 Task 可显式预检/集成：
 
 ```sh
 python3 sdd-change/scripts/sdd.py integrate "$CHG" --root "$PROJECT" --task "$TASK" --check
 python3 sdd-change/scripts/sdd.py integrate "$CHG" --root "$PROJECT" --task "$TASK"
 ```
 
-集成状态不进入 Graph schema，而由 `result_revision` 是否为当前 HEAD ancestor 实时推导。下游 `prepare` 同时要求依赖 accepted 且该精确 revision 已进入 baseline，因此实际执行按 wave 推进。
+同一波次有多个 accepted/pending Task 时优先整波执行：
+
+```sh
+python3 sdd-change/scripts/sdd.py integrate "$CHG" --root "$PROJECT" --wave --check
+python3 sdd-change/scripts/sdd.py integrate "$CHG" --root "$PROJECT" --wave
+```
+
+集成状态与 wave 候选都不进入 Graph schema：前者由 `result_revision` 是否为当前 HEAD ancestor 实时推导，后者按 Graph 顺序从 accepted/pending Task 派生。`--wave --check` 在一个 detached worktree 中链式 merge 整个 wave，可在写 Main 前发现兄弟 Task 之间的真实冲突。下游 `prepare` 同时要求依赖 accepted 且该精确 revision 已进入 baseline，因此实际执行按 wave 推进。
 
 ## 3. 普通返工
 
@@ -81,4 +90,4 @@ replan 撤销目标、摘要漂移任务及其下游的旧验收，保留历史�
 
 SDD Change 必须包含非空 Task Graph；纯文档小改动使用 Quick，不创建 Change。完整收口核对历次交付和集成 diff，而非仅最后一轮。
 
-Path Contract 写在各 Task Design 中，只防当前 Worker 越界；兄弟 Task 的 allow 可重叠。Main 用 `sdd.py integrate` 集成 accepted result：脚本保护 result ancestry 与 Main 权威 Change 工件；普通代码冲突由 Main 处理，复杂语义冲突可回派原 Worker。Worker 阶段只跑定向验证；全部 Task 最终集成并由 Architect 同步 Current Truth 后，Main 统一跑全量并要求全绿。
+Path Contract 写在各 Task Design 中，只防当前 Worker 越界；兄弟 Task 的 allow 可重叠。Main 用 `sdd.py integrate` 集成 accepted result：单 Task 用 `--task`，同一 accepted/pending wave 优先先跑 `--wave --check` 再 `--wave`。脚本保护 result ancestry 与 Main 权威 Change 工件；普通代码冲突由 Main 处理，复杂语义冲突可回派原 Worker。Worker 阶段只跑定向验证；全部 Task 最终集成并由 Architect 同步 Current Truth 后，Main 统一跑全量并要求全绿。
