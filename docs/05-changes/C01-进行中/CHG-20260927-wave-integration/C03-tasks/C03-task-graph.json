@@ -1,0 +1,18 @@
+{
+  "tasks": [
+    {
+      "id": "C03-01",
+      "path": "C03-tasks/C03-01-wave-runtime",
+      "depends_on": [],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-02",
+      "path": "C03-tasks/C03-02-observation",
+      "depends_on": [],
+      "state": "planned",
+      "history": []
+    }
+  ]
+}
