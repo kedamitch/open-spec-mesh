@@ -4,7 +4,7 @@ set -euo pipefail
 CHG="CHG-20260927-multi-host-runtime"
 SDD="sdd-change/scripts/sdd.py"
 PLANNING="db09e434c77982e36513a0153cc7cb78f438c887"
-FINAL_SOURCE="628e10f39c15508976098cba566a640f52a65841"
+FINAL_SOURCE="7d8cbd584202d04142ef33ac395521d45faee415"
 
 git config user.name "Open Spec Mesh"
 git config user.email "open-spec-mesh@example.invalid"
