@@ -4,7 +4,7 @@ set -euo pipefail
 CHG="CHG-20260927-multi-host-runtime"
 SDD="sdd-change/scripts/sdd.py"
 PLANNING="db09e434c77982e36513a0153cc7cb78f438c887"
-FINAL_SOURCE="46320043dbd4d6c4109bfe385b5fd31ba3db1459"
+FINAL_SOURCE="628e10f39c15508976098cba566a640f52a65841"
 
 git config user.name "Open Spec Mesh"
 git config user.email "open-spec-mesh@example.invalid"
@@ -164,6 +164,7 @@ run_task_05() {
     "docs/08-quality/Q01-validation.md"
     "scripts/verify_claude.py"
     "scripts/verify_opencode.py"
+    "tests/test_sdd.py"
     "sdd-init/references/runtime-guide.md"
   )
   for path in "${paths[@]}"; do copy_file "$w" "$path"; done
