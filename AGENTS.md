@@ -58,7 +58,7 @@ Task 按业务模块和可验收结果拆分，不为消灭文件冲突继续细
 - 证据不足 → 补证据，不直接验收。
 - 多个结果冲突 → Main 以冻结 Contract、真实 diff 和可复验证据收敛，不让 Agent 互相裁决。
 
-全部 Task 最终集成后，Main 交 Architect 按 integrated diff 同步受影响 Current Truth 并提交，再运行项目完整测试 / build / static validation。任何失败都必须修到通过，不维护“存量失败”豁免；全绿后才最终验收和收口。
+全部 Task 最终集成后，Main 交 Architect 按 integrated diff 同步受影响 Current Truth 并提交；最终验证前退役已完成的 Worker worktree 并 prune Git 登记，脏工作区必须先保全而不能强删。再运行项目完整测试 / build / static validation；任何失败都必须修到通过，不维护“存量失败”豁免；全绿后才最终验收和收口。
 
 ## 6. 授权边界
 
