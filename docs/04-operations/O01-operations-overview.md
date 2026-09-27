@@ -4,8 +4,9 @@
 
 | Environment | Purpose |
 | --- | --- |
-| 开发工作站 | 运行安装器、Codex 客户端和 SDD CLI |
-| 业务项目工作区 | 保存代码、docs、Git worktree 和项目私有配置 |
+| 开发工作站 | 运行安装器、Codex/OpenCode/Claude Code 与 SDD CLI |
+| Host config home | 保存 Open Spec Mesh 受管 Rules / Skills / Agents / overlay |
+| 业务项目工作区 | 保存代码、docs 与 SDD Git worktree |
 | 外部 Provider | 提供模型推理；不属于本包部署单元 |
 
 ## Deployment Architecture
@@ -16,46 +17,38 @@
 
 ## Configuration
 
-- Codex / Agent：`config.toml`。
-- Provider / 工具密钥：外部环境变量。
-- 业务应用：真实 `.env` 外置，不进入仓库或镜像。
+| Host | 用户配置 | Open Spec Mesh 受管内容 |
+| --- | --- | --- |
+| Codex | `config.toml` | 受管 role/MCP 合并 |
+| OpenCode | `opencode.json(c)` 等 | `AGENTS.md` marker、Skills、Agents、独立 overlay |
+| Claude Code | `settings.json` 等 | `CLAUDE.md` marker、Skills、Agents、独立 MCP JSON |
+
+Provider / 工具密钥只通过环境变量继承，不写入仓库或 overlay 值。
 
 ## Network
 
-本包无固定监听端口。可选 MCP / 外部 Provider 的地址由用户配置；业务项目端口在各自应用文档维护。
+本包无固定监听端口。Research MCP / Provider 网络行为由用户环境决定；runtime smoke 不进行模型调用。
 
 ## Observability
 
-### Logs
-
-CLI 标准输出 / 错误和 Git / CI 记录。
-
-### Metrics
-
-正常 SDD 流程不要求额外模型指标；离线 Observation 可按执行记录生成确定性统计。
-
-### Tracing
-
-Task ID、baseline、attempt、revision、Delivery 和 history 提供研发链路追踪。
-
-### Alerts
-
-本包无常驻告警服务；CI 失败和 CLI 阻断由调用方处理。
+- Logs：CLI stderr/stdout、Git、CI。
+- Trace：Task ID、baseline、attempt、revision、Delivery、history。
+- Codex native rollout：可做 full observation。
+- OpenCode/Claude private trace：当前标记 unsupported/partial，不伪造事件。
 
 ## Backup & Recovery
 
 - Git 是代码和正式文档恢复基础。
-- 安装器对受管配置使用暂存 / 替换 / 失败恢复。
-- Worker workspace 不自动 reset / rebase，避免隐式丢代码。
+- 安装器对受管文件使用暂存/替换/回滚。
+- 非 Codex 未受管同名资产拒绝覆盖。
+- Worker workspace 不自动 reset/rebase；宿主不得创建第二层 worktree。
 
 ## Security
 
-- 密钥只通过宿主环境传递，不写 docs、日志或受管配置值。
-- 不把命令行确认 flag 当身份认证。
-- 外部 Web / MCP 证据不获得代码写权限。
+- 密钥不写 docs、日志或受管配置值。
+- Agent/permission 是宿主约束，不替代 Path Contract/Git evidence。
+- 外部 Web/MCP 证据不获得代码写权限。
 
 ## Common Operations
 
 [本地工具包运行说明](O02-applications/O02-01-local-toolkit.md)。
-
-业务项目的 Docker 交付规则见 [运维模板](../../sdd-init/references/operations-template.md)；不存在的服务不创建 Dockerfile。
