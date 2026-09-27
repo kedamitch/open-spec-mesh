@@ -19,7 +19,7 @@
 ## 执行层级
 
 - **Worker / Task**：只运行与当前 Task AC 直接相关的定向测试，以及该 Task 必要的 build / static check；不要为每个 Task 重复跑项目全量。
-- **Main / Integration**：全部 accepted Task/worktree 集成并同步、提交受影响 Current Truth 后，以该最终 HEAD 执行 `sdd-close/scripts/run_validation.py`。脚本只调用上述单一项目入口，不动态拼 shell 命令。
+- **Main / Integration**：accepted Task 先由 `sdd.py integrate` 按 wave 集成；全部 Task 最终 integrated 后由 Architect 同步受影响 Current Truth，Main 核对并提交最终 HEAD，再执行 `sdd-close/scripts/run_validation.py`。脚本只调用上述单一项目入口，不动态拼 shell 命令。
 - **完成条件**：入口内任一 required check 非零即失败；不区分“存量失败 / 新增失败”，不维护 known-failure 白名单。验证后仅 active Change 收口证据可继续变化；其他项目文件变化必须更新 revision 并重跑。CI 扩展仍由仓库工作流独立执行。
 
 ## CI 分层与额度控制
