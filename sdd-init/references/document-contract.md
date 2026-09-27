@@ -161,9 +161,9 @@ Task 是可执行的局部详细设计；Worker 拿到 Task 后不应再猜主�
 
 ## Delivery
 
-Delivery 固定五节：文件改动、验证结果、自审结论、剩余问题、快照影响。文件改动必须写“文件 + 操作 + 具体行为影响”，并与 Path Contract 和真实 Git diff 一致。Worker 的验证结果只记录当前 Task 的定向测试和必要 build/static check，不重复 Design，不写计划，不虚构通过。
+Delivery 固定五节：文件改动、验证结果、自审结论、剩余问题、快照影响。关键内容使用固定字段：交付结果；验证结论与逐 AC 结果；已修复问题 / 契约偏差；未验证项 / 剩余风险；快照范围 / 说明。文件行由真实 Git diff 约束，AC 行由 Task Contract 约束；`deliver --draft` 自动生成两类骨架，Worker 只填写实际行为与证据。
 
-全部 Task 集成后的项目全量测试 / build / static validation 属于 Main 的最终集成验收，不属于每个 Delivery。最终存在任何失败都不能写 pass，不区分存量失败和新增失败。
+Delivery 可真实记录“部分通过 / 未通过”，但总体写“通过”时不得存在失败/未执行 AC、契约偏差或未验证项。Main Acceptance 仍是独立判断：结构化 Delivery 只能证明明显不满足时必须拒绝，不能自动证明应该验收。全部 Task 集成后的项目全量测试 / build / static validation 属于 Main 的最终集成验收，不属于每个 Delivery。
 
 ## ADR
 

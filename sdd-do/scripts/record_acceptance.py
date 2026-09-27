@@ -7,6 +7,7 @@ sys.path[:0]=[str(PACKAGE/'sdd-init/scripts'),str(PACKAGE/'sdd-change/scripts')]
 from sdd_common import root_path,read_text
 from numbering import locked
 from workflow import context,document,contract_digest,event,save_graph,transition
+from delivery_evidence import acceptance_blockers
 
 def accept(root,change_id,task_id,decision,reason,workers_stopped=False):
     if decision not in ('accept','rework'): raise ValueError('Unknown acceptance decision')
@@ -16,6 +17,9 @@ def accept(root,change_id,task_id,decision,reason,workers_stopped=False):
         change,fields,gp,g,t,d,tf=context(root,change_id,task_id); report=read_text(document(root,d,tf,'report'))
         if t['state']!='submitted' or hashlib.sha256(report.encode()).hexdigest()!=t.get('report_digest'): raise ValueError('Submit the current report before acceptance')
         if contract_digest(root,change,fields,d,tf)!=t.get('contract_digest'): raise ValueError('Frozen Contract changed')
+        task_contract=read_text(document(root,d,tf,'contract'))
+        blockers=acceptance_blockers(report,task_contract)
+        if blockers: raise ValueError('Delivery is not acceptance-ready: '+', '.join(blockers))
         event(t,'accepted',reason=reason,revision=t['result_revision']); save_graph(gp,g); return 'accepted'
 
 def main():
