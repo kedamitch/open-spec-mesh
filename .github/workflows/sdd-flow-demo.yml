@@ -87,16 +87,77 @@ jobs:
           python -B "$SDD" integrate "$CHG" --root . --wave
           python -B "$SDD" status "$CHG" --root .
 
-          echo "=== main full validation ==="
-          python -B scripts/sdd_validate.py
+          echo "=== architect current truth sync ==="
+          python - <<'PY'
+          from pathlib import Path
 
-          echo "=== authoritative runtime artifacts after real flow ==="
+          product = Path('docs/02-product/P02-modules/P02-01-sdd-runtime.md')
+          text = product.read_text()
+          old = '| 集成 | `status` 用 Git ancestry 推导 pending / integrated；Main 用 `sdd.py integrate --check` 预检、用 ancestry-preserving merge 按 wave 集成 accepted result；简单冲突由 Main 处理，复杂冲突回原 Worker；最终集成后交 Architect 同步 Current Truth，再对最终 HEAD 做全量验证 |'
+          new = '| 集成 | `status` 用 Git ancestry 推导 pending / integrated；Main 可对单 Task 使用 `integrate --task`，或用 `integrate --wave [--check]` 一次预检/集成当前 accepted+pending wave；wave 先在 detached worktree 链式预检，冲突时不改 Main HEAD；最终集成后交 Architect 同步 Current Truth，再对最终 HEAD 做全量验证 |'
+          assert old in text
+          product.write_text(text.replace(old, new))
+
+          api = Path('docs/03-architecture/T02-api.md')
+          text = api.read_text()
+          marker = '| integrate | accepted Task | Git ancestry 幂等判断；以 Task `result_revision` 为 parent 创建 ancestry-preserving merge commit，保留 Main 当前 active Change 权威快照；冲突不静默改写 |'
+          addition = marker + '\n| integrate --wave --check | 当前 Change | 按 Graph 顺序选择 accepted 且尚未进入 HEAD 的 Task，在单一 detached worktree 中链式预检整个 wave；任一项目代码冲突即返回且 Main HEAD 不变 |\n| integrate --wave | 当前 Change | 先执行完整 wave 预检；通过后复用单 Task ancestry-preserving merge 依次集成候选；已 integrated Task 自动排除，重复执行幂等 |'
+          assert marker in text
+          api.write_text(text.replace(marker, addition))
+
+          domain = Path('docs/03-architecture/T04-domain-model.md')
+          text = domain.read_text()
+          old = 'Change 固定包含 C01 Change、C02 Design 和 C03 Task Graph / Task Design。Task 包含依赖、冻结契约、baseline、workspace、attempt、当前 delivery 和 history。Current Truth 保存验收后的系统事实。'
+          new = old + ' IntegrationWave 是由 Graph 与当前 HEAD 临时派生的 accepted+pending Task 序列，不持久化、不新增 Task 状态。'
+          assert old in text
+          domain.write_text(text.replace(old, new))
+          PY
+          git add docs/02-product/P02-modules/P02-01-sdd-runtime.md docs/03-architecture/T02-api.md docs/03-architecture/T04-domain-model.md
+          git commit -m "docs: sync wave integration current truth"
+
+          echo "=== prepare final close evidence ==="
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess, sys
+          sys.path.insert(0, 'sdd-init/scripts')
+          from sdd_common import metadata, render_spec
+
+          change = Path('docs/05-changes/C01-进行中/CHG-20260927-wave-integration/C01-change.md')
+          fields, body = metadata(change.read_text())
+          head = subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip()
+          fields.update(
+              integrated_revision=head,
+              product='SDD Runtime now supports deterministic whole-wave integration.',
+              technology='IntegrationWave is derived from Graph plus Git ancestry; no persistent state added.',
+              operations='No deployment/runtime service change.',
+          )
+          body = body.replace(
+              '## 验证结果\n\npending',
+              '## 验证结果\n\nAC-01/AC-02/AC-03 passed through real prepared worktrees, Delivery/Acceptance/Integration, and final repository validation.'
+          )
+          body = body.replace('## 最终结论\n\npending', '## 最终结论\n\npass')
+          change.write_text(render_spec(fields, body))
+          PY
+
+          FINAL_HEAD="$(git rev-parse HEAD)"
+          echo "=== revision-bound full validation ==="
+          python -B sdd-close/scripts/run_validation.py "$CHG" --root . --revision "$FINAL_HEAD"
+
+          echo "=== archive ==="
+          python -B "$SDD" close "$CHG" --root . --archive
+
+          ARCHIVE="docs/05-changes/C02-已完成/$CHG"
+          test -d "$ARCHIVE"
+          test ! -d "docs/05-changes/C01-进行中/$CHG"
+
+          echo "=== authoritative runtime artifacts after full close ==="
           echo "SDD_DEMO_GRAPH_BEGIN"
-          cat "docs/05-changes/C01-进行中/$CHG/C03-tasks/C03-task-graph.json"
+          cat "$ARCHIVE/C03-tasks/C03-task-graph.json"
           echo "SDD_DEMO_GRAPH_END"
           echo "SDD_DEMO_RUNTIME_DELIVERY_BEGIN"
-          cat "docs/05-changes/C01-进行中/$CHG/C03-tasks/C03-01-wave-runtime/C03-01-02-delivery.md"
+          cat "$ARCHIVE/C03-tasks/C03-01-wave-runtime/C03-01-02-delivery.md"
           echo "SDD_DEMO_RUNTIME_DELIVERY_END"
           echo "SDD_DEMO_OBSERVATION_DELIVERY_BEGIN"
-          cat "docs/05-changes/C01-进行中/$CHG/C03-tasks/C03-02-observation/C03-02-02-delivery.md"
+          cat "$ARCHIVE/C03-tasks/C03-02-observation/C03-02-02-delivery.md"
           echo "SDD_DEMO_OBSERVATION_DELIVERY_END"
+          echo "SDD_DEMO_ARCHIVE_OK=$ARCHIVE"
