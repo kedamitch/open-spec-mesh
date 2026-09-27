@@ -1,0 +1,18 @@
+{
+  "tasks": [
+    {
+      "id": "C03-01",
+      "path": "C03-tasks/C03-01-planning-compression",
+      "depends_on": [],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-02",
+      "path": "C03-tasks/C03-02-structured-delivery",
+      "depends_on": ["C03-01"],
+      "state": "planned",
+      "history": []
+    }
+  ]
+}
