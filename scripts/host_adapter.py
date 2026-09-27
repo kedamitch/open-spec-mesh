@@ -135,25 +135,18 @@ def _yaml_scalar(value: str) -> str:
 
 
 def _opencode_permissions(role: str) -> list[str]:
+    """Render the stable OpenCode Markdown permission schema.
+
+    OpenCode v2.0.18 still documents/accepts `permission.task`. The newer V2
+    core migrates this legacy Markdown form, so this is the compatibility
+    surface across the released CLI and the in-progress V2 config internals.
+    """
     allowed = ROLES if role == "main" else (("explorer", "librarian") if role == "architect" else ())
-    lines = [
-        "permissions:",
-        "  - action: subagent",
-        '    resource: "*"',
-        "    effect: deny",
-    ]
+    lines = ["permission:", "  task:", '    "*": deny']
     for name in allowed:
-        lines += [
-            "  - action: subagent",
-            f"    resource: {name}",
-            "    effect: allow",
-        ]
+        lines.append(f"    {name}: allow")
     if role in ("reviewer", "explorer", "librarian"):
-        lines += [
-            "  - action: edit",
-            '    resource: "*"',
-            "    effect: deny",
-        ]
+        lines.append("  edit: deny")
     return lines
 
 
