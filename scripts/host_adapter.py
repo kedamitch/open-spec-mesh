@@ -99,11 +99,11 @@ def _adapt_prompt(text: str, profile: HostProfile) -> str:
     if profile.name == "opencode":
         text = text.replace(
             '- V2：`agent_type` + `fork_turns="none"`；model / effort 由角色 TOML 固定。',
-            "- Agent：使用 OpenCode 原生 primary/subagent 与 Task tool；model/provider 继承用户宿主配置。"
+            "- Agent：使用 OpenCode 原生 primary/subagent 与 subagent tool；model/provider 继承用户宿主配置。"
         )
         text = text.replace(
             '使用 agent_type + fork_turns="none"，不覆盖 model / effort。',
-            "使用 OpenCode 原生 Task tool 调用命名 subagent；不在派发时覆盖用户 model/provider。"
+            "使用 OpenCode 原生 subagent tool 调用命名 subagent；不在派发时覆盖用户 model/provider。"
         )
     elif profile.name == "claude":
         text = text.replace(
@@ -216,6 +216,23 @@ def render_rules(source: Path, host: str, home: str | Path | None = None) -> str
             + text
         )
     return text.rstrip() + "\n"
+
+
+def adapt_skill_markdown(text: str, host: str, home: str | Path | None = None) -> str:
+    """Rewrite only host-install path idioms; do not rewrite host-specific explanatory sections."""
+    profile = host_profile(host, home)
+    if host == "codex":
+        return text
+    skill_root = str(profile.skills_path)
+    text = text.replace(
+        'python3 "$CODEX_HOME/skills/sdd-migrate/scripts/migrate_project.py"',
+        f'python3 "{skill_root}/sdd-migrate/scripts/migrate_project.py"',
+    )
+    text = text.replace(
+        '安装后使用 `$CODEX_HOME/skills/` 下对应脚本。',
+        f'安装后使用 `{skill_root}/` 下对应脚本。',
+    )
+    return text
 
 
 def render_dispatch_contract(source: Path, host: str, home: str | Path | None = None) -> str:

@@ -63,6 +63,19 @@ class HostAdapterTests(unittest.TestCase):
         dispatch = host_adapter.render_role(ROOT, "claude", "architect", claude_home)
         self.assertIn(str(claude_home / "open-spec-mesh" / "dispatch-contract.md"), dispatch)
 
+    def test_skill_runtime_paths_are_rewritten_without_touching_codex_sections(self):
+        home=Path("/tmp/opencode-home")
+        migration='python3 "$CODEX_HOME/skills/sdd-migrate/scripts/migrate_project.py" --root "$PROJECT"'
+        self.assertIn(
+            '/tmp/opencode-home/skills/sdd-migrate/scripts/migrate_project.py',
+            host_adapter.adapt_skill_markdown(migration,'opencode',home),
+        )
+        leaf='Codex: "$CODEX_HOME/skills/sdd-do/scripts/run_leaf.py"'
+        self.assertEqual(
+            leaf,
+            host_adapter.adapt_skill_markdown(leaf,'opencode',home),
+        )
+
     def test_mcp_overlays_use_env_references_without_secret_values(self):
         commands = {
             "codegraph": "/tools/codegraph",
