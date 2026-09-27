@@ -1,13 +1,23 @@
 # 执行行为诊断
 
-纯 Python 标准库、离线、只读采集。**不调用模型、Codex CLI、网络 API，不注入提示词、不新增 Skill，也不让 Agent 手写日志。** 诊断独立于开发流程运行；失败不改变 Task、代码或验收状态。
+纯 Python 标准库、离线、只读采集。**不调用模型、宿主 CLI、网络 API，不注入提示词、不新增 Skill，也不让 Agent 手写日志。** 诊断独立于开发流程运行；失败不改变 Task、代码或验收状态。
+
+## Host 能力
+
+| Host | Native trace | Rules | 边界 |
+| --- | --- | --- | --- |
+| Codex | full | `$CODEX_HOME/AGENTS.md` | 保持现有 rollout / child session 解析 |
+| OpenCode | unsupported | `$OPENCODE_CONFIG_DIR/AGENTS.md` | 只采集当前规则/Skill/Agent 与 SDD artifact snapshot |
+| Claude Code | unsupported | `$CLAUDE_CONFIG_DIR/CLAUDE.md` | 只采集当前规则/Skill/Agent 与 SDD artifact snapshot |
+
+OpenCode / Claude Code 在私有 trace adapter 尚未稳定前明确记录 `coverage.status=partial`，不会从“没看到 spawn / Skill read / SDD command”推断它们没有发生。
 
 ## 使用
 
-安装器自动把 `observe.py` 和 `observation/` 安装到现有 `sdd-do/scripts/`。以下命令在业务项目目录执行；默认数据库为 `$CODEX_HOME/sdd-observe/observations.sqlite3`，未设置 CODEX_HOME 时使用 `~/.codex`。
+安装器自动把 `observe.py` 和 `observation/` 安装到现有 `sdd-do/scripts/`。默认数据库改为宿主无关位置：优先 `$OPEN_SPEC_MESH_STATE_HOME/observations.sqlite3`；否则使用 `$XDG_STATE_HOME/open-spec-mesh/observations.sqlite3`，再缺省到 `~/.local/state/open-spec-mesh/observations.sqlite3`。
 
 ```sh
-OBSERVER="${CODEX_HOME:-$HOME/.codex}/skills/sdd-do/scripts/observe.py"
+OBSERVER="${CODEX_HOME:-$HOME/.codex}/skills/sdd-do/scripts/observe.py"  # Codex 示例
 
 # 一次扫描本项目的历史根会话；每个原生 turn 单独成片段，不推测多个需求的关系。
 python3 -B "$OBSERVER" scan --root "$PWD" --since 2026-09-23
@@ -34,13 +44,26 @@ python3 -B "$OBSERVER" report --run feature-one
 
 `--turn` 在根会话含多个 turn 时必须给出；单 turn 可省略。`--change`、期望模式和期望角色均可省略，此时保留 unknown，不猜用户意图。没有明确绑定时，只从成功 SDD 命令里的唯一 Change ID 关联。原生 thread、一次 turn、SDD Task 和最终需求不是同一个对象。
 
-源码测试可加 `--rules-root <package-root>`；已安装环境默认检查 CODEX_HOME。自定义数据库参数放在子命令前：`observe.py --db /private/data/observations.sqlite3 scan ...`。数据库必须在项目外且权限为 0600。
+源码测试可加 `--rules-root <package-root>`；已安装环境按 `--host` 选择对应配置根。自定义数据库参数放在子命令前：`observe.py --db /private/data/observations.sqlite3 scan ...`。数据库必须在项目外且权限为 0600。
+
+OpenCode / Claude Code 当前使用 artifact-only collect，不读取私有 session DB：
+
+```sh
+python3 -B "$OBSERVER" --host opencode collect \
+  --run inspect-open --root "$PWD" --expected-mode sdd --change CHG-YYYYMMDD-example
+
+python3 -B "$OBSERVER" --host claude collect \
+  --run inspect-claude --root "$PWD" --expected-mode sdd --change CHG-YYYYMMDD-example
+```
+
+非 Codex `scan` 当前明确拒绝；不能把未知私有 trace 当成空 trace。
 
 ## 采集与证据
 
 | 输入 | 提取 | 不做的推断 |
 | --- | --- | --- |
-| 原生 rollout JSONL | 根/子会话、turn、调用和结果、原生命令/委派事件、实际 model/effort、累计用量样本 | 无调用记录不等于工具不可用；调用不等于完成 |
+| Codex 原生 rollout JSONL | 根/子会话、turn、调用和结果、原生命令/委派事件、实际 model/effort、累计用量样本 | 无调用记录不等于工具不可用；调用不等于完成 |
+| OpenCode / Claude 当前 artifact snapshot | 当前规则、Agent、Skill、显式 Change / Task Graph | 不生成缺失委派/Skill/命令的负面判断；native trace 保持 unknown |
 | 指令注入记录 | 规则指纹、已支持的路由表信号及行号 | 无 cat AGENTS.md 不等于未加载；不读取思维链 |
 | 当前规则/角色/Skill 文件 | 指纹、文件状态、角色配置；无正文副本 | 当前存在不等于该轮加载；事后指纹不能证明历史版本 |
 | 显式关联的 Change/Task Graph | 当前状态、attempt、history、版本字段 | 旧 history 无时间则 unknown，不用采集时间补成执行时间 |
