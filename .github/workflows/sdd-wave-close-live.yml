@@ -75,6 +75,12 @@ jobs:
           python "$SDD" integrate "$CHG" --root "$ROOT" --wave --check
           python "$SDD" integrate "$CHG" --root "$ROOT" --wave
 
+          # Accepted results are now in Main HEAD. Retire Worker worktrees before
+          # final project validation so Git metadata cannot leak into test cleanup.
+          git -C "$ROOT" worktree remove --force "$WT1"
+          git -C "$ROOT" worktree remove --force "$WT2"
+          git -C "$ROOT" worktree prune
+
           cp -a "$ROOT/docs/05-changes/C01-进行中/$CHG" "$SNAP"
           git -C "$ROOT" reset --hard "$FINAL"
           rm -rf "$ROOT/docs/05-changes/C01-进行中/$CHG"
