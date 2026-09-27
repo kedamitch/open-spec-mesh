@@ -215,6 +215,19 @@ class MultiHostInstallTests(unittest.TestCase):
         overlay=json.loads((home/'open-spec-mesh.opencode.json').read_text())
         self.assertEqual('main',overlay['default_agent'])
         self.assertIn('servers',overlay['mcp'])
+        self.assertEqual(
+            {'main','architect','worker','reviewer','explorer','librarian'},
+            set(overlay['agents']))
+        self.assertNotIn('model',overlay['agents']['main'])
+        self.assertNotIn('model',overlay['agents']['worker'])
+        self.assertEqual('primary',overlay['agents']['main']['mode'])
+        self.assertEqual('subagent',overlay['agents']['worker']['mode'])
+        self.assertIn(
+            {'action':'subagent','resource':'architect','effect':'allow'},
+            overlay['agents']['main']['permissions'])
+        self.assertIn(
+            {'action':'subagent','resource':'*','effect':'deny'},
+            overlay['agents']['worker']['permissions'])
         self.install_host('opencode',home)
         self.assertEqual(1,(home/'AGENTS.md').read_text().count(installer.BEGIN))
 
