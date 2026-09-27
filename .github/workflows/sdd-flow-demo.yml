@@ -1,0 +1,102 @@
+name: SDD flow demo
+on:
+  push:
+    branches: ['integration/sdd-flow-demo']
+
+permissions:
+  contents: read
+
+jobs:
+  real-sdd-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Configure Git
+        run: |
+          git config user.name "Open Spec Mesh Demo"
+          git config user.email "demo@open-spec-mesh.invalid"
+          git fetch origin worker/wave-runtime worker/wave-observation
+      - name: Run real SDD lifecycle
+        env:
+          CHG: CHG-20260927-wave-integration
+          SDD: sdd-change/scripts/sdd.py
+          W1: ${{ runner.temp }}/worker-runtime
+          W2: ${{ runner.temp }}/worker-observation
+          E1: ${{ runner.temp }}/runtime-evidence.md
+          E2: ${{ runner.temp }}/observation-evidence.md
+        run: |
+          set -euo pipefail
+
+          echo "=== planning status ==="
+          python -B "$SDD" status "$CHG" --root .
+
+          echo "=== prepare parallel workers ==="
+          python -B "$SDD" prepare "$CHG" --root . --task C03-01 --worktree "$W1"
+          python -B "$SDD" bind-session "$CHG" --root . --task C03-01 --agent-session demo-worker-runtime
+          python -B "$SDD" prepare "$CHG" --root . --task C03-02 --worktree "$W2"
+          python -B "$SDD" bind-session "$CHG" --root . --task C03-02 --agent-session demo-worker-observation
+
+          echo "=== apply actual worker revisions without committing synchronized runtime graph ==="
+          git -C "$W1" stash push -u -m sdd-sync
+          git -C "$W1" cherry-pick a1b0bbf67742c8ee4e92db2a2916ba9ac48b92e1 48a07524cd1f2b58f48f44485673c4c5b089a4e7
+          git -C "$W1" stash pop
+
+          git -C "$W2" stash push -u -m sdd-sync
+          git -C "$W2" cherry-pick 57f6c7361946ca334b00f149e33b2c746e301c2c 4c900e66c9e2494a0e90ccd47200823c6fc8a473
+          git -C "$W2" stash pop
+
+          echo "=== worker directed tests ==="
+          python -B -m unittest discover -s "$W1/tests" -p 'test_lean_cli.py' -v
+          python -B -m unittest discover -s "$W2/tests" -p 'test_lean_observation.py' -v
+
+          echo "=== worker delivery ==="
+          python -B "$W1/$SDD" deliver "$CHG" --root "$W1" --task C03-01 --attempt 1 --revision HEAD --evidence-file "$E1" --draft
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          p=Path(os.environ['E1'])
+          p.write_text(p.read_text().replace('待补充。','AC-01/AC-02 directed tests passed; diff self-reviewed.'))
+          PY
+          python -B "$W1/$SDD" deliver "$CHG" --root "$W1" --task C03-01 --attempt 1 --revision HEAD --evidence-file "$E1"
+
+          python -B "$W2/$SDD" deliver "$CHG" --root "$W2" --task C03-02 --attempt 1 --revision HEAD --evidence-file "$E2" --draft
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          p=Path(os.environ['E2'])
+          p.write_text(p.read_text().replace('待补充。','AC-03 directed tests passed; diff self-reviewed.'))
+          PY
+          python -B "$W2/$SDD" deliver "$CHG" --root "$W2" --task C03-02 --attempt 1 --revision HEAD --evidence-file "$E2"
+
+          echo "=== main accept ==="
+          python -B "$SDD" close "$CHG" --root . --task C03-01 --accept --from-workspace "$W1" --reason "C03-01 AC-01/AC-02 and CI evidence verified"
+          python -B "$SDD" close "$CHG" --root . --task C03-02 --accept --from-workspace "$W2" --reason "C03-02 AC-03 and CI evidence verified"
+          python -B "$SDD" status "$CHG" --root .
+
+          echo "=== bootstrap integration of runtime Task using existing single-task command ==="
+          python -B "$SDD" integrate "$CHG" --root . --task C03-01 --check
+          python -B "$SDD" integrate "$CHG" --root . --task C03-01
+
+          echo "=== use newly implemented wave command for remaining accepted Task ==="
+          python -B "$SDD" integrate "$CHG" --root . --wave --check
+          python -B "$SDD" integrate "$CHG" --root . --wave
+          python -B "$SDD" status "$CHG" --root .
+
+          echo "=== main full validation ==="
+          python -B scripts/sdd_validate.py
+
+          echo "=== authoritative runtime artifacts after real flow ==="
+          echo "SDD_DEMO_GRAPH_BEGIN"
+          cat "docs/05-changes/C01-进行中/$CHG/C03-tasks/C03-task-graph.json"
+          echo "SDD_DEMO_GRAPH_END"
+          echo "SDD_DEMO_RUNTIME_DELIVERY_BEGIN"
+          cat "docs/05-changes/C01-进行中/$CHG/C03-tasks/C03-01-wave-runtime/C03-01-02-delivery.md"
+          echo "SDD_DEMO_RUNTIME_DELIVERY_END"
+          echo "SDD_DEMO_OBSERVATION_DELIVERY_BEGIN"
+          cat "docs/05-changes/C01-进行中/$CHG/C03-tasks/C03-02-observation/C03-02-02-delivery.md"
+          echo "SDD_DEMO_OBSERVATION_DELIVERY_END"
