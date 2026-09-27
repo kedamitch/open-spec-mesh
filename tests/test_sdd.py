@@ -95,6 +95,7 @@ class LifecycleTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory(prefix='sdd-test-')
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)/'project'; self.root.mkdir()
+        self.addCleanup(self.cleanup_worktrees)
         workflow.git(self.root, 'init', '-q')
         workflow.git(self.root, 'config', 'user.name', 'Test')
         workflow.git(self.root, 'config', 'user.email', 'test@example.invalid')
@@ -114,6 +115,34 @@ class LifecycleTest(unittest.TestCase):
         self.change = new_change.create_change(self.root, 'booking-cancel')
         self.change_doc.write_text(contract(), encoding='utf-8')
         self.commit()
+
+    def cleanup_worktrees(self):
+        """Retire registered test worktrees before TemporaryDirectory removes .git."""
+        if not self.root.exists():
+            return
+        result = subprocess.run(
+            ['git', '-C', str(self.root), 'worktree', 'list', '--porcelain'],
+            text=True, capture_output=True,
+        )
+        if result.returncode:
+            return
+        root = self.root.resolve()
+        locations = [
+            Path(line[9:]).resolve()
+            for line in result.stdout.splitlines()
+            if line.startswith('worktree ')
+        ]
+        for location in locations:
+            if location == root:
+                continue
+            subprocess.run(
+                ['git', '-C', str(self.root), 'worktree', 'remove', '--force', str(location)],
+                text=True, capture_output=True,
+            )
+        subprocess.run(
+            ['git', '-C', str(self.root), 'worktree', 'prune'],
+            text=True, capture_output=True,
+        )
 
     @property
     def fields(self): return metadata((self.change/'index.md').read_text())[0]
