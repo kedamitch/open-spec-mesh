@@ -74,17 +74,17 @@ def main():
         if "model" in overlay:
             raise SystemExit("Open Spec Mesh overlay must not select the user's model")
 
-        agents = run([binary, "agent", "list"], cwd=project, env=env)
+        agents = run([binary, "debug", "agents"], cwd=project, env=env)
         missing = [
             role for role in ("main", "architect", "worker", "reviewer", "explorer", "librarian")
-            if role not in agents
+            if ('"id": "' + role + '"') not in agents
         ]
         if missing:
             raise SystemExit(
-                "OpenCode agent list did not discover installed agents "
+                "OpenCode debug agents did not discover installed agents "
                 + ",".join(missing)
                 + "\nconfig sources:\n" + resolved[-3000:]
-                + "\nagent list:\n" + agents[-5000:]
+                + "\nagents:\n" + agents[-5000:]
             )
 
         help_text = run([binary, "run", "--help"], cwd=project, env=env)
