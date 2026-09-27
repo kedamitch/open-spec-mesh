@@ -189,7 +189,7 @@ def render_role(source: Path, host: str, role: str,
         ]
     else:
         tools = {
-            "architect": "Agent, Read, Write, Edit, Bash, Glob, Grep, Skill, WebFetch, WebSearch",
+            "architect": "Agent(explorer, librarian), Read, Write, Edit, Bash, Glob, Grep, Skill, WebFetch, WebSearch",
             "worker": "Read, Write, Edit, Bash, Glob, Grep, Skill",
             "reviewer": "Read, Bash, Glob, Grep, Skill",
             "explorer": "Read, Bash, Glob, Grep, Skill",
