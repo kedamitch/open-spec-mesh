@@ -869,6 +869,11 @@ def _build_host_stage(source: Path, host: str, home: Path, stage: Path,
         elif relative.parts and relative.parts[0] == 'skills':
             src = source / relative.parts[1]
             copy_item(source, src, dst)
+            for markdown in dst.rglob('*.md'):
+                markdown.write_text(
+                    host_adapter.adapt_skill_markdown(
+                        markdown.read_text(encoding='utf-8'), host, home),
+                    encoding='utf-8')
         elif relative.parts and relative.parts[0] == 'agents':
             role = relative.stem
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -888,6 +893,8 @@ def install_host(source: Path, host: str, home: Path | None = None, dry_run: boo
     """Install Open Spec Mesh into an OpenCode/Claude config home without taking over user config."""
     if host not in ('opencode', 'claude'):
         raise ValueError('install_host supports opencode or claude')
+    if with_laya:
+        raise ValueError('Managed Laya/System One is currently Codex-host only')
     source = source.resolve()
     home = Path(os.path.abspath(
         (home if home is not None else host_adapter.default_home(host)).expanduser()
