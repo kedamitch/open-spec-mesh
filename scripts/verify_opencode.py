@@ -81,17 +81,24 @@ def main():
             if "model" in definition:
                 raise SystemExit("OpenCode overlay must not override model for " + role)
 
-        agents = run([binary, "debug", "agents"], cwd=project, env=env)
-        missing = [
-            role for role in ("main", "architect", "worker", "reviewer", "explorer", "librarian")
-            if ('"id": "' + role + '"') not in agents
-        ]
+        agents_text = run([binary, "debug", "agents"], cwd=project, env=env)
+        agents = json.loads(agents_text)
+        if isinstance(agents, dict):
+            discovered = set(agents)
+        elif isinstance(agents, list):
+            discovered = {
+                item.get("id") or item.get("name")
+                for item in agents if isinstance(item, dict)
+            }
+        else:
+            raise SystemExit("OpenCode debug agents returned an unexpected shape")
+        missing = sorted(expected_roles - discovered)
         if missing:
             raise SystemExit(
                 "OpenCode debug agents did not discover installed agents "
                 + ",".join(missing)
                 + "\nconfig sources:\n" + resolved[-3000:]
-                + "\nagents:\n" + agents[-5000:]
+                + "\nagents:\n" + agents_text[-5000:]
             )
 
         help_text = run([binary, "run", "--help"], cwd=project, env=env)
