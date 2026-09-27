@@ -1,6 +1,6 @@
 # 日常运行指南
 
-**主线**：Quick 直接完成；需要 Worker 分工时进入 SDD，由 Architect 规划，Worker 实现，Main 验收。模型写决策与解释，脚本维护身份、文件清单和状态。
+**主线**：Quick 直接完成；需要 Worker 分工时进入 SDD，由 Architect 规划，Worker 实现，Main 验收。Codex、OpenCode、Claude Code 共享同一 SDD runtime；宿主只改变 Skill/Agent/session 的承载方式。模型写决策与解释，脚本维护身份、文件清单和状态。
 
 ## 工件分工
 
@@ -13,6 +13,25 @@
 | 图状态与导航 | 使用创建、派发、交付、收口脚本；不手工改图或重复抄写索引 |
 
 Task、Delivery、图和索引继续存在，保护不变；少的是人为模式和重复编写，不是校验。
+
+## 宿主入口
+
+安装后先确定宿主的 Skill 根：
+
+```sh
+# Codex
+SKILL_ROOT="${CODEX_HOME:-$HOME/.codex}/skills"
+
+# OpenCode
+SKILL_ROOT="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/skills"
+
+# Claude Code
+SKILL_ROOT="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
+```
+
+OpenCode 主会话使用 `opencode --agent main`；需要 Research MCP 时同时设置 `OPENCODE_CONFIG=<config-home>/open-spec-mesh.opencode.json`。Claude Code 使用 `claude --agent main --mcp-config <config-home>/open-spec-mesh.mcp.json`。非 Codex Agent 默认继承宿主模型，不写入 Codex model 名。
+
+三宿主的 Worker 都必须在 `prepare` 返回的 workspace 中运行；不要启用宿主自动 worktree。Leaf/session 细节见 [leaf-execution](../../sdd-do/references/leaf-execution.md)。
 
 ## 日常动作
 
@@ -27,7 +46,7 @@ python3 "$SDD" status "$CHG" --root "$PROJECT"
 `status` 不做语义决策，只返回 `planning_ready`、Task 状态、等待依赖、已有 `agent_session` 与 `allowed_actions`；Main 仍按派发契约决定真正的下一步。
 
 ```sh
-SDD="${CODEX_HOME:-$HOME/.codex}/skills/sdd-change/scripts/sdd.py"
+SDD="$SKILL_ROOT/sdd-change/scripts/sdd.py"
 ```
 
 ### prepare：Main 准备实施
@@ -92,7 +111,7 @@ python3 "$SDD" close "$CHG" --root "$PROJECT" --accept --reason "已核对版本
 最终验证前退役已完成的 Worker worktree：仅移除已提交且 Delivery 已导入/验收的干净工作区；有未提交实现/证据时先保全，不使用 `--force`。完成后执行 `git worktree prune`，避免已结束 Worker 的 Git 元数据污染项目级测试/清理。再把最终 HEAD 写入 `integrated_revision`，运行唯一机器验证入口：
 
 ```sh
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/sdd-close/scripts/run_validation.py" \
+python3 "$SKILL_ROOT/sdd-close/scripts/run_validation.py" \
   "$CHG" --root "$PROJECT" --revision "$INTEGRATED_REVISION"
 ```
 

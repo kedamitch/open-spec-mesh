@@ -71,5 +71,5 @@ Task 按业务模块和可验收结果拆分，不为消灭文件冲突继续细
 
 - 日常入口：`sdd-change/scripts/sdd.py`；旧项目文档升级使用 `sdd-migrate`，新项目骨架使用 `sdd-init`。
 - 写作：遵循 `sdd-init/references/document-contract.md`。
-- Skill 根：`$CODEX_HOME/skills/`。
-- V2：`agent_type` + `fork_turns="none"`；model / effort 由角色 TOML 固定。
+- Skill 根由宿主原生 discovery 决定：Codex `$CODEX_HOME/skills/`；OpenCode `$OPENCODE_CONFIG_DIR/skills/`（默认 `~/.config/opencode/skills/`）；Claude Code `$CLAUDE_CONFIG_DIR/skills/`（默认 `~/.claude/skills/`）。
+- Agent 路由保持同一语义：Codex 使用 V2 `agent_type + fork_turns="none"`；OpenCode 使用 primary/subagent + `subagent` 权限；Claude Code 使用 `Agent(type...)` allowlist。非 Codex host 的模型/provider 继承用户宿主配置。
