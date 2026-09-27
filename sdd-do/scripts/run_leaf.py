@@ -67,7 +67,7 @@ def default_home(host):
             os.environ.get("OPENCODE_CONFIG_DIR", home / ".config" / "opencode")
         ).expanduser()
     if host == "claude":
-        return Path(os.environ.get("CLAUDE_HOME", home / ".claude")).expanduser()
+        return Path(os.environ.get("CLAUDE_CONFIG_DIR", home / ".claude")).expanduser()
     raise ValueError("Unknown host: " + host)
 
 
