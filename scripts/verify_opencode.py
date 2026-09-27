@@ -61,16 +61,31 @@ def main():
         })
 
         resolved = run([binary, "debug", "config"], cwd=project, env=env)
-        data = json.loads(resolved)
-        if data.get("default_agent") != "main":
-            raise SystemExit("OpenCode did not resolve Open Spec Mesh main as default_agent")
-        if "model" in json.loads((home / "open-spec-mesh.opencode.json").read_text()):
+        sources = json.loads(resolved)
+        if not isinstance(sources, list):
+            raise SystemExit("OpenCode debug config returned an unexpected shape")
+        source_text = json.dumps(sources, ensure_ascii=False)
+        overlay_path = str(home / "open-spec-mesh.opencode.json")
+        if overlay_path not in source_text and "open-spec-mesh.opencode.json" not in source_text:
+            raise SystemExit("OpenCode did not load the Open Spec Mesh config overlay: " + source_text[-2000:])
+        overlay = json.loads((home / "open-spec-mesh.opencode.json").read_text())
+        if overlay.get("default_agent") != "main":
+            raise SystemExit("Open Spec Mesh overlay default_agent mismatch")
+        if "model" in overlay:
             raise SystemExit("Open Spec Mesh overlay must not select the user's model")
 
         agents = run([binary, "debug", "agents"], cwd=project, env=env)
-        for role in ("main", "architect", "worker", "reviewer", "explorer", "librarian"):
-            if role not in agents:
-                raise SystemExit("OpenCode did not discover agent: " + role)
+        missing = [
+            role for role in ("main", "architect", "worker", "reviewer", "explorer", "librarian")
+            if role not in agents
+        ]
+        if missing:
+            raise SystemExit(
+                "OpenCode did not discover installed agents "
+                + ",".join(missing)
+                + "\nconfig sources:\n" + resolved[-3000:]
+                + "\nagents:\n" + agents[-5000:]
+            )
 
         help_text = run([binary, "run", "--help"], cwd=project, env=env)
         args, extra_env = run_leaf.host_command(
