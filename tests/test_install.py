@@ -233,6 +233,32 @@ class MultiHostInstallTests(unittest.TestCase):
         manifest=json.loads((home/installer.HOST_MANIFEST).read_text())
         self.assertEqual('claude',manifest['host'])
 
+    def test_installed_skill_runtime_paths_follow_selected_host(self):
+        open_home=self.base/'open-skill'
+        claude_home=self.base/'claude-skill'
+        self.install_host('opencode',open_home)
+        self.install_host('claude',claude_home)
+        open_migrate=(open_home/'skills/sdd-migrate/SKILL.md').read_text()
+        claude_migrate=(claude_home/'skills/sdd-migrate/SKILL.md').read_text()
+        self.assertIn(
+            str(open_home/'skills/sdd-migrate/scripts/migrate_project.py'),
+            open_migrate)
+        self.assertIn(
+            str(claude_home/'skills/sdd-migrate/scripts/migrate_project.py'),
+            claude_migrate)
+        self.assertNotIn('$CODEX_HOME/skills/sdd-migrate',open_migrate)
+        self.assertNotIn('$CODEX_HOME/skills/sdd-migrate',claude_migrate)
+        open_graph=(open_home/'skills/sdd-change/references/task-graph.md').read_text()
+        self.assertIn(str(open_home/'skills')+'/',open_graph)
+
+    def test_non_codex_laya_fails_closed_before_target_mutation(self):
+        for host in ('opencode','claude'):
+            with self.subTest(host=host):
+                home=self.base/(host+'-laya')
+                with self.assertRaisesRegex(ValueError,'Codex-host only'):
+                    self.install_host(host,home,with_laya=True)
+                self.assertFalse(home.exists())
+
     def test_unmanaged_host_artifact_is_never_overwritten(self):
         home=self.base/'opencode';target=home/'skills/sdd-do'
         target.mkdir(parents=True);(target/'SKILL.md').write_text('mine')
