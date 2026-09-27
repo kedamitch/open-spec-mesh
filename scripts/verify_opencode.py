@@ -77,14 +77,27 @@ def main():
         agents = run([binary, "debug", "agents"], cwd=project, env=env)
         missing = [
             role for role in ("main", "architect", "worker", "reviewer", "explorer", "librarian")
-            if role not in agents
+            if ('"id": "' + role + '"') not in agents
         ]
         if missing:
+            # Distinguish custom-config-dir discovery from Markdown/frontmatter parsing.
+            probe = home / "agents" / "probe-global.md"
+            probe.write_text("---\ndescription: probe global\nmode: subagent\n---\nprobe\n")
+            global_probe = run([binary, "debug", "agents"], cwd=project, env=env)
+            project_agents = project / ".opencode" / "agents"
+            project_agents.mkdir(parents=True)
+            (project_agents / "probe-project.md").write_text(
+                "---\ndescription: probe project\nmode: subagent\n---\nprobe\n"
+            )
+            project_probe = run([binary, "debug", "agents"], cwd=project, env=env)
             raise SystemExit(
                 "OpenCode did not discover installed agents "
                 + ",".join(missing)
                 + "\nconfig sources:\n" + resolved[-3000:]
-                + "\nagents:\n" + agents[-5000:]
+                + "\ninitial agents:\n" + agents[-3500:]
+                + "\ncustom-dir probe visible=" + str('"id": "probe-global"' in global_probe)
+                + "\nproject probe visible=" + str('"id": "probe-project"' in project_probe)
+                + "\nproject agents tail:\n" + project_probe[-3500:]
             )
 
         help_text = run([binary, "run", "--help"], cwd=project, env=env)
