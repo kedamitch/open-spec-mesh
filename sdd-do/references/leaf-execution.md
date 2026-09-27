@@ -47,7 +47,7 @@ python ~/.config/opencode/skills/sdd-do/scripts/run_leaf.py worker \
   --host opencode --root "$WORKTREE" --resume "$SESSION_ID" --prompt-file "$FEEDBACK"
 ```
 
-launcher 使用 `opencode run --agent <role> --dir <workspace>`；恢复时增加 `--session <id>`。它设置 package-owned config overlay，但不改用户 provider/model。
+launcher 在 SDD workspace 中以进程 `cwd` 启动 `opencode run --agent <role>`；恢复时增加 `--session <id>`。OpenCode v2.0.18 的 `run` 不再接受 `--dir`，因此工作目录只由进程 cwd 决定。它设置 package-owned config overlay，但不改用户 provider/model。
 
 ## Claude Code
 

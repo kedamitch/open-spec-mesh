@@ -123,8 +123,6 @@ def host_command(host, binary, role, project, resume=None, home=None):
             role,
             "--format",
             "json",
-            "--dir",
-            str(project),
         ]
         if resume:
             args += ["--session", resume]
