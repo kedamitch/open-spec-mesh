@@ -14,11 +14,11 @@
 | prepare | Change；可选 Task、base、worktree、reuse | 契约路径、Task、baseline、attempt、workspace、digest、`allowed_actions` 与 Worker `dispatch` Packet；多 Task 拒绝猜选 |
 | prepare 恢复 | 当前 running Task | 原身份、resume=true、原 `agent_session`；不增加 attempt，不替换原 Worker 或工作区 |
 | bind-session | running Task、spawn 后得到的 Agent session/thread ID | 首次绑定可恢复会话；重复同值幂等，不允许改绑另一个会话 |
-| deliver --draft | 已提交 revision、派发 attempt、证据文件路径 | 精确 Git 文件表和待填写章节；拒绝覆盖已有文件、陈旧身份和符号链接 |
-| deliver | 当前 revision、派发 attempt、完整证据文件 | 当前 Delivery 路径；用真实 Git diff 校验 Task Path Contract；Worker 不更新权威 submitted / accepted 状态 |
+| deliver --draft | 已提交 revision、派发 attempt、证据文件路径 | 自动生成真实 Git 文件表、Task Contract AC 行和固定字段骨架；拒绝覆盖已有文件、陈旧身份和符号链接 |
+| deliver | 当前 revision、派发 attempt、结构化 Delivery | 校验 Git diff / Path Contract、固定字段枚举、逐 AC 覆盖及“通过”与 blocker 的一致性；允许真实记录部分通过/未通过；Worker 不更新权威 submitted / accepted 状态 |
 | integrate --task [--check] | accepted Task | 单 Task Git ancestry 幂等判断；`--check` 在 detached worktree 预检真实 merge，实际执行以 Task `result_revision` 为 parent 创建 ancestry-preserving merge commit；保留 Main 当前 active Change 权威快照，冲突不静默改写 |
 | integrate --wave [--check] | 当前 accepted/pending wave | 按 Graph 顺序派生候选；在一个 detached worktree 中链式预检整个 wave，可发现 Task 间冲突且不改 Main HEAD；无冲突时批量复用单 Task ancestry-preserving 集成，重复执行只处理剩余 pending |
-| close --accept | 当前 Task、Main 验收理由 | 自动 submit / 导入原工作区报告后登记 accepted；不合并代码 |
+| close --accept | 当前 Task、Main 验收理由 | 自动 submit / 导入原工作区报告；若 Delivery 存在失败/未执行 AC、未验证项、契约偏差或非“通过”结论则拒绝 accepted；无 blocker 仍要求 Main 显式判断 |
 | `run_validation.py` | Change、integration revision | 调用项目唯一 Validation Entry Point；先使旧成功 receipt 失效，再记录 revision / 入口摘要 / 退出码 / 输出摘要；不通过 LLM 文本判定成功 |
 | close --archive | 已完成集成、机器验证 receipt 全绿并完成评估的 Change | 复核 receipt、集成祖先、冻结 Contract/Report 和最终结论后归档；不隐式执行验证、验收、填 pass 或写快照 |
 

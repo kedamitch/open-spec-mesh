@@ -1,5 +1,6 @@
 """Canonical SDD readiness gates: one human-readable C01/C02/C03 format, no legacy compatibility."""
 from pathlib import Path
+import re
 import unittest
 
 import test_sdd as fixture
@@ -66,6 +67,38 @@ class ContractReadinessTests(unittest.TestCase):
                 '> **交付目标**：待补充。'),
             encoding='utf-8')
         self.rejection_preserves_graph(task)
+
+    def test_explicit_no_change_keeps_fixed_dimensions_dispatchable(self):
+        task = self.f.task()
+        design = self.f.design_doc.read_text()
+        for heading in ('产品变更', '接口变更', '领域模型与状态变更', '数据与表结构变更', '应用与组件变更'):
+            design = re.sub(
+                rf'(^## {re.escape(heading)}\n).*?(?=^## |\Z)',
+                f'## {heading}\n\n无变化。\n\n',
+                design, flags=re.M | re.S,
+            )
+        self.f.design_doc.write_text(design, encoding='utf-8')
+
+        path = self.task_contract(task)
+        text = path.read_text()
+        for heading in ('Components', '接口变化', '领域模型 / 状态变化', '数据与表结构变化'):
+            text = re.sub(
+                rf'(^### {re.escape(heading)}\n).*?(?=^### |^## |\Z)',
+                f'### {heading}\n\n无变化。\n\n',
+                text, flags=re.M | re.S,
+            )
+        path.write_text(text, encoding='utf-8')
+        self.f.approve(task)
+        self.assertTrue(self.f.info(task)['contract_digest'])
+
+    def test_fixed_no_change_dimensions_cannot_be_omitted(self):
+        task = self.f.task()
+        self.f.design_doc.write_text(
+            re.sub(r'^## 数据与表结构变更\n.*?(?=^## |\Z)', '',
+                   self.f.design_doc.read_text(), flags=re.M | re.S),
+            encoding='utf-8',
+        )
+        self.rejection_preserves_graph(task, 'missing section: 数据与表结构变更')
 
     def test_task_requires_path_contract(self):
         task = self.f.task()

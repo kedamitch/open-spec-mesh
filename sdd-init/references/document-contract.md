@@ -153,17 +153,17 @@ Design 是 **Current Truth 的完整增量设计**：
 10. 人类可读 Task Graph：Task、依赖、输出、AC、设计落点。
 11. 风险、停止条件、未决问题。
 
-必须表达 **Current → Delta → Target**；无变化明确写“无变化”。
+必须表达 **Current → Delta → Target**。固定设计维度和标题全部保留；没有变化时直接在该标题下写“无变化。”，不再生成空子标题、空表或“无变化”占位行。有变化时只展开承载新增信息所需的表格、列表或短段落；表格已经表达的事实不再用正文重复一遍。
 
 ## Task
 
-Task 是可执行的局部详细设计；Worker 拿到 Task 后不应再猜主要实现结构。固定内容：Goal、Included/Excluded、Inputs/Dependencies、Path Contract、代码结构、Task 流程、Components、本地 Domain/Database/API 变化、Implementation Constraints、Error/Edge Cases、Tests、AC、Expected Output。Path Contract 用 allow/deny 路径保护当前 Task 的实际 diff，可以与兄弟 Task 重叠；它不是并行互斥锁。每个 Task 至少一个真实 Mermaid；类图按需。
+Task 是可执行的局部详细设计；Worker 拿到 Task 后不应再猜主要实现结构。固定内容：Goal、Included/Excluded、Inputs/Dependencies、Path Contract、代码结构、Task 流程、Components、本地 Domain/Database/API 变化、Implementation Constraints、Error/Edge Cases、Tests、AC、Expected Output。固定维度全部保留；没有变化的子项直接写“无变化。”，不生成空表。公共设计只在 Design 展开，Task 引用 Dxxx 后只写当前 Task 如何落实，不重复公共原因与结论。Path Contract 用 allow/deny 路径保护当前 Task 的实际 diff，可以与兄弟 Task 重叠；它不是并行互斥锁。每个 Task 至少一个真实 Mermaid；类图按需。
 
 ## Delivery
 
-Delivery 固定五节：文件改动、验证结果、自审结论、剩余问题、快照影响。文件改动必须写“文件 + 操作 + 具体行为影响”，并与 Path Contract 和真实 Git diff 一致。Worker 的验证结果只记录当前 Task 的定向测试和必要 build/static check，不重复 Design，不写计划，不虚构通过。
+Delivery 固定五节：文件改动、验证结果、自审结论、剩余问题、快照影响。关键内容使用固定字段：交付结果；验证结论与逐 AC 结果；已修复问题 / 契约偏差；未验证项 / 剩余风险；快照范围 / 说明。文件行由真实 Git diff 约束，AC 行由 Task Contract 约束；`deliver --draft` 自动生成两类骨架，Worker 只填写实际行为与证据。
 
-全部 Task 集成后的项目全量测试 / build / static validation 属于 Main 的最终集成验收，不属于每个 Delivery。最终存在任何失败都不能写 pass，不区分存量失败和新增失败。
+Delivery 可真实记录“部分通过 / 未通过”，但总体写“通过”时不得存在失败/未执行 AC、契约偏差或未验证项。Main Acceptance 仍是独立判断：结构化 Delivery 只能证明明显不满足时必须拒绝，不能自动证明应该验收。全部 Task 集成后的项目全量测试 / build / static validation 属于 Main 的最终集成验收，不属于每个 Delivery。
 
 ## ADR
 
@@ -190,9 +190,10 @@ Release Checklist：Build、Tests、Database、Configuration、Documentation、D
 - 禁止把 `depends_on / AC / Design / contract_digest / attempt` 等协议字段当成正文主结构。
 - 图 > 表 > 列表 > 短段落。
 - 标题表达业务/设计问题，不表达协议字段。
-- 表格用于清单和差异，长理由不用表格堆砌。
+- 表格用于清单和差异，长理由不用表格堆砌；表格已有事实不在正文重复。
+- 固定设计标题必须保留；无变化时标题下直接写“无变化。”，不生成空表。
 - 复杂关系、流程、状态优先 Mermaid。
-- 公共规则只在 Design 写一次；Task 引用并写本地实现。
+- 公共规则只在 Design 写一次；Task 引用并写本地实现，不重复公共设计。
 - AC / Dxxx / Task ID 第一次出现时“编号 + 语义”。
 - 未核实内容写“待核实 / 待补充”，不得补猜。
 - 必需内容未完成时阻止派发。

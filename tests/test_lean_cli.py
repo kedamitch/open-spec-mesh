@@ -2,6 +2,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import unittest
@@ -38,10 +39,26 @@ class LeanCliTests(unittest.TestCase):
         return cli.deliver(self.root, self.change_id, info['task'], attempt=info['attempt'],
                            evidence_file=self.evidence, draft=True)
 
+    def fill_draft(self, *, conclusion='通过', ac_result='通过', deviation='无', unverified='无'):
+        text = self.evidence.read_text()
+        text = text.replace('> **交付结果**：待补充。', '> **交付结果**：完成当前 Task 的测试夹具行为。')
+        text = text.replace('- **结论**：待补充。', f'- **结论**：{conclusion}')
+        text = re.sub(
+            r'(\| `AC-[0-9]+` \|) 待补充。 \| 待补充。 \| 待补充。 \|',
+            lambda match: match.group(1) + f' 定向测试 | {ac_result} | 断言与输出已核对 |',
+            text,
+        )
+        text = text.replace('- **契约偏差**：无', f'- **契约偏差**：{deviation}')
+        text = text.replace('- **未验证项**：无', f'- **未验证项**：{unverified}')
+        text = text.replace('- **范围**：待补充。', '- **范围**：无')
+        text = text.replace('- **说明**：待补充。', '- **说明**：测试夹具，无 Current Truth 影响。')
+        text = text.replace('待补充。', '已核查当前 Task 的实际 diff。')
+        self.evidence.write_text(text)
+
     def complete_report(self, info):
         self.f.commit()
         self.draft(info)
-        self.evidence.write_text(self.evidence.read_text().replace('待补充。', '已核查 AC-01 的测试夹具行为。'))
+        self.fill_draft()
         return cli.deliver(self.root, self.change_id, info['task'], attempt=info['attempt'], evidence_file=self.evidence)
 
     def test_prepare_requires_at_least_one_canonical_task(self):
@@ -219,6 +236,12 @@ class LeanCliTests(unittest.TestCase):
         text = self.evidence.read_text()
         for path, operation in changed_files(self.root, info['baseline'], sha).items():
             self.assertIn(f'| `{path}` | {operation} | 待补充。 |', text)
+        self.assertIn('> **交付结果**：待补充。', text)
+        self.assertIn('- **结论**：待补充。', text)
+        self.assertIn('| `AC-01` | 待补充。 | 待补充。 | 待补充。 |', text)
+        self.assertIn('- **契约偏差**：无', text)
+        self.assertIn('- **未验证项**：无', text)
+        self.assertIn('- **范围**：待补充。', text)
         self.assertEqual('running', self.f.info(info['task'])['state'])
         with self.assertRaises(ValueError):
             cli.deliver(self.root, self.change_id, attempt=info['attempt'], evidence_file=self.evidence)
@@ -278,6 +301,26 @@ class LeanCliTests(unittest.TestCase):
         self.assertEqual('completed', result['state'])
         self.assertFalse(self.f.change.exists())
         self.assertTrue(Path(result['path']).is_dir())
+
+    def test_accept_rejects_delivery_with_mechanical_blockers(self):
+        for kwargs in (
+            {'conclusion': '部分通过'},
+            {'conclusion': '未通过', 'ac_result': '失败'},
+            {'conclusion': '部分通过', 'unverified': '异常路径未执行'},
+            {'conclusion': '部分通过', 'deviation': '修改了冻结接口语义'},
+        ):
+            with self.subTest(kwargs=kwargs):
+                self.evidence.unlink(missing_ok=True)
+                info = self.prepare()
+                self.f.commit()
+                self.draft(info)
+                self.fill_draft(**kwargs)
+                cli.deliver(self.root, self.change_id, info['task'], attempt=info['attempt'],
+                            evidence_file=self.evidence)
+                with self.assertRaisesRegex(ValueError, 'not acceptance-ready'):
+                    cli.close(self.root, self.change_id, accept_task=True, reason='Main reviewed')
+                self.assertEqual('submitted', self.f.info(info['task'])['state'])
+                workflow.transition(self.root, self.change_id, info['task'], 'rework', 'retry')
 
     def test_repeated_acceptance_is_idempotent_but_report_tampering_is_rejected(self):
         info = self.prepare()

@@ -46,18 +46,20 @@ Worker 首次 spawn 成功后，记录返回的会话 / thread id：
 python3 "$SDD" bind-session "$CHG" --root "$PROJECT" --task "$TASK" --agent-session "$THREAD_ID"
 ```
 
+Planning 文档保留 Design / Task 的全部固定维度与标题；某维度无变化时标题下直接写“无变化。”，不生成空表。表格已表达的事实不再用正文重复；公共设计只在 Design 展开，Task 引用 Dxxx 后只写本地落实。
+
 绑定只用于后续恢复原上下文；不能覆盖成另一个会话，也不是身份认证。多个 ready Task 只要依赖满足即可并行；并行写任务必须各自使用独立 worktree。Path Contract 可以重叠，低/中度重叠留给 Main 集成；高度重合或存在真实语义先后时由 Architect 用 depends_on 串行。依赖 Task 即使已 accepted，只要其 `result_revision` 尚未进入当前 HEAD，`status` 仍阻止下游 `prepare`。完整 Design 和全部 Task Design 必须在首次实现前完成并可 Review；不得等 ready 后补设计。Worker 默认读取 Change + Design + 自己的 Task Design。Design / Graph / Task Design 的 depends_on、AC、Dxxx 引用不一致时拒绝派发。
 
 ### deliver：Worker 提交交付
 
-先提交实际改动。需要文件表草稿时运行第一条，补齐改动点和验证后运行第二条；已有完整证据可直接用第二条。
+先提交实际改动。第一条会根据真实 Git diff 自动生成文件行，根据 Task Contract 自动生成全部 AC 行，并生成固定字段骨架；Worker 只补交付结果、行为影响、实际检查和证据。已有完整结构化证据可直接用第二条。
 
 ```sh
 python3 "$SDD" deliver "$CHG" --root "$WORKSPACE" --attempt "$ATTEMPT" --evidence-file "$EVIDENCE_MD" --draft
 python3 "$SDD" deliver "$CHG" --root "$WORKSPACE" --attempt "$ATTEMPT" --evidence-file "$EVIDENCE_MD"
 ```
 
-默认读取 `HEAD`，可用 `--revision` 指定已提交版本。草稿不覆盖已有文件，含占位内容不能交付；必须保留派发时的 attempt，不能自行读取新轮次冒领。交付时会用真实 Git diff 机械检查 Task Path Contract；兄弟 Task 的路径重叠不会被视为越界。Worker 只需要运行当前 Task 的定向测试和必要 build/static check。此动作只写 Worker 报告，不推进 Main 的 submitted / accepted 状态。
+默认读取 `HEAD`，可用 `--revision` 指定已提交版本。草稿不覆盖已有文件，含占位内容不能交付；必须保留派发时的 attempt，不能自行读取新轮次冒领。Delivery 固定五节，并使用固定字段/枚举；Task 的每个 AC 必须且只能有一行结果。`部分通过 / 未通过` 可以作为真实 Delivery 提交，但失败/未执行 AC、未验证项、契约偏差或非“通过”结论都会阻止后续 Acceptance。交付时仍用真实 Git diff 检查 Path Contract；Worker 只运行当前 Task 的定向测试和必要 build/static check。
 
 ### integrate：Main 波次集成
 
