@@ -54,17 +54,21 @@ def safe_relative(parent: Path, name: str) -> Path:
     return child
 
 
-def snapshot(project: Path, rules_root: Path) -> list[dict]:
+def snapshot(project: Path, rules_root: Path, host='codex') -> list[dict]:
     """Current inventory, NOT proof that these files were loaded in the recorded run."""
+    if host not in {'codex', 'opencode', 'claude'}:
+        raise ValueError('Unknown observation host')
     items = []
     files = []
+    rule_names = ('AGENTS.md', 'AGENTS.override.md') if host != 'claude' else ('CLAUDE.md',)
     for label, directory in [('rules', rules_root), ('project', project)]:
-        for name in ('AGENTS.md', 'AGENTS.override.md'):
+        for name in rule_names:
             path = directory / name
             if path.exists() or path.is_symlink():
                 files.append((label + '/' + name, path))
+    role_suffix = '.toml' if host == 'codex' else '.md'
     for role in sorted(ROLES - {'main'}):
-        files.append(('rules/agents/' + role + '.toml', rules_root/'agents'/f'{role}.toml'))
+        files.append((f'rules/agents/{role}{role_suffix}', rules_root/'agents'/f'{role}{role_suffix}'))
     # Installed layout and source layout; record collision/missing rather than choosing a hidden winner.
     for base, label in [(rules_root/'skills', 'rules/skills'), (rules_root, 'source'),
                         (project/'.agents/skills', 'project/.agents/skills')]:
@@ -83,7 +87,7 @@ def snapshot(project: Path, rules_root: Path) -> list[dict]:
             try:
                 text = file_text(path)
                 item.update(status='present', digest=digest(text), instruction_digest=digest(text.strip()), bytes=len(text.encode()))
-                if path.name in {'AGENTS.md', 'AGENTS.override.md'}:
+                if path.name in {'AGENTS.md', 'AGENTS.override.md', 'CLAUDE.md'}:
                     item['policy'] = policy_signal(text)
                 elif path.suffix == '.toml':
                     role = tomllib.loads(text)
@@ -288,15 +292,50 @@ def collect(project: Path, rules_root: Path, session_file: Path, sessions_dir: P
         changes = {e.get('fact', {}).get('change_id') for e in events if e.get('status') == 'success'} - {None}
         change = next(iter(changes)) if len(changes) == 1 else None
     sdd = sdd_artifacts(project, change)
-    snapshots = snapshot(project, rules_root)
+    snapshots = snapshot(project, rules_root, 'codex')
     fingerprint = digest(json.dumps([(x['path'], x.get('digest')) for x in snapshots], sort_keys=True))
     return {'schema': 1, 'collected_at': datetime.now(timezone.utc).isoformat(),
+            'host': {'name': 'codex', 'native_trace': 'full'},
             'project_key': digest(str(project.resolve())), 'root_session': root_trace['id'],
             'turn': turn or (root_trace['turns'][0] if len(root_trace['turns']) == 1 else None),
             'expectation': {'mode': expected_mode, 'roles': sorted(set(expected_roles)), 'source': 'operator_not_model'},
             'sessions': sessions, 'events': events, 'coverage': {'status': 'partial' if issues else 'observed', 'issues': sorted(set(issues))},
             'snapshots': snapshots, 'configuration_fingerprint': fingerprint,
             'configuration_basis': 'current_inventory_not_proven_active', 'sdd': sdd}
+
+
+def collect_host_snapshot(project: Path, rules_root: Path, host: str,
+                          change: str | None = None, expected_mode='unknown',
+                          expected_roles=()) -> dict:
+    """Collect host-neutral artifacts when no stable private trace adapter exists."""
+    if host not in {'opencode', 'claude'}:
+        raise ValueError('Artifact-only collection is for opencode/claude')
+    snapshots = snapshot(project, rules_root, host)
+    fingerprint = digest(json.dumps(
+        [(x['path'], x.get('digest')) for x in snapshots], sort_keys=True))
+    return {
+        'schema': 1,
+        'collected_at': datetime.now(timezone.utc).isoformat(),
+        'host': {'name': host, 'native_trace': 'unsupported'},
+        'project_key': digest(str(project.resolve())),
+        'root_session': host + ':unobserved',
+        'turn': None,
+        'expectation': {
+            'mode': expected_mode,
+            'roles': sorted(set(expected_roles)),
+            'source': 'operator_not_model',
+        },
+        'sessions': [],
+        'events': [],
+        'coverage': {
+            'status': 'partial',
+            'issues': [host + '_native_trace_unsupported'],
+        },
+        'snapshots': snapshots,
+        'configuration_fingerprint': fingerprint,
+        'configuration_basis': 'current_inventory_not_proven_active',
+        'sdd': sdd_artifacts(project, change),
+    }
 
 
 def scan_runs(project: Path, rules_root: Path, sessions_dir: Path, since: str | None = None, max_runs=100):
