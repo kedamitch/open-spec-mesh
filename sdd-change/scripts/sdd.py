@@ -16,7 +16,7 @@ sys.path[:0] = [str(PACKAGE/name/'scripts') for name in ('sdd-init', 'sdd-change
 from sdd_common import active_change, root_path, read_text
 from numbering import locked
 from workflow import (context, document, contract_digest, transition, revision, ancestor, validate_delivery,
-                      save_graph, planning_complete, frozen_contract_drifts)
+                      save_graph, planning_complete, frozen_contract_drifts, git)
 from prepare_workspace import prepare as prepare_workspace, shared_worktree
 from record_delivery import deliver as record_delivery
 from import_delivery import import_delivery
