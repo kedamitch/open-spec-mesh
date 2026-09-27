@@ -150,6 +150,47 @@ def _opencode_permissions(role: str) -> list[str]:
     return lines
 
 
+
+def _opencode_v2_permissions(role: str) -> list[dict[str, str]]:
+    """Native V2 permission rules for package-owned JSON agent definitions."""
+    allowed = ROLES if role == "main" else (("explorer", "librarian") if role == "architect" else ())
+    rules = [{"action": "subagent", "resource": "*", "effect": "deny"}]
+    rules.extend(
+        {"action": "subagent", "resource": name, "effect": "allow"}
+        for name in allowed
+    )
+    if role in ("reviewer", "explorer", "librarian"):
+        rules.append({"action": "edit", "resource": "*", "effect": "deny"})
+    return rules
+
+
+def render_opencode_agent_map(source: Path, home: str | Path | None = None) -> dict[str, dict]:
+    """Render canonical Open Spec Mesh roles as native OpenCode V2 config agents.
+
+    Markdown agents remain installed for normal discovery and human readability.
+    This map is also placed in the package-owned overlay because released
+    OpenCode v2.0.18 loads that config deterministically while Markdown discovery
+    can vary across transitional V2 builds.
+    """
+    profile = host_profile("opencode", home)
+    result: dict[str, dict] = {
+        "main": {
+            "description": "Open Spec Mesh Main：Quick/SDD 路由、调度、验收、集成与最终验证。",
+            "mode": "primary",
+            "permissions": _opencode_v2_permissions("main"),
+        }
+    }
+    for role in ROLES:
+        data = load_role(source, role)
+        result[role] = {
+            "description": data["description"],
+            "mode": "subagent",
+            "system": _adapt_prompt(data["developer_instructions"], profile).strip(),
+            "permissions": _opencode_v2_permissions(role),
+        }
+    return result
+
+
 def render_main(source: Path, host: str, home: str | Path | None = None) -> str:
     profile = host_profile(host, home)
     if host == "codex":

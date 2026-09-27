@@ -80,6 +80,40 @@ class HostAdapterTests(unittest.TestCase):
             host_adapter.adapt_skill_markdown(leaf,'opencode',home),
         )
 
+    def test_opencode_v2_agent_map_uses_canonical_roles_without_model_override(self):
+        agents = host_adapter.render_opencode_agent_map(ROOT, "/tmp/opencode-home")
+        self.assertEqual(
+            {"main", "architect", "worker", "reviewer", "explorer", "librarian"},
+            set(agents),
+        )
+        self.assertEqual("primary", agents["main"]["mode"])
+        self.assertEqual("subagent", agents["worker"]["mode"])
+        for role, data in agents.items():
+            self.assertNotIn("model", data, role)
+        main_rules = agents["main"]["permissions"]
+        self.assertIn(
+            {"action": "subagent", "resource": "*", "effect": "deny"},
+            main_rules,
+        )
+        self.assertIn(
+            {"action": "subagent", "resource": "architect", "effect": "allow"},
+            main_rules,
+        )
+        architect_rules = agents["architect"]["permissions"]
+        self.assertIn(
+            {"action": "subagent", "resource": "explorer", "effect": "allow"},
+            architect_rules,
+        )
+        self.assertNotIn(
+            {"action": "subagent", "resource": "worker", "effect": "allow"},
+            architect_rules,
+        )
+        self.assertIn(
+            {"action": "edit", "resource": "*", "effect": "deny"},
+            agents["reviewer"]["permissions"],
+        )
+        self.assertNotIn("$CODEX_HOME", agents["worker"]["system"])
+
     def test_mcp_overlays_use_env_references_without_secret_values(self):
         commands = {
             "codegraph": "/tools/codegraph",
