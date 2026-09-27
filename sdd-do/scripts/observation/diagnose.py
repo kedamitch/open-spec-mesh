@@ -13,6 +13,7 @@ def reference(event: dict) -> str:
 
 def diagnose(run: dict) -> dict:
     events, findings = run['events'], []
+    trace_full = run.get('host', {}).get('native_trace', 'full') == 'full'
     tools = [e for e in events if e['kind'] == 'tool']
     mode = run['expectation']['mode']
     sdd = run['sdd']
@@ -31,7 +32,7 @@ def diagnose(run: dict) -> dict:
     current_restrictions = [p for p in run['snapshots'] if p.get('policy') == 'explorer_requires_complex']
     for role in run['expectation']['roles']:
         role_calls = [e for e in calls if e['fact'].get('role') == role]
-        if role_calls:
+        if role_calls or not trace_full:
             continue
         if role in {'explorer', 'librarian'} and mode in {'quick', 'sdd', 'simple'} and (restricted or current_restrictions) and not conflicting:
             basis = '运行时指令中' if restricted else '当前文件中（不证明该轮已加载）'
@@ -46,7 +47,7 @@ def diagnose(run: dict) -> dict:
     executed = [e for e in tools if e['status'] == 'success']
     workflow = [e for e in executed if e['fact']['kind'].startswith(('change.', 'task.', 'design.'))]
     if mode in {'sdd', 'simple', 'complex'}:
-        if not workflow and sdd['association'] == 'unknown':
+        if trace_full and not workflow and sdd['association'] == 'unknown':
             add('S01', 'needs_review', '本次期望使用 SDD，但未观察到成功的 SDD 命令，且没有唯一 Change 关联。',
                 ['expectation:operator', 'coverage:' + run['coverage']['status']],
                 '先补充 --change 或完整 rollout；不能仅凭“无日志”断言没有按 SDD 执行。')
@@ -91,7 +92,7 @@ def diagnose(run: dict) -> dict:
                 '对照该轮角色 Prompt 的叶子约束；职责应放在角色 Prompt/运行时，不扩写主 AGENTS.md。')
     # Reads are observations, not assertions that prompts were obeyed.
     skill_reads = [e for e in executed if e['fact']['kind'] == 'skill.read']
-    if mode in {'sdd', 'simple', 'complex'} and not skill_reads:
+    if trace_full and mode in {'sdd', 'simple', 'complex'} and not skill_reads:
         add('P01', 'unknown', '未观察到成功的显式 SKILL.md 读取；不能据此判断 Skill 未加载或未执行。',
             ['coverage:' + run['coverage']['status']],
             '检查隐式加载/注入和真实工件。AGENTS 自动加载也不要求出现 cat 调用。')
@@ -147,7 +148,8 @@ def cell(value) -> str:
 
 
 def markdown(run: dict) -> str:
-    lines = ['# 执行行为诊断', '', f"Run：`{cell(run['run_id'])}`；规则集：`{VERSION}`；额外模型调用：**0**。" + (' 分组成员：' + ', '.join(run['members']) if run.get('members') else ''), '',
+    host = run.get('host', {'name': 'codex', 'native_trace': 'full'})
+    lines = ['# 执行行为诊断', '', f"Run：`{cell(run['run_id'])}`；Host：`{cell(host.get('name'))}`；native trace：`{cell(host.get('native_trace'))}`；规则集：`{VERSION}`；额外模型调用：**0**。" + (' 分组成员：' + ', '.join(run['members']) if run.get('members') else ''), '',
              f"选定会话：`{cell(run['root_session'])}`；Turn：`{cell(run['turn'])}`；期望模式：`{cell(run['expectation']['mode'])}`（操作者标注，不是模型事实）。", '',
              '## 诊断', '', '| 规则 / 分类 | 结论 | 证据定位 | 最小修正建议 |', '| --- | --- | --- | --- |']
     for f in run['findings']:
