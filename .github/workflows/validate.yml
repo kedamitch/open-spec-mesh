@@ -81,36 +81,6 @@ jobs:
         with:
           python-version: '3.11'
       - run: npm install --global @opencode/cli@latest
-      - run: python scripts/verify_opencode.py
-
-  claude-runtime:
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/integration/')
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: npm install --global @anthropic-ai/claude-code@latest
-      - run: python scripts/verify_claude.py
-
-  opencode-runtime:
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/integration/')
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: npm install --global @opencode/cli@latest
       - run: python -B scripts/verify_opencode.py
 
   claude-runtime:
