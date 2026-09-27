@@ -36,11 +36,11 @@ class MultiHostLeafLauncherTests(unittest.TestCase):
             self.assertEqual('opencode',args[0])
             self.assertEqual(['run','--agent','worker'],args[1:4])
             self.assertIn('--format',args)
-            self.assertEqual(str(root.resolve()),args[args.index('--dir')+1])
             self.assertEqual('ses_123456',args[args.index('--session')+1])
             self.assertEqual('/tmp/opencode-home',env['OPENCODE_CONFIG_DIR'])
             self.assertEqual('/tmp/opencode-home/open-spec-mesh.opencode.json',
                              env['OPENCODE_CONFIG'])
+            self.assertNotIn('--dir',args)
             self.assertNotIn('worktree',args)
 
     def test_claude_command_uses_named_agent_resume_and_mcp_overlay(self):
