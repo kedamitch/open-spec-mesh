@@ -61,13 +61,16 @@ sequenceDiagram
       Main->>CLI: 重新导入 / submit / 核验
     end
     Main->>CLI: accept
-    Main->>Git: 合并全部 accepted worktree / result
-    alt 普通 merge conflict
-      Main->>Git: Main 直接解决并核对
-    else 复杂 merge conflict
-      Main->>Worker: 回派原 Worker 之一解决冲突并定向复验
-      Worker->>Git: 提交冲突解决
-      Main->>Git: 继续集成
+    Main->>CLI: integrate --check
+    CLI->>Git: detached merge preflight + ancestry check
+    alt 外部代码冲突
+      CLI-->>Main: conflict paths
+      Main->>Worker: 复杂语义冲突回派原 Worker；简单冲突 Main 处理
+      Worker->>Git: 必要时提交冲突解决并定向复验
+    else 可集成
+      Main->>CLI: integrate
+      CLI->>Git: ancestry-preserving merge commit
+      CLI-->>Main: integrated
     end
     opt 受影响快照需要同步
       Main->>Arch: 完整 diff、历次 Delivery、集成结果
@@ -91,6 +94,6 @@ sequenceDiagram
   end
 ```
 
-Quick 允许 Explorer / Librarian 调查，但不进入 SDD Task 生命周期。进入 SDD 无额外模式审批；冻结契约变化与 Reviewer 显式授权仍是独立边界。
+Quick 允许 Explorer / Librarian 调查，但不进入 SDD Task 生命周期。SDD 有依赖时按 Execution Wave → Integration Wave → Next Wave 推进；accepted 但未进入 HEAD 的上游不会让下游 prepare。进入 SDD 无额外模式审批；冻结契约变化与 Reviewer 显式授权仍是独立边界。
 
 路由分层：SDD runtime 只给出当前状态与机械允许动作；Main 负责 Quick/SDD、调查类型、实现缺陷/设计缺口等语义路由；角色 TOML 负责 Agent 被唤起后的工作方法，动态 Dispatch Packet 只传当前任务的工件引用和增量上下文。

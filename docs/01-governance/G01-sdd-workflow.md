@@ -13,8 +13,10 @@ Current Truth
   → C03 Task Graph + Task Design
   → Implementation
   → Task Delivery
-  → Validation / Integration
+  → Integration Wave
+  → Next Wave / Final Integration
   → Update Current Truth
+  → Full Validation
   → Release
 ```
 
@@ -31,4 +33,4 @@ Current Truth
 
 ## 验证与合并
 
-执行 [验证规范](../08-quality/Q01-validation.md)，按 Task 协议完成冻结、工作区派发、逐文件 Delivery、验收、集成和归档。CI 必须对应准确提交；历史成功不能替代本轮结果。源码、配置和文档都纳入 diff，用户秘密不进入工件。
+执行 [验证规范](../08-quality/Q01-validation.md)，按 Task 协议完成冻结、工作区派发、逐文件 Delivery、验收与 wave 集成；`status` 用 Git ancestry 恢复集成进度，不在 Graph 复制状态。最终集成后由 Architect 同步 Current Truth，Main 再做全量验证与归档。CI 必须对应准确提交；历史成功不能替代本轮结果。源码、配置和文档都纳入 diff，用户秘密不进入工件。

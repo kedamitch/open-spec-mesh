@@ -291,20 +291,85 @@ class LeanCliTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             cli.close(self.root, self.change_id, accept_task=True, reason='retry')
 
-    def test_worktree_import_is_automatic_but_code_integration_is_not(self):
+    def test_worktree_acceptance_then_integration_is_explicit_and_idempotent(self):
         task = self.f.task()
         location = Path(self.f.tmp.name)/'worker'
         self.prepare(task_id=task, worktree=str(location))
         (location/'implementation.txt').write_text('result')
-        self.f.deliver(task, location)
+        result_revision = self.f.deliver(task, location)
         before = workflow.revision(self.root, 'HEAD')
         result = cli.close(self.root, self.change_id, accept_task=True, reason='verified actual worktree report')
         self.assertEqual('accepted', result['state'])
         self.assertEqual(before, workflow.revision(self.root, 'HEAD'))
+
+        pending = cli.status(self.root, self.change_id, task)['tasks'][0]
+        self.assertEqual('pending', pending['integration'])
+        self.assertIn('integrate', pending['allowed_actions'])
+        preflight = cli.integrate(self.root, self.change_id, task, check_only=True)
+        self.assertEqual('ready', preflight['integration'])
+        self.assertEqual(before, workflow.revision(self.root, 'HEAD'))
+
+        integrated = cli.integrate(self.root, self.change_id, task)
+        self.assertEqual('integrated', integrated['integration'])
+        self.assertEqual('result', (self.root/'implementation.txt').read_text())
+        self.assertTrue(workflow.ancestor(self.root, result_revision, integrated['head']))
+        self.assertEqual('accepted', self.f.info(task)['state'])
+
+        current = cli.status(self.root, self.change_id, task)['tasks'][0]
+        self.assertEqual('integrated', current['integration'])
+        self.assertNotIn('integrate', current['allowed_actions'])
+        head = workflow.revision(self.root, 'HEAD')
+        self.assertEqual(head, cli.integrate(self.root, self.change_id, task)['head'])
+
         self.f.verdict()
-        with self.assertRaises(ValueError):
-            cli.close(self.root, self.change_id, archive=True)
-        self.assertTrue(self.f.change.exists())
+        closed = cli.close(self.root, self.change_id, archive=True)
+        self.assertEqual('completed', closed['state'])
+
+    def test_dependent_task_waits_for_accepted_result_to_enter_head(self):
+        first = self.f.task()
+        second = self.f.task('frontend', [first])
+        location = Path(self.f.tmp.name)/'dependency-worker'
+        self.prepare(task_id=first, worktree=str(location))
+        (location/'implementation.txt').write_text('dependency result')
+        self.f.deliver(first, location)
+        cli.close(self.root, self.change_id, task_id=first, accept_task=True,
+                  reason='verified dependency worktree')
+
+        blocked = cli.status(self.root, self.change_id, second)['tasks'][0]
+        self.assertNotIn('prepare', blocked['allowed_actions'])
+        self.assertTrue(any(
+            reason.startswith('waiting_for_integrated_dependencies:')
+            for reason in blocked['blocked_reasons']
+        ))
+
+        cli.integrate(self.root, self.change_id, first)
+        ready = cli.status(self.root, self.change_id, second)['tasks'][0]
+        self.assertIn('prepare', ready['allowed_actions'])
+        dispatched = self.prepare(task_id=second)
+        self.assertEqual('running', dispatched['state'])
+
+    def test_integration_preflight_reports_real_code_conflicts_without_mutation(self):
+        (self.root/'conflict.txt').write_text('base\n')
+        self.f.commit()
+        task = self.f.task()
+        location = Path(self.f.tmp.name)/'conflict-worker'
+        self.prepare(task_id=task, worktree=str(location))
+        (location/'conflict.txt').write_text('worker\n')
+        self.f.deliver(task, location)
+
+        (self.root/'conflict.txt').write_text('main\n')
+        self.f.commit()
+        cli.close(self.root, self.change_id, task_id=task, accept_task=True,
+                  reason='verified conflicting result')
+        head = workflow.revision(self.root, 'HEAD')
+        graph = self.f.ctx(task)[2].read_bytes()
+
+        preflight = cli.integrate(self.root, self.change_id, task, check_only=True)
+        self.assertEqual('conflict', preflight['integration'])
+        self.assertIn('conflict.txt', preflight['conflicts'])
+        self.assertEqual(head, workflow.revision(self.root, 'HEAD'))
+        self.assertEqual(graph, self.f.ctx(task)[2].read_bytes())
+        self.assertEqual('main\n', (self.root/'conflict.txt').read_text())
 
     def test_submitted_upstream_does_not_unlock_dependent_task(self):
         first = self.f.task(); second = self.f.task('frontend', [first])

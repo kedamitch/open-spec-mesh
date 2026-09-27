@@ -20,8 +20,8 @@
 
 ## 完成边界
 
-交付 ≠ 验收，验收 ≠ 集成通过，归档 ≠ 发布。Worker 只证明当前 Task；Main 负责合并 worktree、处理集成冲突并在全部 Task 集成后运行项目完整测试 / build / static validation。最终验证必须全部通过，不维护“历史失败/已知失败”豁免；发现任何失败都修复或回派原 Worker，直到全绿后才同步当前事实和收口。
+交付 ≠ 验收，验收 ≠ 集成通过，归档 ≠ 发布。Worker 只证明当前 Task；Main 用确定性 integrate 按 wave 合并 accepted result，只有上游精确 revision 已进入 HEAD 才派发依赖 Task。全部 Task 最终集成后，Main 交 Architect 根据 integrated diff 同步 Current Truth 并提交，再运行项目完整测试 / build / static validation。最终验证必须全部通过，不维护“历史失败/已知失败”豁免；发现任何失败都修复或回派原 Worker，直到全绿后收口。
 
 快照与实现不一致时定位原因，不能把错误实现转写为新需求；既有事实按授权同步，新取舍另行确认。状态和恢复命令见 [Task 协议](../../sdd-change/references/task-graph.md)；确认 flag 不是身份认证，角色说明不是文件系统 ACL。
 
-- **集成与验证**：Main 可解决普通 merge conflict；复杂语义冲突可回派原 Worker。Worker 只做 Task 定向验证；全部 Task 集成后由 Main 跑项目完整验证，任何失败都必须修到通过，不维护失败豁免清单。
+- **集成与验证**：Main 先用 `sdd.py integrate --check` 预检，再用 `integrate` 保留 result ancestry；普通 merge conflict 由 Main 处理，复杂语义冲突回原 Worker。Worker 只做 Task 定向验证；最终集成与 Current Truth 同步提交后由 Main 跑完整验证，任何失败都修到通过。

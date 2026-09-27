@@ -86,11 +86,11 @@ Worker execution
   ↓
 Delivery
   ↓
-Main integration
-  ↓
-Full validation
+Integration waves
   ↓
 Current Truth sync
+  ↓
+Full validation
   ↓
 Close / Release
 ```

@@ -6,14 +6,17 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
+import tempfile
 
 PACKAGE = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(PACKAGE/name/'scripts') for name in ('sdd-init', 'sdd-change', 'sdd-do', 'sdd-close')]
 from sdd_common import active_change, root_path, read_text
 from numbering import locked
 from workflow import (context, document, contract_digest, transition, revision, ancestor, validate_delivery,
-                      save_graph, planning_complete, frozen_contract_drifts)
+                      save_graph, planning_complete, frozen_contract_drifts, git)
 from prepare_workspace import prepare as prepare_workspace, shared_worktree
 from record_delivery import deliver as record_delivery
 from import_delivery import import_delivery
@@ -36,11 +39,31 @@ def select_task(root, change_id, task_id=None):
     raise ValueError('No Task Graph: use Quick for Main-owned work, or have Architect define an SDD Task Graph before prepare')
 
 
+def integration_state(root, task):
+    """Derive integration from Git ancestry; never duplicate it in the Task Graph."""
+    if task['state'] != 'accepted':
+        return 'not_applicable'
+    return ('integrated' if ancestor(root, task['result_revision'], revision(root, 'HEAD'))
+            else 'pending')
+
+
+def dependency_integration_waiting(root, graph, task):
+    """Accepted dependencies are runnable only after their exact result is in HEAD."""
+    head = revision(root, 'HEAD')
+    by_id = {item['id']: item for item in graph['tasks']}
+    return [
+        dep for dep in task['depends_on']
+        if by_id[dep]['state'] == 'accepted'
+        and not ancestor(root, by_id[dep]['result_revision'], head)
+    ]
+
+
 def task_action_state(root, change_id, task_id, *, planning_ready=True):
-    """Use the same frozen-contract facts as lifecycle transitions."""
+    """Use the same frozen-contract and Git ancestry facts as lifecycle transitions."""
     _, _, _, graph, task, _, _ = context(root, change_id, task_id)
     waiting = [dep for dep in task['depends_on']
                if next(item for item in graph['tasks'] if item['id'] == dep)['state'] != 'accepted']
+    integration_waiting = dependency_integration_waiting(root, graph, task)
     stale = frozen_contract_drifts(root, change_id, graph)
     own_drift = task_id in stale
     blockers = []
@@ -60,6 +83,8 @@ def task_action_state(root, change_id, task_id, *, planning_ready=True):
             blockers.append('planning_incomplete')
         elif waiting:
             blockers.append('waiting_for_dependencies:' + ','.join(waiting))
+        elif integration_waiting:
+            blockers.append('waiting_for_integrated_dependencies:' + ','.join(integration_waiting))
         else:
             actions = ['prepare']
     elif state == 'running':
@@ -74,11 +99,12 @@ def task_action_state(root, change_id, task_id, *, planning_ready=True):
         else:
             actions.append('rework')
     elif state == 'accepted':
-        actions = ['integrate']
         if stale:
-            actions.append('request_replan_confirmation')
+            actions = ['request_replan_confirmation']
             blockers.append('rework_blocked_by_contract_drift:' + ','.join(sorted(stale)))
         else:
+            if integration_state(root, task) == 'pending':
+                actions.append('integrate')
             actions.append('rework')
     elif state == 'blocked':
         if stale:
@@ -126,6 +152,7 @@ def status(root, change_id, task_id=None):
             'attempt': task.get('attempt'),
             'workspace': task.get('workspace'),
             'agent_session': task.get('agent_session'),
+            'integration': integration_state(root, task),
             **action_state,
         })
     return {'change': change_id, 'graph_ready': True, 'planning_ready': planning_ready,
@@ -273,6 +300,198 @@ def deliver(root, change_id, task_id=None, *, result='HEAD', attempt, evidence_f
             'task_state': 'running'}
 
 
+def validate_accepted_task(root, change_id, task_id):
+    """Revalidate the exact accepted revision before Git integration or close."""
+    change, fields, _, _, task, directory, tf = context(root, change_id, task_id)
+    if task['state'] != 'accepted':
+        raise ValueError('Only accepted Tasks can be integrated')
+    report = read_text(document(root, directory, tf, 'report'))
+    task_contract_path = document(root, directory, tf, 'contract')
+    if (task.get('contract_digest') != contract_digest(root, change, fields, directory, tf)
+            or task.get('report_digest') != hashlib.sha256(report.encode()).hexdigest()
+            or validate_delivery(
+                root, task, report, read_text(task_contract_path),
+                str(task_contract_path.relative_to(root)),
+            ) != task.get('result_revision')):
+        raise ValueError('Accepted Contract or report changed')
+    return change, task
+
+
+def _dirty_paths(root):
+    tracked = set(git(root, 'diff', '--name-only', '-z', 'HEAD').split('\0'))
+    untracked = set(git(root, 'ls-files', '--others', '--exclude-standard', '-z').split('\0'))
+    return (tracked | untracked) - {''}
+
+
+def _change_snapshot(change):
+    if change.is_symlink():
+        raise ValueError('Active Change must not be a symlink')
+    snapshot = {}
+    for path in sorted(change.rglob('*')):
+        if path.is_symlink():
+            raise ValueError('Active Change must not contain symlinks during integration')
+        if path.is_file():
+            snapshot[path.relative_to(change).as_posix()] = (
+                path.read_bytes(), path.stat().st_mode & 0o777
+            )
+    return snapshot
+
+
+def _restore_change_snapshot(change, snapshot):
+    if change.exists():
+        if change.is_symlink():
+            raise ValueError('Active Change must not be a symlink')
+        shutil.rmtree(change)
+    change.mkdir(parents=True)
+    for relative, (data, mode) in snapshot.items():
+        path = change / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        os.chmod(path, mode)
+
+
+def _clean_change_to_head(root, change):
+    """Temporarily expose committed HEAD while preserving the Main-owned Change snapshot."""
+    relative = change.relative_to(root).as_posix()
+    if change.exists():
+        if change.is_symlink():
+            raise ValueError('Active Change must not be a symlink')
+        shutil.rmtree(change)
+    tracked = git(root, 'ls-tree', '-r', '--name-only', 'HEAD', '--', relative)
+    if tracked:
+        git(root, 'restore', '--source=HEAD', '--worktree', '--', relative)
+
+
+def _merge_attempt(root, result_revision):
+    return subprocess.run(
+        ['git', '-C', str(root), 'merge', '--no-ff', '--no-commit', result_revision],
+        text=True, capture_output=True,
+    )
+
+
+def _unmerged_paths(root):
+    return {
+        path for path in git(root, 'diff', '--name-only', '--diff-filter=U', '-z').split('\0')
+        if path
+    }
+
+
+def integration_check(root, change_id, task_id):
+    """Preflight one accepted result in a detached worktree without mutating Main."""
+    change, task = validate_accepted_task(root, change_id, task_id)
+    result_revision = revision(root, task['result_revision'])
+    head = revision(root, 'HEAD')
+    if ancestor(root, result_revision, head):
+        return {
+            'change': change_id, 'task': task_id, 'integration': 'integrated',
+            'result_revision': result_revision, 'head': head, 'conflicts': [],
+        }
+
+    prefix = change.relative_to(root).as_posix().rstrip('/') + '/'
+    with tempfile.TemporaryDirectory(prefix='sdd-integrate-') as temporary:
+        location = Path(temporary) / 'preflight'
+        git(root, 'worktree', 'add', '--detach', str(location), head)
+        try:
+            completed = _merge_attempt(location, result_revision)
+            unmerged = _unmerged_paths(location)
+            conflicts = sorted(path for path in unmerged if not path.startswith(prefix))
+            if completed.returncode and not unmerged:
+                detail = (completed.stderr or completed.stdout).strip()
+                raise ValueError('Integration preflight failed' + (': ' + detail if detail else ''))
+            state = 'conflict' if conflicts else 'ready'
+            return {
+                'change': change_id, 'task': task_id, 'integration': state,
+                'result_revision': result_revision, 'head': head, 'conflicts': conflicts,
+            }
+        finally:
+            subprocess.run(
+                ['git', '-C', str(location), 'merge', '--abort'],
+                text=True, capture_output=True,
+            )
+            subprocess.run(
+                ['git', '-C', str(root), 'worktree', 'remove', '--force', str(location)],
+                text=True, capture_output=True,
+            )
+
+
+def integrate(root, change_id, task_id=None, *, check_only=False):
+    """Integrate an accepted result with an ancestry-preserving merge commit."""
+    task_id = select_task(root, change_id, task_id)
+    with locked(root):
+        change, task = validate_accepted_task(root, change_id, task_id)
+        result_revision = revision(root, task['result_revision'])
+        head = revision(root, 'HEAD')
+        if ancestor(root, result_revision, head):
+            return {
+                'change': change_id, 'task': task_id, 'integration': 'integrated',
+                'result_revision': result_revision, 'head': head, 'conflicts': [],
+            }
+
+        preflight = integration_check(root, change_id, task_id)
+        if check_only or preflight['integration'] == 'conflict':
+            return preflight
+
+        staged = {
+            path for path in git(root, 'diff', '--cached', '--name-only', '-z').split('\0')
+            if path
+        }
+        if staged:
+            raise ValueError('Integration requires an empty Git index: ' + ', '.join(sorted(staged)))
+
+        prefix = change.relative_to(root).as_posix().rstrip('/') + '/'
+        unexpected = sorted(path for path in _dirty_paths(root) if not path.startswith(prefix))
+        if unexpected:
+            raise ValueError(
+                'Commit or preserve non-Change edits before integration: '
+                + ', '.join(unexpected)
+            )
+
+        snapshot = _change_snapshot(change)
+        relative = change.relative_to(root).as_posix()
+        _clean_change_to_head(root, change)
+        completed = _merge_attempt(root, result_revision)
+        conflicts = _unmerged_paths(root)
+        external_conflicts = sorted(path for path in conflicts if not path.startswith(prefix))
+        if external_conflicts:
+            subprocess.run(
+                ['git', '-C', str(root), 'merge', '--abort'],
+                text=True, capture_output=True,
+            )
+            _restore_change_snapshot(change, snapshot)
+            raise ValueError('Integration conflicts require resolution: ' + ', '.join(external_conflicts))
+        if completed.returncode and not conflicts:
+            detail = (completed.stderr or completed.stdout).strip()
+            subprocess.run(
+                ['git', '-C', str(root), 'merge', '--abort'],
+                text=True, capture_output=True,
+            )
+            _restore_change_snapshot(change, snapshot)
+            raise ValueError('Integration failed' + (': ' + detail if detail else ''))
+
+        try:
+            _restore_change_snapshot(change, snapshot)
+            git(root, 'add', '-A', '--', relative)
+            remaining = _unmerged_paths(root)
+            if remaining:
+                raise ValueError('Unresolved integration conflicts: ' + ', '.join(sorted(remaining)))
+            git(root, 'commit', '-m', f'sdd: integrate {task_id}')
+        except BaseException:
+            subprocess.run(
+                ['git', '-C', str(root), 'merge', '--abort'],
+                text=True, capture_output=True,
+            )
+            _restore_change_snapshot(change, snapshot)
+            raise
+
+        integrated_head = revision(root, 'HEAD')
+        if not ancestor(root, result_revision, integrated_head):
+            raise ValueError('Integration commit does not preserve Task result ancestry')
+        return {
+            'change': change_id, 'task': task_id, 'integration': 'integrated',
+            'result_revision': result_revision, 'head': integrated_head, 'conflicts': [],
+        }
+
+
 def close(root, change_id, task_id=None, *, accept_task=False, archive=False, reason='', from_workspace=None):
     if not accept_task and not archive:
         raise ValueError('Choose --accept and/or --archive; no implicit acceptance')
@@ -294,15 +513,7 @@ def close(root, change_id, task_id=None, *, accept_task=False, archive=False, re
             else:
                 import_delivery(root, change_id, task_id, source)
         if task['state'] == 'accepted':
-            report = read_text(document(root, directory, tf, 'report'))
-            task_contract_path = document(root, directory, tf, 'contract')
-            if (task.get('contract_digest') != contract_digest(root, change, fields, directory, tf)
-                    or task.get('report_digest') != hashlib.sha256(report.encode()).hexdigest()
-                    or validate_delivery(
-                        root, task, report, read_text(task_contract_path),
-                        str(task_contract_path.relative_to(root)),
-                    ) != task.get('result_revision')):
-                raise ValueError('Accepted Contract or report changed')
+            validate_accepted_task(root, change_id, task_id)
         else:
             accept(root, change_id, task_id, 'accept', reason)
         result.update(task=task_id, state='accepted')
@@ -318,7 +529,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     actions = parser.add_subparsers(dest='action', required=True)
     commands = {}
-    for name in ('status', 'prepare', 'bind-session', 'deliver', 'close'):
+    for name in ('status', 'prepare', 'bind-session', 'deliver', 'integrate', 'close'):
         command = actions.add_parser(name)
         command.add_argument('change_id')
         command.add_argument('--root', default=str(Path.cwd()))
@@ -332,6 +543,7 @@ def main():
     commands['deliver'].add_argument('--attempt', type=int, required=True)
     commands['deliver'].add_argument('--evidence-file', type=Path, required=True)
     commands['deliver'].add_argument('--draft', action='store_true')
+    commands['integrate'].add_argument('--check', action='store_true', dest='check_only')
     commands['close'].add_argument('--accept', action='store_true', dest='accept_task')
     commands['close'].add_argument('--archive', action='store_true')
     commands['close'].add_argument('--reason', default='')
@@ -349,6 +561,8 @@ def main():
         elif args.action == 'deliver':
             result = deliver(root, args.change_id, args.task_id, result=args.revision, attempt=args.attempt,
                              evidence_file=args.evidence_file, draft=args.draft)
+        elif args.action == 'integrate':
+            result = integrate(root, args.change_id, args.task_id, check_only=args.check_only)
         else:
             result = close(root, args.change_id, args.task_id, accept_task=args.accept_task, archive=args.archive,
                            reason=args.reason, from_workspace=args.from_workspace)

@@ -16,6 +16,8 @@
 | bind-session | running Task、spawn 后得到的 Agent session/thread ID | 首次绑定可恢复会话；重复同值幂等，不允许改绑另一个会话 |
 | deliver --draft | 已提交 revision、派发 attempt、证据文件路径 | 精确 Git 文件表和待填写章节；拒绝覆盖已有文件、陈旧身份和符号链接 |
 | deliver | 当前 revision、派发 attempt、完整证据文件 | 当前 Delivery 路径；用真实 Git diff 校验 Task Path Contract；Worker 不更新权威 submitted / accepted 状态 |
+| integrate --check | accepted Task | 在 detached worktree 预检真实 merge；忽略 Main-owned active Change 路径的旧 Worker 快照，只报告外部代码冲突；不改变 Main HEAD |
+| integrate | accepted Task | Git ancestry 幂等判断；以 Task `result_revision` 为 parent 创建 ancestry-preserving merge commit，保留 Main 当前 active Change 权威快照；冲突不静默改写 |
 | close --accept | 当前 Task、Main 验收理由 | 自动 submit / 导入原工作区报告后登记 accepted；不合并代码 |
 | `run_validation.py` | Change、integration revision | 调用项目唯一 Validation Entry Point；先使旧成功 receipt 失效，再记录 revision / 入口摘要 / 退出码 / 输出摘要；不通过 LLM 文本判定成功 |
 | close --archive | 已完成集成、机器验证 receipt 全绿并完成评估的 Change | 复核 receipt、集成祖先、冻结 Contract/Report 和最终结论后归档；不隐式执行验证、验收、填 pass 或写快照 |
@@ -25,9 +27,9 @@
 ## 生命周期与恢复接口
 
 - **创建**：new_change 一次性创建 C01 Change、C02 Design、C03 Tasks/Graph；new_task 只在 C03-tasks 下创建 canonical Task Design / Delivery。旧布局和 `--from-change` 不支持。
-- **冻结与状态**：task_graph 保留 approve、submit、block、rework、replan；`status` 只读暴露合法下一步，`bind-session` 只补运行元数据；均不跳过 readiness、漂移或用户确认检查。
+- **冻结与状态**：task_graph 保留 approve、submit、block、rework、replan；`status` 只读暴露合法下一步，并以 Git ancestry 派生 accepted Task 的 integration 状态；`bind-session` 只补运行元数据；均不跳过 readiness、漂移或用户确认检查。
 - **派发与交付**：prepare_workspace、record_delivery、import_delivery 保留原工作区、版本、attempt 和文件表校验；Delivery/导入/submit 都复验 Task Path Contract。
-- **验收与归档**：record_acceptance 保留 Task 验收；run_validation 将项目单一验证入口的实际退出结果绑定到 integration revision；check_change / close_change 复核 receipt、契约、报告摘要、真实集成祖先关系和最终结论。
+- **集成、验收与归档**：record_acceptance 保留 Task 验收；integrate 用真实 Git merge 与 ancestry 完成 wave 集成且不新增 Graph 状态；run_validation 将项目单一验证入口的实际退出结果绑定到 integration revision；check_change / close_change 复核 receipt、契约、报告摘要、真实集成祖先关系和最终结论。
 
 低层命令见 [Task 协议](../../sdd-change/references/task-graph.md)。角色名称和命令行确认标记不是身份认证；实际权限仍由宿主与调用方保证。
 
