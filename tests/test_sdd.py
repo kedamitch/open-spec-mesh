@@ -97,6 +97,10 @@ class LifecycleTest(unittest.TestCase):
         self.root = Path(self.tmp.name)/'project'; self.root.mkdir()
         self.addCleanup(self.cleanup_worktrees)
         workflow.git(self.root, 'init', '-q')
+        # Disposable repositories must never spawn automatic object maintenance
+        # while TemporaryDirectory teardown is removing their .git directory.
+        workflow.git(self.root, 'config', 'gc.auto', '0')
+        workflow.git(self.root, 'config', 'maintenance.auto', 'false')
         workflow.git(self.root, 'config', 'user.name', 'Test')
         workflow.git(self.root, 'config', 'user.email', 'test@example.invalid')
         init_project.initialize(self.root)
