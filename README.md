@@ -134,7 +134,7 @@ Useful options:
 ./install.sh --codex-home /path/to/runtime-home   # Codex compatibility flag
 ```
 
-The installer keeps credentials and user provider/model settings outside package ownership. OpenCode and Claude Code receive native Rules / Skills / Agents plus an Open Spec Mesh-owned MCP overlay; existing user config is not rewritten.
+The installer keeps credentials and user provider/model settings outside package ownership. OpenCode receives native Rules / Skills / Agent Markdown plus the same canonical roles in the package-owned config overlay for released-runtime compatibility; Claude Code receives native Rules / Skills / Agents plus an Open Spec Mesh-owned MCP overlay. Existing user config is not rewritten.
 
 Start the Open Spec Mesh Main agent with the host-native entry:
 

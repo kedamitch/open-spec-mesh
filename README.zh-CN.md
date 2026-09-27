@@ -16,7 +16,7 @@
 
 ---
 
-Open Spec Mesh 是一套面向多 Agent 软件开发的轻量 **Spec-Driven Development** 框架。
+Open Spec Mesh 是一套面向多 Agent 软件开发的轻量 **Spec-Driven Development** 框架，并原生适配 **Codex、OpenCode、Claude Code** 三种宿主。
 
 模型专注于真正需要语义能力的部分：理解、设计、实现、评审；脚本负责生命周期、Task Contract、状态、证据、验证与恢复。
 
@@ -104,26 +104,51 @@ Task Graph 只保存拓扑和运行状态；真正给人 Review 的设计内容�
 - Python 3.11+
 - Git
 - Linux / macOS
+- Codex、OpenCode 或 Claude Code 之一
 - 可选研究工具需要 Node.js 20.18.1+ / npm
 
 ### 安装
+
+Codex 保持默认兼容行为：
 
 ```bash
 ./install.sh --dry-run
 ./install.sh
 ```
 
+显式安装到其他宿主：
+
+```bash
+./install.sh --host opencode
+./install.sh --host claude
+```
+
 常用选项：
 
 ```bash
+./install.sh --host <codex|opencode|claude> --host-home /path/to/runtime-home
 ./install.sh --skip-tools
 ./install.sh --include-project-docs
-./install.sh --with-laya
+./install.sh --with-laya       # 仅 Codex host
 ./install.sh --without-laya
 ./install.sh --codex-home /path/to/runtime-home
 ```
 
-安装器不会把真实凭据写入仓库或生成配置，只透传受支持的环境变量名称。
+安装器不会接管用户的 provider、model 或真实凭据。OpenCode 使用原生 Rules / Skills / Agent Markdown，并把同一组 canonical Role 同步到 Open Spec Mesh 自己的 config overlay 以兼容当前正式版运行时；Claude Code 使用原生 Rules / Skills / Agents 和独立 MCP overlay。
+
+启动 Main：
+
+```bash
+# Codex：启动正常配置好的 Codex 会话。
+
+# OpenCode
+OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/open-spec-mesh.opencode.json" \
+  opencode --agent main
+
+# Claude Code
+claude --agent main \
+  --mcp-config "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/open-spec-mesh.mcp.json"
+```
 
 ## 核心工作流
 
@@ -165,7 +190,7 @@ Task 优先按完整业务能力或独立可验收结果拆分，不因为文件
 python3 -B scripts/sdd_validate.py
 ```
 
-Pull Request 运行核心验证；main 与手工 full run 再增加兼容性、Mermaid、Docker、Runtime、Research Tools 等扩展检查。
+Pull Request 运行核心验证；main 与手工 full run 再增加 Python 兼容性、Mermaid、Docker、Codex/OpenCode/Claude Runtime、Research Tools 等扩展检查。宿主 Runtime smoke 使用真实 CLI 解析配置，但不调用模型。
 
 ## 可选语义判断层
 

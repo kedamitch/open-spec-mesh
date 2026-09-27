@@ -18,7 +18,7 @@
 | Host | Main / Agent 格式 | 委派限制 | 模型策略 | Session |
 | --- | --- | --- | --- | --- |
 | Codex | `AGENTS.md` + `agents/*.toml` | V2 configured roles | Role TOML 固定 model/effort | Codex thread UUID |
-| OpenCode V2 | `AGENTS.md` + `agents/*.md` | ordered `permissions` / `subagent` allowlist | 继承用户当前 model/provider | OpenCode session ID |
+| OpenCode | `AGENTS.md` + `agents/*.md` + package overlay `agents` map | released Markdown `permission.task` + overlay permission rules | 继承用户当前 model/provider | OpenCode session ID |
 | Claude Code | `CLAUDE.md` + `agents/*.md` | Main `Agent(architect,...)`；Architect `Agent(explorer,librarian)`；leaf 无 Agent | `model: inherit` | Claude session ID / name |
 
 Host Adapter 只渲染格式、路径和权限表达；canonical Role prompt 仍来自 `agents/*.toml`。非 Codex host 不复制 `gpt-6-*` 模型名。
@@ -38,7 +38,7 @@ Host Adapter 只渲染格式、路径和权限表达；canonical Role prompt 仍
 
 ## 派发与恢复
 
-Codex 使用 V2 `agent_type + fork_turns="none"`。OpenCode 使用命名 subagent 与 ordered `permissions`；Claude Code 使用 Agent tool allowlist。正式 Worker 始终从 `prepare` 返回的 workspace 启动；不启用宿主自己的自动 worktree。
+Codex 使用 V2 `agent_type + fork_turns="none"`。OpenCode 使用命名 subagent；当前正式版 Markdown Agent 以 `permission.task` 表达 allowlist，同时 package-owned overlay 注册同一 canonical Role，兼容 v2.0.18 的真实发现行为。Claude Code 使用 Agent tool allowlist。正式 Worker 始终从 `prepare` 返回的 workspace 启动；不启用宿主自己的自动 worktree。
 
 同 Task 复用 Worker，同 Change 复用 Architect。普通实现缺陷在原 Worker 内修复。依赖满足的 Task 可在独立 SDD worktree 并行，Main 负责 ancestry-preserving integration。
 

@@ -9,7 +9,7 @@
 | Host | 默认 Home | Rules | Skills | Agents | Open Spec Mesh MCP |
 | --- | --- | --- | --- | --- | --- |
 | Codex | `$CODEX_HOME` / `~/.codex` | `AGENTS.md` | `skills/` | `agents/*.toml` | 合并到受管 `config.toml` |
-| OpenCode | `$OPENCODE_CONFIG_DIR` / `~/.config/opencode` | `AGENTS.md` | `skills/` | `agents/*.md` | `open-spec-mesh.opencode.json` overlay |
+| OpenCode | `$OPENCODE_CONFIG_DIR` / `~/.config/opencode` | `AGENTS.md` | `skills/` | `agents/*.md` + overlay `agents` map | `open-spec-mesh.opencode.json` overlay |
 | Claude Code | `$CLAUDE_CONFIG_DIR` / `~/.claude` | `CLAUDE.md` | `skills/` | `agents/*.md` | `open-spec-mesh.mcp.json` overlay |
 
 ## 功能与业务规则
@@ -26,7 +26,7 @@
 | dry-run | `--dry-run` | 完整预检，不写目标 |
 | 升级失败 | 事务回滚 | 恢复本次已移动受管文件，不删除未受管文件 |
 
-OpenCode / Claude 的 host manifest 只声明 Open Spec Mesh 自己拥有的路径，重复安装幂等。Rules 文件使用 managed marker 合并，用户正文保留。
+OpenCode / Claude 的 host manifest 只声明 Open Spec Mesh 自己拥有的路径，重复安装幂等。Rules 文件使用 managed marker 合并，用户正文保留。OpenCode 的 Markdown Agent 与 overlay `agents` map 都由同一 canonical Role 渲染：前者保持原生可读布局，后者保证当前正式版 CLI 能稳定发现角色；二者都不写入用户模型/provider。
 
 ## 模型与 Provider
 

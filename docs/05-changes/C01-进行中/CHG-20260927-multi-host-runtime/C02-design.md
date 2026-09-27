@@ -17,7 +17,7 @@
 
 ### 总体方案
 
-canonical Skill 继续使用现有 `SKILL.md`；canonical Role 继续以 `agents/*.toml` 中的 description / developer_instructions 为语义源，Codex 专属 model/effort/sandbox 只供 Codex。Host Adapter 读取 canonical 语义后生成 OpenCode / Claude Code 原生 Agent Markdown，并注入宿主自己的 Skill/Dispatch 路径。安装器负责文件所有权和 package-owned MCP 配置，执行器只负责宿主命令与 session identity。
+canonical Skill 继续使用现有 `SKILL.md`；canonical Role 继续以 `agents/*.toml` 中的 description / developer_instructions 为语义源，Codex 专属 model/effort/sandbox 只供 Codex。Host Adapter 读取 canonical 语义后生成 OpenCode / Claude Code 原生 Agent Markdown，并注入宿主自己的 Skill/Dispatch 路径。OpenCode 额外把同一 canonical Role 渲染到 package-owned overlay 的 `agents` map，以兼容 v2.0.18 的真实角色发现；这不是第二份 prompt 源。安装器负责文件所有权和 package-owned MCP 配置，执行器只负责宿主命令与 session identity。
 
 ### 总业务流程 / 主时序
 
@@ -110,7 +110,7 @@ classDiagram
 
 - **结论**：OpenCode/Claude 的 MCP 使用 package-owned overlay/CLI merge；不覆盖用户主配置。
 - **原因**：JSONC、provider、已有 MCP 都属于用户事实。
-- **影响**：完整工具入口通过 Open Spec Mesh launcher/参数加载 overlay。
+- **影响**：完整工具入口通过 Open Spec Mesh launcher/参数加载 overlay；OpenCode overlay 同时承载 MCP 与 canonical agent registration，但不写用户 model/provider。
 
 ### D004｜SDD worktree 仍是唯一执行隔离
 
