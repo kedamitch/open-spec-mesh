@@ -147,11 +147,30 @@ class EvidenceTests(unittest.TestCase):
         return subprocess.run(['git', '-C', str(self.root), *args], check=True,
                               capture_output=True, text=True).stdout.strip()
 
-    def evidence(self, files=None, verification='AC-01: isolated test passed'):
-        table = files if files is not None else '| `app.py` | A | Added the validated value |'
-        return ('## 文件改动\n\n' + table + '\n\n## 验证结果\n\n' + verification
-                + '\n\n## 自审结论\n\nChecked the diff.\n\n## 剩余问题\n\n无。'
-                + '\n\n## 快照影响\n\n无，测试夹具。\n')
+    def evidence(self, files=None, verification='isolated test passed', conclusion='通过',
+                 ac_result='通过', deviation='无', unverified='无', snapshot_scope='无'):
+        table = (
+            '| 文件 | 操作 | 行为影响 |\n'
+            '| --- | --- | --- |\n'
+            + (files if files is not None else '| `app.py` | A | Added the validated value |')
+        )
+        return (
+            '## 文件改动\n\n> **交付结果**：写入验证值。\n\n' + table
+            + '\n\n## 验证结果\n\n'
+            + f'- **结论**：{conclusion}\n\n'
+            + '| AC / 场景 | 检查 | 结果 | 证据 |\n'
+            + '| --- | --- | --- | --- |\n'
+            + f'| `AC-01` | isolated test | {ac_result} | {verification} |\n'
+            + '\n## 自审结论\n\n'
+            + '- **已修复问题**：无\n'
+            + f'- **契约偏差**：{deviation}\n'
+            + '\n## 剩余问题\n\n'
+            + f'- **未验证项**：{unverified}\n'
+            + '- **剩余风险**：无\n'
+            + '\n## 快照影响\n\n'
+            + f'- **范围**：{snapshot_scope}\n'
+            + '- **说明**：测试夹具，无 Current Truth 影响。\n'
+        )
 
     def path_contract(self, allow='app.py', deny='无'):
         return (
@@ -162,6 +181,7 @@ class EvidenceTests(unittest.TestCase):
             '| --- | --- |\n'
             f'| allow | `{allow}` |\n'
             + (f'| deny | `{deny}` |\n' if deny != '无' else '| deny | 无 |\n')
+            + '\n## 依赖与验收\n\n### 验收标准\n\n- `AC-01`：验证夹具行为。\n'
         )
 
     def test_path_contract_accepts_allowed_diff_and_rejects_outside_or_denied(self):
@@ -187,7 +207,7 @@ class EvidenceTests(unittest.TestCase):
 
     def test_real_table_and_fenced_test_output_are_valid(self):
         self.assertEqual({'app.py': 'A'}, validate_evidence(
-            self.root, self.base, self.result, self.evidence(verification='```text\n3 passed\n```')))
+            self.root, self.base, self.result, self.evidence(verification='3 passed')))
 
     def test_example_table_does_not_count_as_delivery(self):
         for wrapper in ('```markdown\n{}\n```', '<!--\n{}\n-->'):
@@ -201,6 +221,41 @@ class EvidenceTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
                     validate_evidence(self.root, self.base, self.result, self.evidence(verification=value))
+
+    def test_structured_delivery_requires_exact_ac_coverage_and_enums(self):
+        contract = self.path_contract()
+        missing = self.evidence().replace('| `AC-01` | isolated test | 通过 | isolated test passed |\n', '')
+        with self.assertRaisesRegex(ValueError, 'result row|AC rows must match'):
+            validate_evidence(self.root, self.base, self.result, missing, task_contract=contract)
+        with self.assertRaisesRegex(ValueError, 'AC result'):
+            validate_evidence(
+                self.root, self.base, self.result,
+                self.evidence().replace('| `AC-01` | isolated test | 通过 |',
+                                        '| `AC-01` | isolated test | maybe |'),
+                task_contract=contract)
+        with self.assertRaisesRegex(ValueError, '快照范围'):
+            validate_evidence(
+                self.root, self.base, self.result,
+                self.evidence(snapshot_scope='unknown'), task_contract=contract)
+
+    def test_delivery_cannot_claim_pass_with_failed_unverified_or_deviation(self):
+        contract = self.path_contract()
+        for evidence in (
+            self.evidence(ac_result='失败'),
+            self.evidence(unverified='异常路径未执行'),
+            self.evidence(deviation='修改冻结语义'),
+        ):
+            with self.subTest(evidence=evidence):
+                with self.assertRaisesRegex(ValueError, 'cannot claim 通过'):
+                    validate_evidence(self.root, self.base, self.result, evidence, task_contract=contract)
+        self.assertEqual(
+            {'app.py': 'A'},
+            validate_evidence(
+                self.root, self.base, self.result,
+                self.evidence(conclusion='部分通过', ac_result='失败'),
+                task_contract=contract,
+            ),
+        )
 
     def test_domain_pending_word_is_not_a_placeholder(self):
         require_evidence_body('Asserted that the order remains pending after failure.', 'verification')

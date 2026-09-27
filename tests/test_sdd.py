@@ -376,11 +376,20 @@ booking 进入 cancelled 结果；其他状态语义不变。
         root = root or self.root
         sha = self.commit(root)
         info = self.info(task, root)
-        table = '| 文件 | 操作 | 改动点与行为影响 |\n| --- | --- | --- |\n'
+        table = '| 文件 | 操作 | 行为影响 |\n| --- | --- | --- |\n'
         for path, status in changed_files(root, info['baseline'], sha).items():
             table += f'| `{path}` | {status} | {evidence} |\n'
-        report = ('## 文件改动\n\n'+table+'\n## 验证结果\n\nAC-01 test result: '+evidence+
-                  '\n\n## 自审结论\n\n已核查差异。\n\n## 剩余问题\n\n无。\n\n## 快照影响\n\n测试夹具，无业务快照变化。\n')
+        report = (
+            '## 文件改动\n\n> **交付结果**：完成 booking 测试夹具实现。\n\n'
+            + table
+            + '\n## 验证结果\n\n- **结论**：通过\n\n'
+            + '| AC / 场景 | 检查 | 结果 | 证据 |\n'
+            + '| --- | --- | --- | --- |\n'
+            + f'| `AC-01` | booking 定向测试 | 通过 | {evidence} |\n'
+            + '\n## 自审结论\n\n- **已修复问题**：无\n- **契约偏差**：无\n'
+            + '\n## 剩余问题\n\n- **未验证项**：无\n- **剩余风险**：无\n'
+            + '\n## 快照影响\n\n- **范围**：无\n- **说明**：测试夹具，无业务快照变化。\n'
+        )
         record_delivery.deliver(root, self.change.name, task, sha, report, info['attempt'])
         return sha
 

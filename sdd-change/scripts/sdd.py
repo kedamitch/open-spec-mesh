@@ -22,7 +22,7 @@ from record_delivery import deliver as record_delivery
 from import_delivery import import_delivery
 from record_acceptance import accept
 from close_change import close_change
-from delivery_evidence import changed_files, SECTIONS
+from delivery_evidence import changed_files, task_ac_refs
 from path_contract import validate_changed_paths
 
 
@@ -271,14 +271,34 @@ def draft_delivery(root, change_id, task_id, result, attempt, evidence_file):
             read_text(task_contract_path), files,
             str(task_contract_path.relative_to(root)),
         )
-        rows = ['| 文件 | 操作 | 改动点 |', '| --- | --- | --- |']
+        task_contract = read_text(task_contract_path)
+        acs = task_ac_refs(task_contract)
+        rows = ['| 文件 | 操作 | 行为影响 |', '| --- | --- | --- |']
         for path, operation in sorted(files.items()):
             if any(c in path for c in ('|', '`', '\n', '\r')):
                 raise ValueError('Filename cannot be safely represented in the delivery table')
             rows.append(f'| `{path}` | {operation} | 待补充。 |')
-        body = '## 文件改动\n\n' + ('\n'.join(rows) if files else '无文件改动。') + '\n'
-        for section in SECTIONS[1:]:
-            body += '\n## '+section+'\n\n待补充。\n'
+        if not files:
+            rows.append('|  |  |  |')
+        validation = ['| AC / 场景 | 检查 | 结果 | 证据 |', '| --- | --- | --- | --- |']
+        validation += [f'| `{ac}` | 待补充。 | 待补充。 | 待补充。 |' for ac in acs]
+        body = (
+            '## 文件改动\n\n'
+            '> **交付结果**：待补充。\n\n'
+            + '\n'.join(rows)
+            + '\n\n## 验证结果\n\n'
+            '- **结论**：待补充。\n\n'
+            + '\n'.join(validation)
+            + '\n\n## 自审结论\n\n'
+            '- **已修复问题**：无\n'
+            '- **契约偏差**：无\n'
+            '\n## 剩余问题\n\n'
+            '- **未验证项**：无\n'
+            '- **剩余风险**：无\n'
+            '\n## 快照影响\n\n'
+            '- **范围**：待补充。\n'
+            '- **说明**：待补充。\n'
+        )
         target = Path(evidence_file).absolute()
         for part in (target, *target.parents):
             if part.is_symlink():

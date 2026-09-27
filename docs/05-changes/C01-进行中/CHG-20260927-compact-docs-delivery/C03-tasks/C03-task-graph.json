@@ -37,8 +37,32 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "planned",
-      "history": []
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "7a60cacf7f86220c018c5a5f3a062eb167ffb270",
+          "workspace": "/home/runner/work/_temp/structured-delivery-worker",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "9a5dcd85b43916a14ec5c080869299fedfc6fc67",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "AC-02/AC-03、实际 diff 与结构化 Delivery 正反例已核对",
+          "revision": "9a5dcd85b43916a14ec5c080869299fedfc6fc67"
+        }
+      ],
+      "contract_digest": "70af81e77d39b83c4af14384ae50d03456f19549af899dde38508a04f06a70ad",
+      "workspace": "/home/runner/work/_temp/structured-delivery-worker",
+      "baseline": "7a60cacf7f86220c018c5a5f3a062eb167ffb270",
+      "attempt": 1,
+      "agent_session": "structured-delivery-worker",
+      "result_revision": "9a5dcd85b43916a14ec5c080869299fedfc6fc67",
+      "report_digest": "f5163cff02069ca7e7381a3f1506b82b6c0bfed820b214224adfa6473b658f78"
     }
   ]
 }
