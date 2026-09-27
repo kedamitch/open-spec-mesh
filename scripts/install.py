@@ -841,6 +841,7 @@ def _host_overlay(source: Path, host: str, home: Path, commands: dict[str, str],
     if host == 'opencode':
         data = json.loads(text)
         data['default_agent'] = 'main'
+        data['agents'] = host_adapter.render_opencode_agent_map(source, home)
         return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
     return text
 
