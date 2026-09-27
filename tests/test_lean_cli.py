@@ -325,6 +325,73 @@ class LeanCliTests(unittest.TestCase):
         closed = cli.close(self.root, self.change_id, archive=True)
         self.assertEqual('completed', closed['state'])
 
+    def test_wave_preflight_and_integration_cover_all_pending_accepted_tasks(self):
+        first = self.f.task('backend')
+        second = self.f.task('frontend')
+        first_workspace = Path(self.f.tmp.name)/'wave-backend'
+        second_workspace = Path(self.f.tmp.name)/'wave-frontend'
+        self.prepare(task_id=first, worktree=str(first_workspace))
+        self.prepare(task_id=second, worktree=str(second_workspace))
+
+        (first_workspace/'backend.txt').write_text('backend result\n')
+        (second_workspace/'frontend.txt').write_text('frontend result\n')
+        first_revision = self.f.deliver(first, first_workspace)
+        second_revision = self.f.deliver(second, second_workspace)
+        cli.close(self.root, self.change_id, task_id=first, accept_task=True,
+                  reason='verified backend wave result')
+        cli.close(self.root, self.change_id, task_id=second, accept_task=True,
+                  reason='verified frontend wave result')
+
+        before = workflow.revision(self.root, 'HEAD')
+        preflight = cli.integrate_wave(self.root, self.change_id, check_only=True)
+        self.assertEqual('ready', preflight['integration'])
+        self.assertEqual([first, second], preflight['tasks'])
+        self.assertEqual(before, workflow.revision(self.root, 'HEAD'))
+        self.assertFalse((self.root/'backend.txt').exists())
+        self.assertFalse((self.root/'frontend.txt').exists())
+
+        integrated = cli.integrate_wave(self.root, self.change_id)
+        self.assertEqual('integrated', integrated['integration'])
+        self.assertEqual([first, second], integrated['tasks'])
+        self.assertEqual('backend result\n', (self.root/'backend.txt').read_text())
+        self.assertEqual('frontend result\n', (self.root/'frontend.txt').read_text())
+        self.assertTrue(workflow.ancestor(self.root, first_revision, integrated['head']))
+        self.assertTrue(workflow.ancestor(self.root, second_revision, integrated['head']))
+
+        repeated = cli.integrate_wave(self.root, self.change_id)
+        self.assertEqual('integrated', repeated['integration'])
+        self.assertEqual([], repeated['tasks'])
+        self.assertEqual(integrated['head'], repeated['head'])
+
+    def test_wave_preflight_detects_cross_task_conflict_before_main_write(self):
+        (self.root/'shared.txt').write_text('base\n')
+        self.f.commit()
+        first = self.f.task('backend')
+        second = self.f.task('frontend')
+        first_workspace = Path(self.f.tmp.name)/'conflict-backend'
+        second_workspace = Path(self.f.tmp.name)/'conflict-frontend'
+        self.prepare(task_id=first, worktree=str(first_workspace))
+        self.prepare(task_id=second, worktree=str(second_workspace))
+
+        (first_workspace/'shared.txt').write_text('backend\n')
+        (second_workspace/'shared.txt').write_text('frontend\n')
+        self.f.deliver(first, first_workspace)
+        self.f.deliver(second, second_workspace)
+        cli.close(self.root, self.change_id, task_id=first, accept_task=True,
+                  reason='verified backend conflict fixture')
+        cli.close(self.root, self.change_id, task_id=second, accept_task=True,
+                  reason='verified frontend conflict fixture')
+
+        head = workflow.revision(self.root, 'HEAD')
+        graph = self.f.ctx(first)[2].read_bytes()
+        preflight = cli.integrate_wave(self.root, self.change_id, check_only=True)
+        self.assertEqual('conflict', preflight['integration'])
+        self.assertEqual(second, preflight['conflict_task'])
+        self.assertIn('shared.txt', preflight['conflicts'])
+        self.assertEqual(head, workflow.revision(self.root, 'HEAD'))
+        self.assertEqual(graph, self.f.ctx(first)[2].read_bytes())
+        self.assertEqual('base\n', (self.root/'shared.txt').read_text())
+
     def test_dependent_task_waits_for_accepted_result_to_enter_head(self):
         first = self.f.task()
         second = self.f.task('frontend', [first])
