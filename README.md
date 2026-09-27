@@ -16,7 +16,7 @@ Specs define the truth. Agents plan and execute. Scripts enforce state.
 
 ---
 
-Open Spec Mesh is a lightweight **Spec-Driven Development framework for multi-agent software engineering**.
+Open Spec Mesh is a lightweight **Spec-Driven Development framework for multi-agent software engineering**, with native host adapters for **Codex, OpenCode, and Claude Code**.
 
 It keeps the model focused on semantic work—understanding, design, implementation and review—while deterministic scripts own lifecycle state, task contracts, evidence, validation and recovery.
 
@@ -105,25 +105,50 @@ The Task Graph stores topology and runtime state. Human design detail stays in M
 - Git
 - Linux or macOS
 - Node.js 20.18.1+ / npm when installing optional research tools
+- Codex, OpenCode, or Claude Code as the agent host
 
 ### Install
+
+Codex remains the backward-compatible default:
 
 ```bash
 ./install.sh --dry-run
 ./install.sh
 ```
 
+Install for another host explicitly:
+
+```bash
+./install.sh --host opencode
+./install.sh --host claude
+```
+
 Useful options:
 
 ```bash
+./install.sh --host <codex|opencode|claude> --host-home /path/to/runtime-home
 ./install.sh --skip-tools
 ./install.sh --include-project-docs
-./install.sh --with-laya
+./install.sh --with-laya       # Codex host only
 ./install.sh --without-laya
-./install.sh --codex-home /path/to/runtime-home
+./install.sh --codex-home /path/to/runtime-home   # Codex compatibility flag
 ```
 
-The installer keeps credentials outside version control and only forwards supported environment-variable names.
+The installer keeps credentials and user provider/model settings outside package ownership. OpenCode receives native Rules / Skills / Agent Markdown plus the same canonical roles in the package-owned config overlay for released-runtime compatibility; Claude Code receives native Rules / Skills / Agents plus an Open Spec Mesh-owned MCP overlay. Existing user config is not rewritten.
+
+Start the Open Spec Mesh Main agent with the host-native entry:
+
+```bash
+# Codex: start a normal configured Codex session.
+
+# OpenCode
+OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/open-spec-mesh.opencode.json" \
+  opencode --agent main
+
+# Claude Code
+claude --agent main \
+  --mcp-config "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/open-spec-mesh.mcp.json"
+```
 
 ## Core workflow
 
@@ -165,11 +190,11 @@ One canonical local entry point:
 python3 -B scripts/sdd_validate.py
 ```
 
-Pull requests run the core validation path. Main-branch and manual full runs add compatibility, Mermaid, Docker, runtime and research-tool checks.
+Pull requests run the core validation path. Main-branch and manual full runs add compatibility, Mermaid, Docker, Codex/OpenCode/Claude runtime smokes and research-tool checks. Host runtime smokes parse real native CLI/config without making model calls.
 
 ## Optional semantic decision layer
 
-Open Spec Mesh can optionally use the **System One** bridge for repeated semantic decisions.
+Open Spec Mesh can optionally use the **System One** bridge for repeated semantic decisions. In this release the managed Laya/System One bridge remains a Codex-host capability; OpenCode/Claude installation fails closed if `--with-laya` is requested.
 
 - disabled by default
 - Laya is the default optional provider

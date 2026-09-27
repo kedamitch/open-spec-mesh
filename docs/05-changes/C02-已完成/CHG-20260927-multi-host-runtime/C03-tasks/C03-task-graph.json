@@ -1,0 +1,169 @@
+{
+  "tasks": [
+    {
+      "id": "C03-01",
+      "path": "C03-tasks/C03-01-host-adapter",
+      "depends_on": [],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "2e32f0341170f081b10b3a89e0f768caf6ff76e8",
+          "workspace": "/home/runner/work/_temp/c03-01",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "8505b31aac9cb089068a4cff65f840e9e697a3ec",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-01 的 Path Contract、AC、定向测试与实际 diff 已核对",
+          "revision": "8505b31aac9cb089068a4cff65f840e9e697a3ec"
+        }
+      ],
+      "contract_digest": "f9031e2af01b36706897420676b27af0ed7a8d8c5ceac0d4944d3ddb68f1dad9",
+      "workspace": "/home/runner/work/_temp/c03-01",
+      "baseline": "2e32f0341170f081b10b3a89e0f768caf6ff76e8",
+      "attempt": 1,
+      "agent_session": "finalize-c03-01",
+      "result_revision": "8505b31aac9cb089068a4cff65f840e9e697a3ec",
+      "report_digest": "386f1943b6820ac0b009c04ebea9844e37ee37d346f713ccc9c1acd7abde4e9f"
+    },
+    {
+      "id": "C03-02",
+      "path": "C03-tasks/C03-02-installer",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "b454dee73dd7680abcdb237ce0bb1ce3228d26f1",
+          "workspace": "/home/runner/work/_temp/c03-02",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "85902b2cab3f6d621f5015a06924f177b9b0bf3b",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-02 的 Path Contract、AC、定向测试与实际 diff 已核对",
+          "revision": "85902b2cab3f6d621f5015a06924f177b9b0bf3b"
+        }
+      ],
+      "contract_digest": "ced039f1796ceee28f650a37322e82fa9b53fc3af4c975a0b02c86b53bbbc6bb",
+      "workspace": "/home/runner/work/_temp/c03-02",
+      "baseline": "b454dee73dd7680abcdb237ce0bb1ce3228d26f1",
+      "attempt": 1,
+      "agent_session": "finalize-c03-02",
+      "result_revision": "85902b2cab3f6d621f5015a06924f177b9b0bf3b",
+      "report_digest": "ba13ac38a90ed819292723f5f4eab3006822d113a6ec9ec80be29e688f485579"
+    },
+    {
+      "id": "C03-03",
+      "path": "C03-tasks/C03-03-execution",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "e56a4d111e912a8e5e676189562237e85516e1ae",
+          "workspace": "/home/runner/work/_temp/c03-03",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "9a28e483faddfdc4af261a8e8f1d51275f71fb8e",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-03 的 Path Contract、AC、定向测试与实际 diff 已核对",
+          "revision": "9a28e483faddfdc4af261a8e8f1d51275f71fb8e"
+        }
+      ],
+      "contract_digest": "85d9790df87a55659f581aef88acafb00ba77e0d83fd67c92673089802b64bce",
+      "workspace": "/home/runner/work/_temp/c03-03",
+      "baseline": "e56a4d111e912a8e5e676189562237e85516e1ae",
+      "attempt": 1,
+      "agent_session": "finalize-c03-03",
+      "result_revision": "9a28e483faddfdc4af261a8e8f1d51275f71fb8e",
+      "report_digest": "72dd3d21f31339142acf2fe4449e9973cdb9e424a9e9a0d12dc0d6ab35b1265f"
+    },
+    {
+      "id": "C03-04",
+      "path": "C03-tasks/C03-04-observation",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "19af07db3bbb8e74a998c7ff759946cb03520cb0",
+          "workspace": "/home/runner/work/_temp/c03-04",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "ee731f9ef3ed0bf14eefcc130ff3aa13c45d1140",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-04 的 Path Contract、AC、定向测试与实际 diff 已核对",
+          "revision": "ee731f9ef3ed0bf14eefcc130ff3aa13c45d1140"
+        }
+      ],
+      "contract_digest": "18f832afb33bbb1d7ed86a72dc96f39117509d1827c717a7fa02950658d55733",
+      "workspace": "/home/runner/work/_temp/c03-04",
+      "baseline": "19af07db3bbb8e74a998c7ff759946cb03520cb0",
+      "attempt": 1,
+      "agent_session": "finalize-c03-04",
+      "result_revision": "ee731f9ef3ed0bf14eefcc130ff3aa13c45d1140",
+      "report_digest": "29f930fd815df2160fae6e1184c8fc4164edf68ab703aba2f8fdc0f36b2a05d2"
+    },
+    {
+      "id": "C03-05",
+      "path": "C03-tasks/C03-05-validation",
+      "depends_on": [
+        "C03-02",
+        "C03-03",
+        "C03-04"
+      ],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "32dec10c62af54dd689952fcf3599f9c55a2c5f2",
+          "workspace": "/home/runner/work/_temp/c03-05",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "00c3869c17e59a1b703e741d17eecc8aee006a33",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-05 的 Path Contract、AC、定向测试与实际 diff 已核对",
+          "revision": "00c3869c17e59a1b703e741d17eecc8aee006a33"
+        }
+      ],
+      "contract_digest": "e580c6e3bce94df8945027d94488b8312cfc600fe2b5207435c52272b302d0e8",
+      "workspace": "/home/runner/work/_temp/c03-05",
+      "baseline": "32dec10c62af54dd689952fcf3599f9c55a2c5f2",
+      "attempt": 1,
+      "agent_session": "finalize-c03-05",
+      "result_revision": "00c3869c17e59a1b703e741d17eecc8aee006a33",
+      "report_digest": "c49ddb7f908e3263d61530327c1096ad6f1b0dc798914240f04532b2d35bf1ea"
+    }
+  ]
+}

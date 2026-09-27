@@ -20,6 +20,7 @@ import tomllib
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import install_migrations as migration
 from install_toml import DELETE, set_value
+import host_adapter
 SOURCE = Path(__file__).resolve().parents[1]
 CORE_SKILLS = ('sdd-init', 'sdd-migrate', 'sdd-change', 'sdd-do', 'sdd-close', 'sdd-research', 'sdd-release', 'sdd-diagnose')
 COMPAT_SKILLS = ('prd-spec', 'design-overview')
@@ -779,9 +780,273 @@ def install(source: Path, home: Path, dry_run: bool = False, *, validate: bool =
     return warnings
 
 
+
+HOST_MANIFEST = 'open-spec-mesh/managed-host.json'
+
+
+def _host_manifest_path(home: Path) -> Path:
+    return home / HOST_MANIFEST
+
+
+def read_host_manifest(home: Path, host: str) -> set[str]:
+    path = _host_manifest_path(home)
+    safe_path(path)
+    if not path.exists():
+        return set()
+    if not path.is_file():
+        raise ValueError('Host install manifest must be a file')
+    data = json.loads(path.read_text(encoding='utf-8'))
+    if data.get('schema') != 1 or data.get('package') != migration.PACKAGE or data.get('host') != host:
+        raise ValueError('Unknown host install manifest')
+    paths = data.get('paths')
+    if not isinstance(paths, list) or any(
+        not isinstance(item, str) or not item or Path(item).is_absolute()
+        or '..' in Path(item).parts or '\\' in item for item in paths
+    ):
+        raise ValueError('Unsafe paths in host install manifest')
+    if len(paths) != len(set(paths)):
+        raise ValueError('Duplicate host install manifest paths')
+    return set(paths)
+
+
+def host_manifest_text(host: str, paths) -> str:
+    return json.dumps({
+        'schema': 1,
+        'package': migration.PACKAGE,
+        'host': host,
+        'paths': sorted(str(Path(path).as_posix()) for path in paths),
+    }, ensure_ascii=False, indent=2) + '\n'
+
+
+def host_runtime_paths(host: str, *, with_laya: bool = False,
+                       include_project_docs: bool = False) -> list[Path]:
+    if host not in ('opencode', 'claude'):
+        raise ValueError('Host runtime paths are only for opencode/claude')
+    skills = active_skills(with_laya)
+    paths = [
+        Path('AGENTS.md' if host == 'opencode' else 'CLAUDE.md'),
+        Path('open-spec-mesh/dispatch-contract.md'),
+        Path('open-spec-mesh.opencode.json' if host == 'opencode' else 'open-spec-mesh.mcp.json'),
+        *[Path('skills') / name for name in skills],
+        *[Path('agents') / f'{role}.md' for role in ('main', *ROLES)],
+    ]
+    if include_project_docs:
+        paths.append(Path('docs'))
+    return paths
+
+
+def _host_overlay(source: Path, host: str, home: Path, commands: dict[str, str],
+                  laya_config: dict | None = None) -> str:
+    text = host_adapter.render_mcp_overlay(host, commands, laya=laya_config)
+    if host == 'opencode':
+        data = json.loads(text)
+        data['default_agent'] = 'main'
+        data['agents'] = host_adapter.render_opencode_agent_map(source, home)
+        return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
+    return text
+
+
+def _build_host_stage(source: Path, host: str, home: Path, stage: Path,
+                      commands: dict[str, str], laya_config: dict | None,
+                      *, include_project_docs: bool, with_laya: bool,
+                      managed_paths: list[Path]) -> None:
+    profile = host_adapter.host_profile(host, home)
+    for relative in managed_paths:
+        dst = stage / relative
+        if relative == Path(profile.rules_file):
+            existing = (home / relative).read_text(encoding='utf-8') if (home / relative).exists() else ''
+            source_rules = host_adapter.render_rules(source, host, home)
+            if with_laya:
+                source_rules += laya_policy()
+            text = migration.clean_agents(existing, source_rules, migration.catalog(source))[0]
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(text, encoding='utf-8')
+        elif relative == Path('open-spec-mesh/dispatch-contract.md'):
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(host_adapter.render_dispatch_contract(source, host, home), encoding='utf-8')
+        elif relative == Path(profile.mcp_overlay):
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(_host_overlay(source, host, home, commands, laya_config), encoding='utf-8')
+        elif relative.parts and relative.parts[0] == 'skills':
+            src = source / relative.parts[1]
+            copy_item(source, src, dst)
+            for markdown in dst.rglob('*.md'):
+                markdown.write_text(
+                    host_adapter.adapt_skill_markdown(
+                        markdown.read_text(encoding='utf-8'), host, home),
+                    encoding='utf-8')
+        elif relative.parts and relative.parts[0] == 'agents':
+            role = relative.stem
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            text = (host_adapter.render_main(source, host, home)
+                    if role == 'main' else host_adapter.render_role(source, host, role, home))
+            dst.write_text(text, encoding='utf-8')
+        elif relative == Path('docs'):
+            copy_item(source, source / 'docs', dst)
+        else:
+            raise ValueError('Unknown host managed path: ' + str(relative))
+
+
+def install_host(source: Path, host: str, home: Path | None = None, dry_run: bool = False,
+                 *, validate: bool = True, install_tools: bool = False,
+                 include_project_docs: bool = False, reporter=lambda _: None,
+                 with_laya: bool = False) -> list[str]:
+    """Install Open Spec Mesh into an OpenCode/Claude config home without taking over user config."""
+    if host not in ('opencode', 'claude'):
+        raise ValueError('install_host supports opencode or claude')
+    if with_laya:
+        raise ValueError('Managed Laya/System One is currently Codex-host only')
+    source = source.resolve()
+    home = Path(os.path.abspath(
+        (home if home is not None else host_adapter.default_home(host)).expanduser()
+    ))
+    safe_path(home)
+    if home == source or home.is_relative_to(source) or source.is_relative_to(home):
+        raise ValueError('Source and host home must be disjoint directories')
+    if home.exists() and not home.is_dir():
+        raise ValueError('Host home must be a directory')
+
+    required = ['AGENTS.md', 'agents', *active_skills(with_laya), 'scripts/host_adapter.py']
+    if include_project_docs:
+        required.append('docs')
+    for path in required:
+        if not (source / path).exists():
+            raise ValueError('Missing source: ' + path)
+        safe_tree(source / path)
+    if validate:
+        for args in [('agents/validate_agents.py',), ('sdd-init/scripts/validate_docs.py', '--root', str(source))]:
+            result = subprocess.run([sys.executable, *args], cwd=source, text=True, capture_output=True)
+            if result.returncode:
+                raise ValueError(result.stderr.strip() or result.stdout.strip())
+
+    managed = host_runtime_paths(
+        host, with_laya=with_laya, include_project_docs=include_project_docs)
+    previous = read_host_manifest(home, host)
+    rule_path = Path(host_adapter.host_profile(host, home).rules_file)
+    exclusive = [path for path in managed if path != rule_path]
+    for relative in exclusive:
+        target = home / relative
+        safe_path(target)
+        if target.exists() and relative.as_posix() not in previous:
+            raise ValueError('Unmanaged host artifact exists: ' + relative.as_posix())
+
+    warnings: list[str] = []
+    tool_home = home / 'open-spec-mesh'
+    if install_tools:
+        check_research_keys(required=not dry_run, reporter=reporter)
+        commands = ensure_research_tools(tool_home, dry_run, reporter, check_keys=False)
+        laya_config = ensure_laya_mcp(tool_home, dry_run, reporter) if with_laya else None
+    else:
+        check_research_keys(required=False, reporter=reporter)
+        commands = {server: binary for server, _, binary, _ in RESEARCH_TOOLS}
+        laya_config = laya_mcp_config(tool_home) if with_laya else None
+        reporter('  WARNING tool installation skipped; host overlay references PATH commands')
+
+    all_paths = managed + [Path(HOST_MANIFEST)]
+    for relative in all_paths:
+        safe_path(home / relative)
+    with install_lock(home):
+        anchor = home.parent
+        while not anchor.exists():
+            anchor = anchor.parent
+        transaction = Path(tempfile.mkdtemp(prefix='.sdd-host-install-', dir=anchor))
+        stage, rollback = transaction / 'stage', transaction / 'rollback'
+        stage.mkdir(); rollback.mkdir()
+        moved: list[tuple[Path, Path]] = []
+        installed: list[Path] = []
+        created_dirs: list[Path] = []
+        retain = False
+
+        def ensure_parent(path: Path):
+            missing = []
+            while not path.exists():
+                missing.append(path)
+                path = path.parent
+            for parent in reversed(missing):
+                parent.mkdir()
+                created_dirs.append(parent)
+
+        try:
+            _build_host_stage(
+                source, host, home, stage, commands, laya_config,
+                include_project_docs=include_project_docs, with_laya=with_laya,
+                managed_paths=managed,
+            )
+            manifest = stage / HOST_MANIFEST
+            manifest.parent.mkdir(parents=True, exist_ok=True)
+            manifest.write_text(
+                host_manifest_text(host, [*managed, Path(HOST_MANIFEST)]),
+                encoding='utf-8',
+            )
+            if dry_run:
+                return warnings
+
+            obsolete = [Path(path) for path in previous if path not in {p.as_posix() for p in all_paths}]
+            for relative in [*all_paths, *obsolete]:
+                target = home / relative
+                if target.exists():
+                    old = rollback / relative
+                    old.parent.mkdir(parents=True, exist_ok=True)
+                    os.replace(target, old)
+                    moved.append((target, old))
+            for relative in all_paths:
+                src = stage / relative
+                target = home / relative
+                ensure_parent(target.parent)
+                temp = target.parent / ('.' + target.name + '.' + transaction.name)
+                try:
+                    if src.is_dir():
+                        shutil.copytree(src, temp)
+                    else:
+                        shutil.copy2(src, temp)
+                    os.replace(temp, target)
+                    installed.append(target)
+                finally:
+                    if temp.exists():
+                        remove_item(temp)
+        except BaseException:
+            failures = []
+            for target in reversed(installed):
+                try:
+                    remove_item(target)
+                except OSError as exc:
+                    failures.append(str(exc))
+            for target, old in reversed(moved):
+                try:
+                    if target.exists():
+                        remove_item(target)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    os.replace(old, target)
+                except OSError as exc:
+                    failures.append(str(exc))
+            for directory in reversed(created_dirs):
+                try:
+                    directory.rmdir()
+                except OSError:
+                    pass
+            if failures:
+                retain = True
+                print(
+                    'Rollback incomplete; recovery data retained at '
+                    + str(rollback) + ': ' + '; '.join(failures),
+                    file=sys.stderr,
+                )
+            raise
+        finally:
+            if not retain:
+                try:
+                    shutil.rmtree(transaction)
+                except OSError as exc:
+                    warnings.append(f'Temporary cleanup failed: {transaction}: {exc}')
+    return warnings
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--codex-home', default=os.environ.get('CODEX_HOME', str(Path.home()/'.codex')))
+    parser.add_argument('--host', choices=host_adapter.HOSTS, default='codex')
+    parser.add_argument('--host-home', type=Path, help='override the selected host config home')
+    parser.add_argument('--codex-home', default=os.environ.get('CODEX_HOME', str(Path.home()/'.codex')),
+                        help='backward-compatible Codex home; ignored for non-Codex hosts unless --host-home is used')
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--skip-tools', action='store_true', help='skip tool installation/migration; still report missing API key variables')
     parser.add_argument('--include-project-docs', action='store_true', help='also replace the package-owned reference docs directory')
@@ -792,13 +1057,26 @@ def main() -> None:
                         help='disable Laya/Jev System One bridge, skill and hints (default)')
     parser.set_defaults(with_laya=False)
     args = parser.parse_args()
+    target = (args.host_home if args.host_home is not None else
+              (Path(args.codex_home) if args.host == 'codex' else host_adapter.default_home(args.host)))
     try:
-        warnings = install(SOURCE, Path(args.codex_home), args.dry_run, install_tools=not args.skip_tools,
-                           include_project_docs=args.include_project_docs, reporter=print, with_laya=args.with_laya)
+        if args.host == 'codex':
+            warnings = install(
+                SOURCE, Path(target), args.dry_run, install_tools=not args.skip_tools,
+                include_project_docs=args.include_project_docs, reporter=print,
+                with_laya=args.with_laya)
+        else:
+            warnings = install_host(
+                SOURCE, args.host, Path(target), args.dry_run, install_tools=not args.skip_tools,
+                include_project_docs=args.include_project_docs, reporter=print,
+                with_laya=args.with_laya)
     except (OSError, ValueError) as exc:
         parser.exit(1, f'install failed: {exc}\n')
-    print(('preview: ' if args.dry_run else 'installed: ')+str(Path(args.codex_home).expanduser()))
-    print('dry-run: no target files changed' if args.dry_run else 'managed files replaced; no persistent backup; start a new Codex session')
+    print(('preview: ' if args.dry_run else 'installed: ')+str(Path(target).expanduser()))
+    if args.dry_run:
+        print('dry-run: no target files changed')
+    else:
+        print(f'managed files replaced; no persistent backup; start a new {args.host} session')
     for warning in warnings:
         print(warning, file=sys.stderr)
 
