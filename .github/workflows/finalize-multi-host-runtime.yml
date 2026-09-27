@@ -1,0 +1,26 @@
+name: Finalize multi-host SDD
+on:
+  push:
+    branches: ['integration/finalize-multi-host-runtime']
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.head_commit.message == 'Run real multi-host SDD close'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --global @opencode/cli@latest @anthropic-ai/claude-code@latest
+      - name: Run real SDD close
+        run: bash .github/finalize-multi-host-runtime.sh
