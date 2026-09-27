@@ -25,7 +25,7 @@ def runtime_home(host):
     if host == 'opencode':
         return Path(os.environ.get('OPENCODE_CONFIG_DIR', str(home/'.config/opencode')))
     if host == 'claude':
-        return Path(os.environ.get('CLAUDE_HOME', str(home/'.claude')))
+        return Path(os.environ.get('CLAUDE_CONFIG_DIR', str(home/'.claude')))
     raise ValueError('Unknown host')
 
 
