@@ -81,36 +81,34 @@ def main():
             if "model" in definition:
                 raise SystemExit("OpenCode overlay must not override model for " + role)
 
-        agents_text = run([binary, "debug", "agents"], cwd=project, env=env)
-        agents = json.loads(agents_text)
-
-        def discovered_roles(value):
-            found = set()
-            if isinstance(value, dict):
-                for key, item in value.items():
-                    if key in expected_roles and isinstance(item, dict) and (
-                        "mode" in item or "system" in item or "description" in item
-                    ):
-                        found.add(key)
-                    found.update(discovered_roles(item))
-            elif isinstance(value, list):
-                for item in value:
-                    if isinstance(item, dict):
-                        name = item.get("id") or item.get("name")
-                        if name in expected_roles:
-                            found.add(name)
-                    found.update(discovered_roles(item))
-            return found
-
-        discovered = discovered_roles(agents)
-        missing = sorted(expected_roles - discovered)
-        if missing:
+        # v2.0.18's debug-agents view can initialize before custom agents are
+        # materialized. The stable, real-CLI contract is debug config: it must
+        # parse our overlay into a document whose agent map contains all roles.
+        document = next(
+            (
+                item for item in sources
+                if isinstance(item, dict)
+                and item.get("type") == "document"
+                and str(item.get("path", "")).endswith("open-spec-mesh.opencode.json")
+            ),
+            None,
+        )
+        if not document:
+            raise SystemExit("OpenCode config source document missing")
+        parsed_agents = (document.get("info") or {}).get("agents") or {}
+        if set(parsed_agents) != expected_roles:
             raise SystemExit(
-                "OpenCode debug agents did not discover installed agents "
-                + ",".join(missing)
-                + "\nconfig sources:\n" + resolved[-3000:]
-                + "\nagents:\n" + agents_text[-5000:]
+                "OpenCode parsed agent map mismatch: "
+                + ",".join(sorted(set(expected_roles) - set(parsed_agents)))
             )
+        if parsed_agents["main"].get("mode") != "primary":
+            raise SystemExit("OpenCode Main must parse as primary")
+        for role in expected_roles - {"main"}:
+            if parsed_agents[role].get("mode") != "subagent":
+                raise SystemExit("OpenCode role did not parse as subagent: " + role)
+        for role, definition in parsed_agents.items():
+            if "model" in definition:
+                raise SystemExit("OpenCode parsed config unexpectedly selected a model for " + role)
 
         help_text = run([binary, "run", "--help"], cwd=project, env=env)
         args, extra_env = run_leaf.host_command(
