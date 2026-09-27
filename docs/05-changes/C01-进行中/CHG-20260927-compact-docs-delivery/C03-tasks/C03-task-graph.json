@@ -4,13 +4,39 @@
       "id": "C03-01",
       "path": "C03-tasks/C03-01-planning-compression",
       "depends_on": [],
-      "state": "planned",
-      "history": []
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "baedadce6f984c47550e7434ec569e1fbd93131c",
+          "workspace": "/home/runner/work/_temp/compact-planning-worker",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "1cb007f1badded441c1302ed727d219c2c0ee4a1",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "AC-01、模板差异与定向测试已核对",
+          "revision": "1cb007f1badded441c1302ed727d219c2c0ee4a1"
+        }
+      ],
+      "contract_digest": "140f8c54c6e85dbed4fbd6d30f80e84b36b89898db0d73d106ec42e10fe5bf8a",
+      "workspace": "/home/runner/work/_temp/compact-planning-worker",
+      "baseline": "baedadce6f984c47550e7434ec569e1fbd93131c",
+      "attempt": 1,
+      "agent_session": "compact-planning-worker",
+      "result_revision": "1cb007f1badded441c1302ed727d219c2c0ee4a1",
+      "report_digest": "10185e991d0962e6655ec53e96a3b4299efd720d4ec382b88a30a802cadc3ad2"
     },
     {
       "id": "C03-02",
       "path": "C03-tasks/C03-02-structured-delivery",
-      "depends_on": ["C03-01"],
+      "depends_on": [
+        "C03-01"
+      ],
       "state": "planned",
       "history": []
     }

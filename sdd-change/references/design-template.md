@@ -23,61 +23,31 @@ sequenceDiagram
     actor User
     participant Entry
     participant Domain
-    participant Store
     User->>Entry: 待补充
     Entry->>Domain: 待补充
-    Domain->>Store: 待补充
-    Store-->>Domain: 待补充
     Domain-->>Entry: 待补充
     Entry-->>User: 待补充
 ```
 
 ## 产品变更
 
-| 模块 / 功能 / 规则 | Current | Delta | Target |
-| --- | --- | --- | --- |
-| 待补充 | 待补充 | 待补充 | 待补充 |
+待补充。
 
 ## 接口变更
 
-| 接口 / 协议 | Current | Delta / Target | 兼容策略 | 关联 AC |
-| --- | --- | --- | --- | --- |
-| 待补充 | 待补充 | 待补充 | 待补充 | `AC-01` 待补充 |
+待补充。
 
 ## 领域模型与状态变更
 
-### 领域模型
-
-```mermaid
-classDiagram
-    class ChangedDomainObject
-```
-
-### 状态 / 不变量变化
-
-| 对象 | Current | Delta / Target | 不变量 / 非法行为 |
-| --- | --- | --- | --- |
-| 待补充 | 待补充 | 待补充 | 待补充 |
+待补充。
 
 ## 数据与表结构变更
 
-### 表结构
-
-| 表 / 存储 | Current | Delta / Target | 数据迁移 / 兼容 |
-| --- | --- | --- | --- |
-| 待补充 | 待补充 | 待补充 | 待补充 |
-
-### 关键字段 / 索引 / 约束
-
-| 表 | 字段 / 索引 / 约束 | 操作 | 定义与影响 |
-| --- | --- | --- | --- |
-| 待补充 | 待补充 | 待补充 | 待补充 |
+待补充。
 
 ## 应用与组件变更
 
-| 应用 / 组件 | Current 职责 | Target 职责 | 依赖变化 |
-| --- | --- | --- | --- |
-| 待补充 | 待补充 | 待补充 | 待补充 |
+待补充。
 
 ## 关键决策
 

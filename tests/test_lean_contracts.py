@@ -70,10 +70,18 @@ class TemplateGenerationTests(unittest.TestCase):
             self.assertIn(heading, design)
         self.assertIn('sequenceDiagram', design)
         self.assertIn('| Task | 交付结果 | 前置任务 | 关联设计 | 验收 |', design)
+        for heading in ('## 产品变更', '## 接口变更', '## 领域模型与状态变更',
+                        '## 数据与表结构变更', '## 应用与组件变更'):
+            self.assertIn(heading + '\n\n待补充。', design)
+        self.assertNotIn('| 表 / 存储 | Current | Delta / Target | 数据迁移 / 兼容 |', design)
         self.assertIn('> **交付目标**：待补充。', task)
         for heading in ('## 范围与代码落点', '### 输入 / 依赖', '### Path Contract', '### 代码结构 / 模块落点', '## Task 实现流程', '### Components', '### 接口变化', '### 领域模型 / 状态变化', '### 数据与表结构变化', '### Tests', '### Expected Output'):
             self.assertIn(heading, task)
         self.assertIn('flowchart', task)
+        for heading in ('### Components', '### 接口变化', '### 领域模型 / 状态变化',
+                        '### 数据与表结构变化'):
+            self.assertIn(heading + '\n\n待补充。', task)
+        self.assertNotIn('| 表 / 存储 | 字段 / 索引 / 约束 | 操作 | 影响 |', task)
         self.assertIn('| 规则 | 路径 |', task)
         self.assertIn('| allow | 待补充 |', task)
         self.assertIn('只运行当前 Task 直接相关的定向测试', task)
