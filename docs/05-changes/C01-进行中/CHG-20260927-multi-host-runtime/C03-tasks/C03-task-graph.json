@@ -1,9 +1,73 @@
 {
   "tasks": [
-    {"id":"C03-01","path":"C03-tasks/C03-01-host-adapter","depends_on":[],"state":"planned","history":[]},
-    {"id":"C03-02","path":"C03-tasks/C03-02-installer","depends_on":["C03-01"],"state":"planned","history":[]},
-    {"id":"C03-03","path":"C03-tasks/C03-03-execution","depends_on":["C03-01"],"state":"planned","history":[]},
-    {"id":"C03-04","path":"C03-tasks/C03-04-observation","depends_on":["C03-01"],"state":"planned","history":[]},
-    {"id":"C03-05","path":"C03-tasks/C03-05-validation","depends_on":["C03-02","C03-03","C03-04"],"state":"planned","history":[]}
+    {
+      "id": "C03-01",
+      "path": "C03-tasks/C03-01-host-adapter",
+      "depends_on": [],
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "2e32f0341170f081b10b3a89e0f768caf6ff76e8",
+          "workspace": "/home/runner/work/_temp/c03-01",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "8505b31aac9cb089068a4cff65f840e9e697a3ec",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "C03-01 的 Path Contract、AC、定向测试与实际 diff 已核对",
+          "revision": "8505b31aac9cb089068a4cff65f840e9e697a3ec"
+        }
+      ],
+      "contract_digest": "f9031e2af01b36706897420676b27af0ed7a8d8c5ceac0d4944d3ddb68f1dad9",
+      "workspace": "/home/runner/work/_temp/c03-01",
+      "baseline": "2e32f0341170f081b10b3a89e0f768caf6ff76e8",
+      "attempt": 1,
+      "agent_session": "finalize-c03-01",
+      "result_revision": "8505b31aac9cb089068a4cff65f840e9e697a3ec",
+      "report_digest": "386f1943b6820ac0b009c04ebea9844e37ee37d346f713ccc9c1acd7abde4e9f"
+    },
+    {
+      "id": "C03-02",
+      "path": "C03-tasks/C03-02-installer",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-03",
+      "path": "C03-tasks/C03-03-execution",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-04",
+      "path": "C03-tasks/C03-04-observation",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-05",
+      "path": "C03-tasks/C03-05-validation",
+      "depends_on": [
+        "C03-02",
+        "C03-03",
+        "C03-04"
+      ],
+      "state": "planned",
+      "history": []
+    }
   ]
 }
