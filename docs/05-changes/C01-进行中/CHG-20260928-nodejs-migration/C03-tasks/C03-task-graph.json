@@ -495,7 +495,7 @@
         "C03-03",
         "C03-04"
       ],
-      "state": "planned",
+      "state": "accepted",
       "history": [
         {
           "state": "blocked",
@@ -615,11 +615,31 @@
             "agent_session": "/root/worker_task_05_host_installer"
           },
           "user_confirmed": false
+        },
+        {
+          "state": "running",
+          "baseline": "4fe2bb445f3bb1c86227e6e7a3f4179989eb897b",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-05-attempt3",
+          "attempt": 3
+        },
+        {
+          "state": "submitted",
+          "revision": "4fe2bb445f3bb1c86227e6e7a3f4179989eb897b",
+          "attempt": 3
+        },
+        {
+          "state": "accepted",
+          "reason": "Main independently reran the actual isolated Node 24.21.0 tarball install/MCP SDK smoke; the installed public systemone command initialized and exposed all four tools. Main also reran the C03-05 installation+System One suite: 62/62 passed, 0 skipped; report, baseline, digest, and empty implementation diff align. No frozen Contract drift.",
+          "revision": "4fe2bb445f3bb1c86227e6e7a3f4179989eb897b"
         }
       ],
-      "workspace": "/home/fatfei/code/open-spec-mesh",
-      "attempt": 2,
-      "agent_session": "/root/worker_task_05_host_installer"
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-05-attempt3",
+      "attempt": 3,
+      "agent_session": "/root/worker_task_05_host_installer",
+      "contract_digest": "e02428d08cd1e01fd1785c3538ceb4db29f9a431e1ddba00d11f2902866fbeed",
+      "baseline": "4fe2bb445f3bb1c86227e6e7a3f4179989eb897b",
+      "result_revision": "4fe2bb445f3bb1c86227e6e7a3f4179989eb897b",
+      "report_digest": "c604b1b08bbf5eec72ae8ac93239cbf80056f73eb6acbe95cb6c2936baf42891"
     },
     {
       "id": "C03-06",
