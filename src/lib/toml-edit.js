@@ -1,7 +1,17 @@
-import { isDeepStrictEqual } from "node:util";
 import { parse } from "smol-toml";
 
 export const DELETE=Symbol("delete");
+
+function same(a,b){
+  if(a===b)return true;
+  if(a instanceof Date&&b instanceof Date)return a.getTime()===b.getTime();
+  if(Array.isArray(a)||Array.isArray(b))return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((v,i)=>same(v,b[i]));
+  if(a&&b&&typeof a==="object"&&typeof b==="object"){
+    const ak=Object.keys(a),bk=Object.keys(b);if(ak.length!==bk.length)return false;
+    return ak.every(k=>Object.prototype.hasOwnProperty.call(b,k)&&same(a[k],b[k]));
+  }
+  return Object.is(a,b);
+}
 
 function key(name){return /^[A-Za-z0-9_-]+$/.test(name)?name:JSON.stringify(name);}
 function literal(value){
@@ -91,7 +101,7 @@ function updateData(data,path,value){
 }
 export function setTomlValue(text,path,value){
   const before=parse(text),expected=structuredClone(before);updateData(expected,path,value);
-  if(isDeepStrictEqual(before,expected))return text;
+  if(same(before,expected))return text;
   const items=entries(text);let result=null;
   for(const item of items){
     if(item.kind==="assignment"&&item.where.length<=path.length&&item.where.every((v,i)=>path[i]===v)){
@@ -122,6 +132,6 @@ export function setTomlValue(text,path,value){
     }
   }
   const after=parse(result);
-  if(!isDeepStrictEqual(expected,after))throw new Error("Unrelated TOML values would change; original config is unchanged");
+  if(!same(expected,after))throw new Error("Unrelated TOML values would change; original config is unchanged");
   return result;
 }
