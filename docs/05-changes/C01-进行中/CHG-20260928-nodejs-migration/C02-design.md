@@ -227,7 +227,7 @@ flowchart LR
 | `C03-03` 观测与诊断 | trace/coverage、兼容SQLite和离线ZIP | `C03-01` codec/IO/锁及resources | `D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D007`WASM SQLite | `AC-06` 观测数据、`AC-07` 私有诊断 |
 | `C03-04` System One客户端 | Node MCP/HTTP/template/runtime与外部GPU隔离 | `C03-01` codec/依赖/入口 | `D002`精确编码、`D004`稳定布局、`D008`客户端解耦 | `AC-08` MCP协议、`AC-09` GPU隔离 |
 | `C03-05` 宿主安装 | 完整tarball消费、native资产、自包含runtime及升级回滚 | `C03-02` workflow、`C03-03` observation、`C03-04` System One | `D001` npm边界、`D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D008`客户端解耦、`D009`ownership | `AC-10` 显式单命令、`AC-11` 宿主安全 |
-| `C03-06` 验证与使用指南 | Node全量/CI、回归映射、操作引用、完整纯Node消费证据 | `C03-05` 完整installed产物 | `D001` npm边界、`D004`稳定布局、`D006`项目验证、`D009`ownership、`D010`回归与快照时机 | `AC-12` 消费验证 |
+| `C03-06` 验证与使用指南 | Node全量/CI、回归映射、操作引用、完整纯Node消费证据及根 `.gitignore` 依赖产物忽略配置 | `C03-05` 完整installed产物 | `D001` npm边界、`D004`稳定布局、`D006`项目验证、`D009`ownership、`D010`回归与快照时机 | `AC-12` 消费验证 |
 
 **过渡编排**：本Change实施期间Main固定使用既有已安装协调器写权威Change；旧源码只保留为基线/编排直到C03-06统一退休。候选Node操作只在隔离fixture或各自受控项目验证，不能与旧协调器并写本Change。全部集成后停止旧writer，再切换完整Node读取既有Graph和执行最终验证/收口；不能因源码退休破坏中途协调器，也不能通过Python后台提供新消费能力。
 

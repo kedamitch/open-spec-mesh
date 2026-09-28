@@ -110,6 +110,7 @@ operations: pending
 
 - **行为**：所有第一方消费操作和指南不再要求 Python；Node全量入口执行平台 required tests/build/static checks。原 422 个静态测试方法逐项映射到 Node 等价场景或明确独立 GPU lane，不以 skip/删除测试取得通过；Docker Python fixture 可保留。
 - **验证**：消费端无 Python环境的完整功能/打包测试；迁移覆盖清单、语法/文档/角色/包内容检查和 CI矩阵，保留 Mermaid/Docker/三宿主/Research/GPU lanes。Main 在最终 integrated revision 上运行 required全量及receipt；Worker只做定向验证。
+- **仓库配置保全**：根 `.gitignore` 增补 `/node_modules/`，仅忽略根依赖安装产物；`package-lock.json` 保持版本控制。Main 已有用户根 `node_modules/` 必须原地保留，不移动、删除、清理、覆盖或暂存其中内容。
 
 ## 约束与待确认
 
