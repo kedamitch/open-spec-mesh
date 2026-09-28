@@ -1,5 +1,7 @@
 # 运行协议
 
+System One 消费端由 Node.js 24.21.0+ 的 `mcp/laya_http_mcp.js` 提供；无需 Python 或本机编译工具链。独立 GPU-host API 仍是另一项 Python/CUDA 部署，见 `integrations/laya-gpu/README.md`，客户端不会启动或调用 Python helper。
+
 ## 工具
 
 | 工具 | 输入 | 行为 |
@@ -58,7 +60,7 @@ Laya 合批服务由仓库 `mcp/laya_batch_server.py` 提供，内部使用 Rout
 将相同参数保存为 JSON，在获授权工作目录中运行：
 
 ```sh
-python3 "${CODEX_HOME:-$HOME/.codex}/mcp/laya_http_mcp.py" --input requests.json
+node "${CODEX_HOME:-$HOME/.codex}/mcp/laya_http_mcp.js" --input requests.json
 ```
 
 这不是前置调度器：不会自动拦截 Codex 请求、换模型或执行决策。

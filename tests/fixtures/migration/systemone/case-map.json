@@ -1,0 +1,320 @@
+{
+  "schema": 1,
+  "legacy_decisions_cases": [
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_templates_and_no_arbitrary_paths",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::template validation, digest, path restrictions, permissions and answer guard preserve advisory boundaries",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_quick_is_default_and_investigation_does_not_upgrade_mode",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::input validation and permission rules short-circuit before any transport",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_real_batch_not_sequential_loop",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::Laya sends a true batch (including one item), accepts native list/envelope, deduplicates and uses pinned cache only",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_single_request_uses_batch_and_default_multilingual",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::Laya sends a true batch (including one item), accepts native list/envelope, deduplicates and uses pinned cache only",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_native_raw_list_batch_response_is_accepted",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::native Laya raw-list envelope and typed numeric answers remain valid",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_jev_provider_uses_official_single_systemone_endpoint",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::Jev is explicit single-state transport, rule rows bypass inference, and no provider fallback is automatic",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_retired_batch_variable_is_ignored_and_not_forwarded",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::clientConfig and managed launch shape are shared, explicit, and do not claim custom MCP entries",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_same_batch_duplicates_inferred_once",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::Laya sends a true batch (including one item), accepts native list/envelope, deduplicates and uses pinned cache only",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_prototype_uses_batch_preserving_typed_answers",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::prototype-named state, question, answer and candidate keys stay inert data properties",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_bad_batch_envelope_falls_back_for_single_and_raw",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::partial responses preserve valid IDs; malformed, uncertain, misaligned and unavailable results fallback safely",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_batch_unavailable_never_retries_legacy_endpoint",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::partial responses preserve valid IDs; malformed, uncertain, misaligned and unavailable results fallback safely",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_cached_and_rule_rows_leave_one_batch_item",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::Laya sends a true batch (including one item), accepts native list/envelope, deduplicates and uses pinned cache only",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_cache_requires_pinned_revision",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::Laya sends a true batch (including one item), accepts native list/envelope, deduplicates and uses pinned cache only",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_cache_ttl_state_schema_and_model_invalidation",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::Laya sends a true batch (including one item), accepts native list/envelope, deduplicates and uses pinned cache only",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_existing_mode_and_leaf_role_use_rules",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::input validation and permission rules short-circuit before any transport",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_mode_and_role_enums_normalize_case_and_whitespace",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::role permission matrix, local descriptions, executor guard, normalization, and order preserve non-escalation",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_delegation_biases_unknown_facts_to_investigation_roles",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::role permission matrix, local descriptions, executor guard, normalization, and order preserve non-escalation",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_delegation_executor_choice_uses_actual_descriptions_and_filters_candidates",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::role permission matrix, local descriptions, executor guard, normalization, and order preserve non-escalation",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_mode_permission_matrix_filters_delegation",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::role permission matrix, local descriptions, executor guard, normalization, and order preserve non-escalation",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_architect_only_sees_its_own_delegate_candidates",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::role permission matrix, local descriptions, executor guard, normalization, and order preserve non-escalation",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_executor_guard_accepts_current_or_permitted_role_only",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::role permission matrix, local descriptions, executor guard, normalization, and order preserve non-escalation",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_sdd_role_order_and_available_roles_do_not_expand_permissions",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::role permission matrix, local descriptions, executor guard, normalization, and order preserve non-escalation",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_corrupt_rows_and_uncertain_are_not_cached_or_applied",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::partial responses preserve valid IDs; malformed, uncertain, misaligned and unavailable results fallback safely",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_alignment_mismatch_fails_all_unmatched_not_reordered",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::partial responses preserve valid IDs; malformed, uncertain, misaligned and unavailable results fallback safely",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_outage_circuit_spans_named_and_raw_calls",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::partial responses preserve valid IDs; malformed, uncertain, misaligned and unavailable results fallback safely",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_disabled_checks_no_config_or_http",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::disabled System One returns before provider configuration or HTTP and settings fail closed",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_bad_input_fails_before_http",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::input validation and permission rules short-circuit before any transport",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_valid_custom_template_no_code_or_overrides",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::template validation, digest, path restrictions, permissions and answer guard preserve advisory boundaries",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_invalid_urls_and_keys_are_redacted",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::provider config defaults to Laya, keeps Jev explicit, and validates safe URLs/keys/models/timeouts",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_metrics_never_contain_state_ids_or_key",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::metrics are private, redacted and non-blocking on write failure",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::DecisionsTest.test_metrics_failure_nonblocking",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::metrics are private, redacted and non-blocking on write failure",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_enabled_disabled_reenabled_preserves_user_files",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_off_does_not_check_laya_or_install_dependencies",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_cli_defaults_off_and_requires_explicit_with_laya",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_dryrun_off_unchanged_and_failed_off_rolls_back",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_custom_mcp_off_preserves_endpoint_and_auth",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_unmanaged_same_named_skill_not_destroyed",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_original_typesafe_symlink_is_untouched",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_live_old_process_disabled_without_http",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_forwarding_preserves_existing_extra_environment",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_upgrade_removes_retired_env_without_changing_other_settings",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    },
+    {
+      "source": "tests/test_laya_decisions.py::SwitchTests.test_custom_laya_keeps_its_own_environment",
+      "owner_task": "C03-05",
+      "target": "frozen host-install task",
+      "status": "mapped-to-dependent-task"
+    }
+  ],
+  "legacy_mcp_client_cases": [
+    {
+      "source": "tests/test_laya_mcp.py::LayaBridgeTests.test_config_requires_both_variables",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::provider config defaults to Laya, keeps Jev explicit, and validates safe URLs/keys/models/timeouts",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_mcp.py::LayaBridgeTests.test_health_request_uses_bearer_without_exposing_key",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::HTTP transport bounds request/response, rejects redirects, respects timeout, parses losslessly and hides credentials",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_mcp.py::LayaBridgeTests.test_jev_http_request_uses_typesafe_bearer_and_single_endpoint",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::Jev is explicit single-state transport, rule rows bypass inference, and no provider fallback is automatic",
+      "status": "covered-by-node-test"
+    },
+    {
+      "source": "tests/test_laya_mcp.py::LayaBridgeTests.test_http_error_never_echoes_api_key",
+      "owner_task": "C03-04",
+      "target": "tests/node/systemone/systemone.test.js::HTTP transport bounds request/response, rejects redirects, respects timeout, parses losslessly and hides credentials",
+      "status": "covered-by-node-test"
+    }
+  ],
+  "independent_gpu_factory_cases": [
+    {
+      "source": "tests/test_laya_server.py::APITest.test_batch_calls_sdk_predict_batch_once",
+      "owner_task": "C03-04",
+      "target": "tests/test_laya_server.py::APITest.test_batch_calls_sdk_predict_batch_once",
+      "status": "retained-independent-gpu-factory-lane"
+    },
+    {
+      "source": "tests/test_laya_server.py::APITest.test_unauthorized_oversize_bad_model_rejected_before_inference",
+      "owner_task": "C03-04",
+      "target": "tests/test_laya_server.py::APITest.test_unauthorized_oversize_bad_model_rejected_before_inference",
+      "status": "retained-independent-gpu-factory-lane"
+    },
+    {
+      "source": "tests/test_laya_server.py::APITest.test_single_and_batch_share_one_executor",
+      "owner_task": "C03-04",
+      "target": "tests/test_laya_server.py::APITest.test_single_and_batch_share_one_executor",
+      "status": "retained-independent-gpu-factory-lane"
+    },
+    {
+      "source": "tests/test_laya_server.py::APITest.test_wrong_sdk_batch_size_results_is_safe_error",
+      "owner_task": "C03-04",
+      "target": "tests/test_laya_server.py::APITest.test_wrong_sdk_batch_size_results_is_safe_error",
+      "status": "retained-independent-gpu-factory-lane"
+    },
+    {
+      "source": "tests/test_laya_server.py::APITest.test_token_budget_failure_before_inference",
+      "owner_task": "C03-04",
+      "target": "tests/test_laya_server.py::APITest.test_token_budget_failure_before_inference",
+      "status": "retained-independent-gpu-factory-lane"
+    }
+  ],
+  "deferred_verification": {
+    "source": "verify_laya client protocol assertions",
+    "owner_task": "C03-06",
+    "status": "remains-in-frozen-validation-task"
+  }
+}

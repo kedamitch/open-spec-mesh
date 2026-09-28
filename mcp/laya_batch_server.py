@@ -11,13 +11,24 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 import hmac
+import importlib.util
 import json
 import os
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from laya_contracts import MAX_ITEMS, MAX_REQUEST, MODELS, validate_questions, validate_answers, encode
+GPU_CONTRACTS_PATH = Path(__file__).resolve().parents[1]/'integrations/laya-gpu/contracts.py'
+_gpu_contracts_spec = importlib.util.spec_from_file_location('open_spec_mesh_laya_gpu_contracts', GPU_CONTRACTS_PATH)
+if _gpu_contracts_spec is None or _gpu_contracts_spec.loader is None:
+    raise RuntimeError('GPU API validation helper is unavailable')
+_gpu_contracts = importlib.util.module_from_spec(_gpu_contracts_spec)
+_gpu_contracts_spec.loader.exec_module(_gpu_contracts)
+MAX_ITEMS = _gpu_contracts.MAX_ITEMS
+MAX_REQUEST = _gpu_contracts.MAX_REQUEST
+MODELS = _gpu_contracts.MODELS
+validate_questions = _gpu_contracts.validate_questions
+validate_answers = _gpu_contracts.validate_answers
+encode = _gpu_contracts.encode
 
 
 def create_app(router, api_key: str, models=('multilingual',), batch_size=8, check_budget=None):

@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "codec": "legacyJson: ensureAscii=false, separators=[\",\",\":\"]",
+  "vectors": [
+    {
+      "name": "laya_true_batch",
+      "value": {
+        "requests": [
+          {
+            "state": {
+              "request": "雪🛠 asks for a bounded advisory decision",
+              "facts": {
+                "9007199254740993": 9007199254740993,
+                "2": 2,
+                "float": 1.0,
+                "negative_zero": -0.0,
+                "__proto__": {
+                  "not_executable": true
+                }
+              }
+            },
+            "questions": {
+              "kind": {
+                "type": "choice",
+                "instructions": "Choose one typed answer.",
+                "criteria": {
+                  "first": "首选",
+                  "uncertain": "证据不足"
+                }
+              }
+            },
+            "model": "multilingual"
+          }
+        ]
+      },
+      "encoded": "{\"requests\":[{\"state\":{\"request\":\"雪🛠 asks for a bounded advisory decision\",\"facts\":{\"9007199254740993\":9007199254740993,\"2\":2,\"float\":1.0,\"negative_zero\":-0.0,\"__proto__\":{\"not_executable\":true}}},\"questions\":{\"kind\":{\"type\":\"choice\",\"instructions\":\"Choose one typed answer.\",\"criteria\":{\"first\":\"首选\",\"uncertain\":\"证据不足\"}}},\"model\":\"multilingual\"}]}"
+    },
+    {
+      "name": "jev_single_request",
+      "value": {
+        "state": {
+          "request": "雪🛠 asks for a bounded advisory decision",
+          "facts": {
+            "9007199254740993": 9007199254740993,
+            "2": 2,
+            "float": 1.0,
+            "negative_zero": -0.0,
+            "__proto__": {
+              "not_executable": true
+            }
+          }
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "Choose one typed answer.",
+            "criteria": {
+              "first": "首选",
+              "uncertain": "证据不足"
+            }
+          }
+        },
+        "model": "jev-latest"
+      },
+      "encoded": "{\"state\":{\"request\":\"雪🛠 asks for a bounded advisory decision\",\"facts\":{\"9007199254740993\":9007199254740993,\"2\":2,\"float\":1.0,\"negative_zero\":-0.0,\"__proto__\":{\"not_executable\":true}}},\"questions\":{\"kind\":{\"type\":\"choice\",\"instructions\":\"Choose one typed answer.\",\"criteria\":{\"first\":\"首选\",\"uncertain\":\"证据不足\"}}},\"model\":\"jev-latest\"}"
+    },
+    {
+      "name": "mcp_tools_call_request",
+      "value": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "method": "tools/call",
+        "params": {
+          "name": "laya_decide",
+          "arguments": {
+            "decision": "execution-mode@1",
+            "items": [
+              {
+                "id": "job-雪",
+                "state": {
+                  "request": "雪🛠 asks for a bounded advisory decision",
+                  "facts": {
+                    "9007199254740993": 9007199254740993,
+                    "2": 2,
+                    "float": 1.0,
+                    "negative_zero": -0.0,
+                    "__proto__": {
+                      "not_executable": true
+                    }
+                  }
+                }
+              }
+            ],
+            "context": {
+              "source": "existing facts"
+            },
+            "model": "auto"
+          }
+        }
+      },
+      "encoded": "{\"jsonrpc\":\"2.0\",\"id\":17,\"method\":\"tools/call\",\"params\":{\"name\":\"laya_decide\",\"arguments\":{\"decision\":\"execution-mode@1\",\"items\":[{\"id\":\"job-雪\",\"state\":{\"request\":\"雪🛠 asks for a bounded advisory decision\",\"facts\":{\"9007199254740993\":9007199254740993,\"2\":2,\"float\":1.0,\"negative_zero\":-0.0,\"__proto__\":{\"not_executable\":true}}}}],\"context\":{\"source\":\"existing facts\"},\"model\":\"auto\"}}}"
+    },
+    {
+      "name": "mcp_text_result_envelope",
+      "value": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"status\":\"ok\",\"decision\":\"execution-mode@1\",\"advisory\":true,\"results\":[{\"id\":\"job-雪\",\"status\":\"ok\",\"recommendation\":{\"mode\":\"quick\"},\"basis\":\"model\"}],\"template_hash\":\"0123456789abcdef\",\"metrics\":{\"elapsed_ms\":1.25,\"network_calls\":1,\"cache_hits\":0,\"backend\":\"server_batch\"},\"metrics_written\":null}"
+            }
+          ]
+        }
+      },
+      "encoded": "{\"jsonrpc\":\"2.0\",\"id\":17,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"status\\\":\\\"ok\\\",\\\"decision\\\":\\\"execution-mode@1\\\",\\\"advisory\\\":true,\\\"results\\\":[{\\\"id\\\":\\\"job-雪\\\",\\\"status\\\":\\\"ok\\\",\\\"recommendation\\\":{\\\"mode\\\":\\\"quick\\\"},\\\"basis\\\":\\\"model\\\"}],\\\"template_hash\\\":\\\"0123456789abcdef\\\",\\\"metrics\\\":{\\\"elapsed_ms\\\":1.25,\\\"network_calls\\\":1,\\\"cache_hits\\\":0,\\\"backend\\\":\\\"server_batch\\\"},\\\"metrics_written\\\":null}\"}]}}"
+    }
+  ]
+}
