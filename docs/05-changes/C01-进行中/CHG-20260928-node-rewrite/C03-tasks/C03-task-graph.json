@@ -1,0 +1,9 @@
+{
+  "tasks":[
+    {"id":"C03-01","path":"C03-tasks/C03-01-runtime-foundation","depends_on":[],"state":"planned","history":[]},
+    {"id":"C03-02","path":"C03-tasks/C03-02-utility-commands","depends_on":["C03-01"],"state":"planned","history":[]},
+    {"id":"C03-03","path":"C03-tasks/C03-03-sdd-core","depends_on":["C03-01"],"state":"planned","history":[]},
+    {"id":"C03-04","path":"C03-tasks/C03-04-observation-mcp","depends_on":["C03-01"],"state":"planned","history":[]},
+    {"id":"C03-05","path":"C03-tasks/C03-05-parity-cutover","depends_on":["C03-02","C03-03","C03-04"],"state":"planned","history":[]}
+  ]
+}
