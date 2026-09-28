@@ -1,0 +1,61 @@
+{
+  "source_revision": "f532f190864e8c4489230c7a5ef171e76ac21aa8",
+  "mapping": [
+    {
+      "legacy": "tests/test_scaffold_repair.py",
+      "coverage": "tests/node/document-tooling/scaffold.test.js",
+      "cases": [
+        "all_new_files_appear_in_parent_indexes",
+        "same_full_slot_collision_is_nondestructive",
+        "missing_project_template_does_not_half_initialize",
+        "existing_user_rules_preserved"
+      ]
+    },
+    {
+      "legacy": "tests/test_sdd_migrate.py",
+      "coverage": "tests/node/document-tooling/migration.test.js",
+      "cases": [
+        "preserves_legacy_bytes_and_creates_canonical_scaffold",
+        "canonical_project_rejected_without_mutation",
+        "existing_marker_fails_closed",
+        "initialize_failure_restores_legacy_docs"
+      ]
+    },
+    {
+      "legacy": "tests/test_lean_contracts.py",
+      "coverage": "tests/node/document-tooling/planning-documents.test.js",
+      "cases": [
+        "canonical_numbered_templates",
+        "new_task_planned_schema",
+        "research_and_adr_template_bytes",
+        "missing_template_before_allocation"
+      ]
+    },
+    {
+      "legacy": "tests/test_process_modes.py",
+      "coverage": "tests/node/runtime/cli-runtime.test.js",
+      "cases": [
+        "quick_sdd_and_worker_command_references_remain_explicit"
+      ]
+    },
+    {
+      "legacy": "tests/test_sdd.py",
+      "coverage": "tests/node/runtime/compat-graph.test.js",
+      "cases": [
+        "unicode_and_code_fence_aware_markdown",
+        "graph_shape_and_dag_rules",
+        "duplicate_graph_json_fields_rejected"
+      ]
+    },
+    {
+      "legacy": "numbering.py + sdd_common.py",
+      "coverage": "tests/node/runtime/paths-locks.test.js",
+      "cases": [
+        "two_process_number_allocation",
+        "symlink_and_escape_refusal",
+        "atomic_mode_preservation",
+        "crash_lock_fails_closed_and_explicit_recovery"
+      ]
+    }
+  ]
+}
