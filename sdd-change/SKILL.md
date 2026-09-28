@@ -35,7 +35,7 @@ CHG-.../
    - 总业务流程 / 主时序；
    - 跨 Task 的事务、一致性、幂等、并发、失败恢复。
    没有变化的维度也要明确写“无变化”。
-3. Architect 直接调用 `new_task.py` 形成完整 Task Graph；Main 不二次拆分、改写或转译。Task 优先按业务模块/完整业务结果拆分，不为避免文件冲突继续细拆。
+3. Architect 使用 Node `open-spec-mesh new-task` 命令形成完整 Task Graph；Main 不二次拆分、改写或转译。Task 优先按业务模块/完整业务结果拆分，不为避免文件冲突继续细拆。
 4. Design 的「Task 关系与设计落点」同时给人类可读 Mermaid + Task 表，并与机器 Graph 一致。低/中度公共路径重叠允许并行 worktree；高度重合或存在真实语义先后时才用 depends_on 串行。
 5. 每个 Task Contract 是可实施的小设计：范围、Path Contract、代码结构、Task 流程、核心对象职责、本地 API/Domain/Schema 变化、失败边界、定向测试、AC、预期输出。Path Contract 只限制当前 Task 的合法写入，不要求与兄弟 Task 互斥。
 6. **完整设计前置**：整张 Graph、Design 和全部 Task Contract 一次性交付，可先 Review 再实现。
