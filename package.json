@@ -94,6 +94,9 @@
     "sql.js": "1.14.2"
   },
   "scripts": {
-    "test:document-tooling": "node --test tests/node/runtime/*.test.js tests/node/document-tooling/*.test.js"
+    "test:document-tooling": "node --test tests/node/runtime/*.test.js tests/node/document-tooling/*.test.js",
+    "test:agents": "node --test agents/test_validate_agents.js",
+    "validate:core": "node scripts/sdd_validate.js --profile core",
+    "validate:full": "node scripts/sdd_validate.js --profile full"
   }
 }

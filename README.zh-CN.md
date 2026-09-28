@@ -10,7 +10,7 @@
 
 [![SDD](https://img.shields.io/badge/SDD-Spec--Driven-111827?style=flat-square)](docs/index.md)
 [![Multi-Agent](https://img.shields.io/badge/Multi--Agent-Mesh-4F46E5?style=flat-square)](AGENTS.md)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square)](scripts/sdd_validate.py)
+[![Node.js](https://img.shields.io/badge/Node.js-24.21%2B-339933?style=flat-square)](package.json)
 
 </div>
 
@@ -187,10 +187,10 @@ Task 优先按完整业务能力或独立可验收结果拆分，不因为文件
 统一的本地验证入口：
 
 ```bash
-python3 -B scripts/sdd_validate.py
+node scripts/sdd_validate.js --profile core
 ```
 
-Pull Request 运行核心验证；main 与手工 full run 再增加 Python 兼容性、Mermaid、Docker、Codex/OpenCode/Claude Runtime、Research Tools 等扩展检查。宿主 Runtime smoke 使用真实 CLI 解析配置，但不调用模型。
+Pull Request 运行核心验证；main 与手工 full run 再增加 Mermaid、Docker、Codex/OpenCode/Claude Runtime、Research Tools、Node MCP 与明确的 GPU factory Python lane。宿主 Runtime smoke 使用真实 CLI 解析配置，但不调用模型。
 
 ## 可选语义判断层
 

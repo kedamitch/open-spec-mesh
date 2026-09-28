@@ -10,7 +10,7 @@ Specs define the truth. Agents plan and execute. Scripts enforce state.
 
 [![SDD](https://img.shields.io/badge/SDD-Spec--Driven-111827?style=flat-square)](docs/index.md)
 [![Multi-Agent](https://img.shields.io/badge/Multi--Agent-Mesh-4F46E5?style=flat-square)](AGENTS.md)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square)](scripts/sdd_validate.py)
+[![Node.js](https://img.shields.io/badge/Node.js-24.21%2B-339933?style=flat-square)](package.json)
 
 </div>
 
@@ -187,10 +187,10 @@ A Task is split around a meaningful business capability or independently verifia
 One canonical local entry point:
 
 ```bash
-python3 -B scripts/sdd_validate.py
+node scripts/sdd_validate.js --profile core
 ```
 
-Pull requests run the core validation path. Main-branch and manual full runs add compatibility, Mermaid, Docker, Codex/OpenCode/Claude runtime smokes and research-tool checks. Host runtime smokes parse real native CLI/config without making model calls.
+Pull requests run the core validation path. Main-branch and manual full runs add Mermaid, Docker, Codex/OpenCode/Claude runtime smokes, Research tools, Node MCP, and the explicit GPU factory Python lane. Host runtime smokes parse real native CLI/config without making model calls.
 
 ## Optional semantic decision layer
 
