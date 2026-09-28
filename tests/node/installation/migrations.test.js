@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
-  BEGIN, END, HOST_MANIFEST, MANIFEST, PACKAGE_ID, cleanAgents, hostManifestText,
+  BEGIN, END, HOST_MANIFEST, MANIFEST, PACKAGE_ID, blobHash, catalog, cleanAgents, hostManifestText,
   readHostManifest, readManifest,
 } from '../../../lib/installation/migrations.js';
 
@@ -29,6 +30,28 @@ test('unmarked canonical history is migrated, while unrelated prose is preserved
   assert.equal(result.text.startsWith(local), true);
   assert.equal(result.text.includes('Old canonical managed instructions.'), true);
   assert.equal(result.text.includes(`${BEGIN}\n\n${oldBlock}`), true);
+});
+
+test('catalog retains canonical AGENTS.md blobs from real Git history', (t) => {
+  const source = mkdtempSync(path.join(os.tmpdir(), 'osm-migration-git-'));
+  t.after(() => rmSync(source, { recursive: true, force: true }));
+  mkdirSync(path.join(source, 'scripts'));
+  writeFileSync(path.join(source, 'scripts/install-legacy.json'), JSON.stringify({ agents_md: [] }));
+  const historical = '# Historical canonical instructions\n';
+  const current = '# Current canonical instructions\n';
+  writeFileSync(path.join(source, 'AGENTS.md'), historical);
+  execFileSync('git', ['init', source], { stdio: 'ignore' });
+  execFileSync('git', ['-C', source, 'config', 'user.name', 'Open Spec Mesh tests'], { stdio: 'ignore' });
+  execFileSync('git', ['-C', source, 'config', 'user.email', 'tests@example.invalid'], { stdio: 'ignore' });
+  execFileSync('git', ['-C', source, 'add', 'AGENTS.md', 'scripts/install-legacy.json'], { stdio: 'ignore' });
+  execFileSync('git', ['-C', source, 'commit', '-m', 'historical rules'], { stdio: 'ignore' });
+  writeFileSync(path.join(source, 'AGENTS.md'), current);
+  execFileSync('git', ['-C', source, 'add', 'AGENTS.md'], { stdio: 'ignore' });
+  execFileSync('git', ['-C', source, 'commit', '-m', 'current rules'], { stdio: 'ignore' });
+
+  const hashes = catalog(source);
+  assert.equal(hashes.has(blobHash(historical)), true);
+  assert.equal(hashes.has(blobHash(current)), true);
 });
 
 test('legacy/current manifest formats merge and reject damaged or unsafe ownership', (t) => {

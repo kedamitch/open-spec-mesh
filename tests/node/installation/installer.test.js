@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import { INSTALL_INTERNALS, installHost, parseInstallArgs } from '../../../lib/installation/installer.js';
 import { RUNTIME_INTERNALS } from '../../../lib/installation/runtime-stage.js';
 import { parseToml } from '../../../lib/installation/toml.js';
@@ -37,6 +39,28 @@ test('dry-run reports the plan without creating Home, lock, npm stage, or config
   assert.equal(existsSync(home), false);
   assert.equal(report.some((line) => line.includes('dry-run: no target files changed')), true);
   assert.equal(report.some((line) => line.includes('SYSTEM ONE')), true);
+});
+
+test('dry-run from a packaged source without Git history keeps stderr clean', (t) => {
+  const root = tempDirectory(t); const packagedSource = path.join(root, 'package');
+  mkdirSync(packagedSource);
+  for (const relative of packageFiles) {
+    const source = path.join(REPO_ROOT, relative); const destination = path.join(packagedSource, relative);
+    mkdirSync(path.dirname(destination), { recursive: true });
+    copyFileSync(source, destination);
+  }
+  assert.equal(existsSync(path.join(packagedSource, '.git')), false);
+
+  const home = path.join(root, 'home'); const runner = path.join(root, 'install.mjs');
+  writeFileSync(runner, [
+    `import { installHost } from ${JSON.stringify(pathToFileURL(path.join(REPO_ROOT, 'lib/installation/installer.js')).href)};`,
+    `await installHost({ source: ${JSON.stringify(packagedSource)}, home: ${JSON.stringify(home)}, host: 'codex',`,
+    `  dryRun: true, skipTools: true, nodeVersion: '24.21.0', env: { PATH: ${JSON.stringify(process.env.PATH ?? '')} }, reporter: () => {} });`,
+  ].join('\n'));
+  const child = spawnSync(process.execPath, [runner], { cwd: root, encoding: 'utf8', timeout: 30_000 });
+  assert.equal(child.status, 0, `packaged install failed\nstdout: ${child.stdout}\nstderr: ${child.stderr}`);
+  assert.equal(child.stderr, '');
+  assert.equal(existsSync(home), false);
 });
 
 test('initial Codex default-off plan does not publish baseline Python or Node bridge assets', async (t) => {
