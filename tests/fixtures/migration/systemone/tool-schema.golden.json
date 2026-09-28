@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "tools": [
+    {
+      "name": "laya_status",
+      "description": "Explicit troubleshooting only. Uses Laya /health or Jev /v1/models; neither proves inference quality.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object",
+        "title": "statusArguments"
+      }
+    },
+    {
+      "name": "laya_templates",
+      "description": "List locally available versioned decisions and required fields; no model/network call.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object",
+        "title": "templatesArguments"
+      }
+    },
+    {
+      "name": "laya_decide",
+      "description": "Reuse one named judgment over 1-16 inputs. Do not rewrite questions each time.\n\n        decision: execution-mode@1 or delegation@1 (or an operator-installed custom template).\n        items: [{id: unique string, state: {request: original request, ...}}].\n        context: shared existing facts; item.state overrides matching context fields.\n        delegation@1 needs current_role and available_roles; execution_mode defaults to quick.\n        Do not summarize long context solely to invoke this tool. Prefer direct judgment for\n        obvious/one-off work. Returns per-ID recommendations or fallback; partial keeps valid IDs.\n        No agent spawning, approvals, model changes or acceptance. Quick / SDD remain advisory routing choices.\n        Laya inference uses /v1/systemone/batch. Jev uses the official /v1/systemone endpoint\n        once per distinct state. On fallback continue the original actor's workflow.\n        ",
+      "inputSchema": {
+        "properties": {
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Context"
+          },
+          "model": {
+            "default": "auto",
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "items"
+        ],
+        "type": "object",
+        "title": "decideArguments"
+      }
+    },
+    {
+      "name": "laya_predict",
+      "description": "Prototype a NEW reusable judgment, not the default for every decision.\n\n        questions={id:{type:'choice'|'score'|'noul',instructions:string,criteria:...}}.\n        choice criteria map <=20 labels to descriptions; score uses ordered descriptions;\n        noul omits criteria or uses true/false descriptions. No text generation. Validate on\n        representative data then store a versioned JSON template for repeated execution.\n        auto uses the selected provider default: LAYA_MODEL/multilingual or\n        TYPESAFE_DEFAULT_MODEL/jev-latest. Fallback means the current actor continues.\n        ",
+      "inputSchema": {
+        "properties": {
+          "state": {
+            "additionalProperties": true,
+            "title": "State",
+            "type": "object"
+          },
+          "questions": {
+            "additionalProperties": true,
+            "title": "Questions",
+            "type": "object"
+          },
+          "model": {
+            "default": "auto",
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "questions"
+        ],
+        "type": "object",
+        "title": "predictArguments"
+      }
+    }
+  ]
+}
