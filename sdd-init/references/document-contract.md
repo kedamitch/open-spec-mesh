@@ -157,7 +157,7 @@ Design 是 **Current Truth 的完整增量设计**：
 
 ## Task
 
-Task 是可执行的局部详细设计；Worker 拿到 Task 后不应再猜主要实现结构。固定内容：Goal、Included/Excluded、Inputs/Dependencies、Path Contract、代码结构、Task 流程、Components、本地 Domain/Database/API 变化、Implementation Constraints、Error/Edge Cases、Tests、AC、Expected Output。固定维度全部保留；没有变化的子项直接写“无变化。”，不生成空表。公共设计只在 Design 展开，Task 引用 Dxxx 后只写当前 Task 如何落实，不重复公共原因与结论。Path Contract 用 allow/deny 路径保护当前 Task 的实际 diff，可以与兄弟 Task 重叠；它不是并行互斥锁。每个 Task 至少一个真实 Mermaid；类图按需。
+Task 是可执行的局部详细设计；Worker 拿到 Task 后不应再猜主要实现结构。固定内容：Goal、Included/Excluded、Inputs/Dependencies、代码结构、Task 流程、Components、本地 Domain/Database/API 变化、Implementation Constraints、Error/Edge Cases、Tests、AC、Expected Output。Task 以业务范围和实现约束表达授权边界，不生成文件路径 allow/deny 清单。固定维度全部保留；没有变化的子项直接写“无变化。”，不生成空表。公共设计只在 Design 展开，Task 引用 Dxxx 后只写当前 Task 如何落实，不重复公共原因与结论。每个 Task 至少一个真实 Mermaid；类图按需。
 
 ## Delivery
 
