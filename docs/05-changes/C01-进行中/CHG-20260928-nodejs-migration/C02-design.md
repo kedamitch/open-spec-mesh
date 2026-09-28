@@ -31,7 +31,7 @@
 
 ### 总体方案
 
-源码新增 `bin/open-spec-mesh.js`、`lib/{cli,runtime,documents,workflow,observation,diagnostics,systemone,installation}/`，保留各Skill目录的 `.js`入口/模板/参考。CLI路由是固定command→模块映射，延迟加载对应能力，禁止任意模块路径/动态用户代码替代平台操作。共享机制放runtime，业务实现按能力落点。
+源码新增 `bin/open-spec-mesh.js`、`lib/{cli,runtime,documents,workflow,release,observation,diagnostics,systemone,installation}/`，保留各Skill目录的 `.js`入口/模板/参考。CLI路由是固定command→模块映射，延迟加载对应能力，禁止任意模块路径/动态用户代码替代平台操作。共享机制放runtime，业务实现按能力落点。
 
 消费包不捆绑node_modules或Python；随包包含package参考docs，供原--include-project-docs显式选项完整复制，默认不写Home/docs。installer将包的runtime/resources复制到stage，使用锁定package-lock执行 `npm ci --omit=dev --ignore-scripts --no-audit --no-fund`，验证资源后与host资产一起发布到 `<host-home>/open-spec-mesh/runtime/`。因此不依赖npm exec临时cache生命周期、源码cwd、全局npmroot或Python安装。
 
@@ -81,7 +81,7 @@ sequenceDiagram
 | task-graph | sdd-change/scripts/task_graph.js | graph位置参数及--action approve/submit/block/rework/replan、原确认flags |
 | new-change / new-task / ensure-design | 对应sdd-change/scripts/*.js | title/change_id/root/depends-on，不恢复已移除的--from-change |
 | init-project / migrate-project / new-document / validate-docs | 对应init/migrate脚本.js | 既有root/parent/title/extension等输入 |
-| new-research / new-adr / new-release / check-release | 对应research/release脚本.js | 原title/version/directory/root等输入 |
+| new-research / new-adr / new-release / check-release | 对应research/release脚本.js；Release薄入口分别保持路由到 `lib/release/new-release.js` / `lib/release/check-release.js` | 原title/version/directory/root等输入 |
 | prepare-workspace / record-delivery / import-delivery / record-acceptance / run-leaf | 对应sdd-do脚本.js | 既有workspace、attempt、revision、evidence/session/host等输入 |
 | check-change / close-change / run-validation | 对应sdd-close脚本.js | 原Change、root、revision、accept/archive/evidence等输入 |
 | observe / diagnose | observe.js / sdd-diagnose/scripts/bundle.js | 原host/db、collect/scan/report/group/summary及bundle输入 |
@@ -131,7 +131,7 @@ SQLite不改表/列/索引/约束，不将数据转成JSON或新DB；不自动�
 - `atomicWrite(path, bytes, {mode, preserveMode})`、`safeInside(root, relative)`、`readTextCompat(path)`、`sha256(bytes)`：安全路径、原子/原权限、Python读取兼容。原字节保全使用bytes API而非readTextCompat。
 - `legacyJson(value, {sortKeys, ensureAscii, separators, indent})`、`parseLosslessJson(text)`：hash/wire场景不使用不受控JSON.stringify；Python code-point排序、surrogate转义、空格、数值kind/负零/指数表示须黄金向量验证；普通JSON输出可以同字段不同空白。
 - `graphSchema.load/validate/save`：文档创建只写planned schema；workflow实现状态迁移/readiness，其他模块不能复制状态机。
-- workflow导出 `planningComplete/readContractDigest/runValidation/checkChange`；document allocator只负责建工件，release消费已完成workflow语义。
+- workflow导出 `planningComplete/readContractDigest/runValidation/checkChange`；Release实现位于 `lib/release/{new-release,check-release}.js`，前者复用document allocator建工件，后者消费workflow的closure/checkChange语义；既有registry路由不变。
 - observation导出 `collect/normalize/diagnose/report/summarize`；bundle只调用这些纯采集/诊断接口，不能fork CLI或加模型调用。
 - systemone导出 `clientConfig/managedLaunchShape/toolSchemas/runDecision`；installer消费同一工具/launch/env描述，不重新定义四工具或权限过滤。
 
@@ -223,7 +223,7 @@ flowchart LR
 | Task | 交付结果 | 前置任务 | 关联设计 | 验收 |
 | --- | --- | --- | --- | --- |
 | `C03-01` 文档工具与共享基础 | package/bin/compat/锁/allocator、Node文档创建与迁移 | 无 | `D001` npm边界、`D002`精确编码、`D003`锁与保全、`D004`稳定布局 | `AC-01` 公共基础、`AC-02` 文档工具 |
-| `C03-02` SDD生命周期 | readiness/状态、执行/交付/集成、验证/归档/Release | `C03-01` 文档与公共接口 | `D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D005`Git身份、`D006`项目验证 | `AC-03` 冻结状态、`AC-04` 执行集成、`AC-05` 验证归档 |
+| `C03-02` SDD生命周期 | readiness/状态、执行/交付/集成、验证/归档/Release（`lib/release/**`） | `C03-01` 文档与公共接口 | `D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D005`Git身份、`D006`项目验证 | `AC-03` 冻结状态、`AC-04` 执行集成、`AC-05` 验证归档 |
 | `C03-03` 观测与诊断 | trace/coverage、兼容SQLite和离线ZIP | `C03-01` codec/IO/锁及resources | `D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D007`WASM SQLite | `AC-06` 观测数据、`AC-07` 私有诊断 |
 | `C03-04` System One客户端 | Node MCP/HTTP/template/runtime与外部GPU隔离 | `C03-01` codec/依赖/入口 | `D002`精确编码、`D004`稳定布局、`D008`客户端解耦 | `AC-08` MCP协议、`AC-09` GPU隔离 |
 | `C03-05` 宿主安装 | 完整tarball消费、native资产、自包含runtime及升级回滚 | `C03-02` workflow、`C03-03` observation、`C03-04` System One | `D001` npm边界、`D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D008`客户端解耦、`D009`ownership | `AC-10` 显式单命令、`AC-11` 宿主安全 |
