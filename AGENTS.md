@@ -42,7 +42,7 @@ Worker 使用 `sdd.py prepare` 生成的 Dispatch Packet；首次 spawn 后绑�
 
 ## 4. 并行与会话
 
-Task 按业务模块和可验收结果拆分，不为消灭文件冲突继续细拆。depends_on 已满足的 ready Task 即使 Path Contract 有合理重叠也可并行；并行写任务必须使用独立 worktree。低/中度重叠优先并行后由 Main 集成；公共改动高度重合、合并成本明显高，或后续必须消费前序真实结果时，用 depends_on 串行。
+Task 按业务模块和可验收结果拆分，不为消灭文件冲突继续细拆。depends_on 已满足的 ready Task 即使代码落点重叠也可并行；并行写任务必须使用独立 worktree。低/中度重叠优先并行后由 Main 集成；公共改动高度重合、合并成本明显高，或后续必须消费前序真实结果时，用 depends_on 串行。
 
 不可并行：同一 Task、dependency 未满足，或存在明确的语义先后关系。路径重叠本身不是禁止并行的理由。
 

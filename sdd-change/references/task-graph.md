@@ -2,9 +2,9 @@
 
 权威任务图只由 SDD Architect 创建。Main 负责运行时状态、冻结、派发和验收，但不得重新拆分、合并或转译 Architect 已交付的 Graph。Worker 只写自己的交付。
 
-图结构保持最小：Task ID、Task 路径、`depends_on`、状态和运行元数据，不增加 `parallel_group`、文件锁或路径互斥字段。AC 与验收语义只在 Change / Task Design 定义，不在 Graph 重复保存。Design 保存跨 Task 公共设计、Task 关系与设计落点；每个 Task Design 保存自己的详细设计、Path Contract 和 Worker 自由度。
+图结构保持最小：Task ID、Task 路径、`depends_on`、状态和运行元数据，不增加 `parallel_group`、文件锁或路径互斥字段。AC 与验收语义只在 Change / Task Design 定义，不在 Graph 重复保存。Design 保存跨 Task 公共设计、Task 关系与设计落点；每个 Task Design 保存自己的详细设计和 Worker 自由度。
 
-Task 优先按业务模块/完整业务结果拆分。Path Contract 可以重叠：它只保护当前 Worker 不越界，不表示兄弟 Task 不能并行。低/中度重叠可使用独立 worktree 并行，最终由 Main 集成；高度重合、合并成本明显高或存在真实语义先后时，通过 `depends_on` 串行。
+Task 优先按业务模块/完整业务结果拆分。冻结 Task 的目标、纳入/排除项和 AC 定义业务边界；文件路径不作为授权门。代码落点重叠本身不禁止并行。低/中度重叠可使用独立 worktree 并行，最终由 Main 集成；高度重合、合并成本明显高或存在真实语义先后时，通过 `depends_on` 串行。
 
 以下命令使用 Node package 提供的 `open-spec-mesh` CLI；源码树内也可写为 `node bin/open-spec-mesh.js <command> ...`。`PROJECT` 是主工作区，`WORKTREE` 是已分配工作区，`CHG / TASK / ATTEMPT` 取实际派发值。
 
@@ -15,7 +15,7 @@ open-spec-mesh task-graph --root "$PROJECT" --change "$CHG" --task "$TASK" --act
 open-spec-mesh prepare-workspace "$CHG" "$TASK" --root "$PROJECT" --worktree "$WORKTREE"
 ```
 
-单 Worker 串行任务无隔离需要可省略 `--worktree`；多个写 Task 并行时必须分别分配独立 worktree。approve 先检查真实正文、Path Contract、明确占位和完整前置设计。唯一合法格式要求 Design Task 行、Task Graph、Task Design 的 `depends_on` 完全一致，Task 的 AC / Dxxx 引用也必须一致；任一 Task 的详细设计未完成都不得先派发其他 Task。只有当前 C01/C02/C03 结构可执行；其他结构直接拒绝。
+单 Worker 串行任务无隔离需要可省略 `--worktree`；多个写 Task 并行时必须分别分配独立 worktree。approve 先检查真实正文、明确占位和完整前置设计。唯一合法格式要求 Design Task 行、Task Graph、Task Design 的 `depends_on` 完全一致，Task 的 AC / Dxxx 引用也必须一致；任一 Task 的详细设计未完成都不得先派发其他 Task。只有当前 C01/C02/C03 结构可执行；其他结构直接拒绝。
 
 approve 对 canonical Task 使用 scoped digest：冻结 Change 的共享目标/范围/约束 + 当前 Task 引用的 AC，Design 的公共设计/整体停止条件 + 当前 Task 引用的 Dxxx + 当前 Task 关系行，以及当前 Task Design 全文。未被当前 Task 引用的其他 AC / Dxxx / 兄弟 Task 关系变化不会直接使它 stale；依赖 Task 变化仍通过 Graph 向下游传播。prepare 核对上游 accepted 且结果已进入 baseline，生成 attempt。
 
@@ -89,4 +89,4 @@ replan 撤销目标、摘要漂移任务及其下游的旧验收，保留历史�
 
 SDD Change 必须包含非空 Task Graph；纯文档小改动使用 Quick，不创建 Change。完整收口核对历次交付和集成 diff，而非仅最后一轮。
 
-Path Contract 写在各 Task Design 中，只防当前 Worker 越界；兄弟 Task 的 allow 可重叠。Main 用 `open-spec-mesh sdd integrate` 集成 accepted result：单 Task 用 `--task`，同一 accepted/pending wave 优先先跑 `--wave --check` 再 `--wave`。脚本保护 result ancestry 与 Main 权威 Change 工件；普通代码冲突由 Main 处理，复杂语义冲突可回派原 Worker。Worker 阶段只跑定向验证；全部 Task 最终集成并由 Architect 同步 Current Truth 后，Main 统一跑全量并要求全绿。
+Main 用 `open-spec-mesh sdd integrate` 集成 accepted result：单 Task 用 `--task`，同一 accepted/pending wave 优先先跑 `--wave --check` 再 `--wave`。脚本保护 result ancestry 与 Main 权威 Change 工件；普通代码冲突由 Main 处理，复杂语义冲突可回派原 Worker。Worker 阶段只跑定向验证；全部 Task 最终集成并由 Architect 同步 Current Truth 后，Main 统一跑全量并要求全绿。

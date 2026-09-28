@@ -1,43 +1,41 @@
 ---
 status: submitted
-revision: 62c308ac36ff491a61d58071f009db3e96d6f809
-attempt: 2
-contract_digest: a0d87189b6aa6745fb28a7ac9c783d5e75641a5baf0990875feff9c21e539e7b
-baseline: a015cdac052bf419a9c11e5c5f9c3e641f823322
+revision: ceaeedd42d9908d524234815d05792e9474a073f
+attempt: 3
+contract_digest: 66827d8e5ba69f838956e292c0d103f728341c1c70a997db552cd5ff4a6854a9
+baseline: ceaeedd42d9908d524234815d05792e9474a073f
 ---
 
 # 任务交付报告
 
 ## 文件改动
 
-> **交付结果**：在 attempt 2 新 baseline 上重验 C03-03 全部验收；仅将 store 并发回归增强为 8 writer，无生产实现或契约变更。
+> **交付结果**：在 attempt 3 冻结 baseline 上重新验证 C03-03 的观测与离线诊断行为；按 Task Contract，本轮未发现实现缺陷，未改动源码或测试文件。
 
 | 文件 | 操作 | 行为影响 |
 | --- | --- | --- |
-| `tests/node/observation/store.test.js` | M | 将并发首次建库/SQLite 更新回归从 2 个扩大到 8 个独立 writer 进程，并断言所有 run 均保留，以在当前共享锁实现上加强并发证据。 |
 
 ## 验证结果
 
-- **结论**：通过。
+- **结论**：通过
 
 | AC / 场景 | 检查 | 结果 | 证据 |
 | --- | --- | --- | --- |
-| `AC-06` | 在 attempt 2 baseline `a015cdac052bf419a9c11e5c5f9c3e641f823322` 上运行 `node --test tests/node/observation/*.test.js tests/node/diagnostics/*.test.js` | 通过 | Node 24.21.0；33/33。覆盖 Python sqlite3 golden 读取/更新/重开、scope provenance、foreign/unsupported DB 字节保全、跨宿主 partial，以及当前共享 lock 下并发首次建库无丢 run。 |
-| `AC-07` | 在同一 attempt 2 baseline 运行离线 bundle、安全与边界测试 | 通过 | 同一 Node 定向套件 33/33；合成敏感哨兵未进入 ZIP，manifest 哈希可复核，归档私有权限、固定相对路径、排他发布及项目/Git/symlink 输出拒绝均通过。 |
-| 并发复验 | `node --test tests/node/observation/store.test.js` 连续三次 | 通过 | 每轮 5/5；每轮并发启动 8 个独立 writer，所有 run 均保留。 |
-| 资源与入口 | `npm ci --ignore-scripts --no-audit --no-fund`、相关 JS `node --check`、两个入口 `--help` | 通过 | 锁定依赖安装完成；相关模块/测试语法检查通过；观测和诊断入口均输出 usage。 |
+| `AC-06` | `PATH=/tmp/open-spec-node24.21.8RJPuc/node-v24.21.0-linux-x64/bin:$PATH node --test tests/node/observation/*.test.js tests/node/diagnostics/*.test.js`；另将 `node --test tests/node/observation/store.test.js` 连续运行三次 | 通过 | Node v24.21.0；定向套件 33/33 通过。覆盖跨宿主 partial/unknown、Python sqlite3 旧库字节及 scope-key 兼容、拒绝外来/未知/损坏库与失败保全。并发测试每轮 5/5，通过 8 个独立 writer 首次建库并确认所有 run 持久化。 |
+| `AC-07` | 同一观测/诊断定向套件；运行 `node sdd-do/scripts/observe.js --help`、`node sdd-diagnose/scripts/bundle.js --help`，并对观测/诊断模块和两个入口执行 `node --check` | 通过 | 定向套件 33/33 通过，含空/缺失证据、范围和 coverage、synthetic 敏感载荷排除、ZIP manifest/权限/固定路径/排他发布、symlink/path traversal/项目与 Git 树目标拒绝，以及无网络/子进程静态探针。两个入口均输出 usage，相关模块语法检查通过。 |
+| baseline 影响核对 | 对比 `a015cdac052bf419a9c11e5c5f9c3e641f823322..ceaeedd42d9908d524234815d05792e9474a073f` 的 observation/diagnostics 范围 | 通过 | 观测/诊断生产实现无变化；该范围内差异仅为并发测试增强。当前 attempt 的 HEAD 与分配 baseline `ceaeedd42d9908d524234815d05792e9474a073f` 一致。 |
 
 ## 自审结论
 
-- **已修复问题**：当前 baseline 的 targeted AC 均通过；为降低并发丢 run 回归的偶发漏检，将既有双 writer 断言提升为八 writer 并验证全部持久化。没有发现需要改动生产实现的问题。
+- **已修复问题**：无；本轮定向复验未发现需要在既有业务范围内修复的实现缺陷。
 - **契约偏差**：无
 
 ## 剩余问题
 
-- **未验证项**：无
-- **剩余风险**：sql.js 按整库载入 WASM 内存；超大既有数据库峰值内存未用生产数据测量。本 Task 未接触真实私有 trace/生产 DB，验证仅覆盖 synthetic fixtures；全仓集成验证由 Main 执行。
+- **未验证项**：无。
+- **剩余风险**：sql.js 以 WASM 内存载入整库；本轮未使用生产数据测量超大数据库的峰值内存。真实私有 trace/生产数据库不属于本轮可运行验证范围。
 
 ## 快照影响
 
-- **范围**：multiple
-- **说明**：本 attempt 只增加并发测试强度，无新的运行时快照差异；观测/诊断产品能力、Node + SQLite WASM 技术实现及操作入口仍待全部 Task 集成后由 Main/Architect 同步 Current Truth。
+- **范围**：无
+- **说明**：本轮无运行时或测试文件变更，无新增 Current Truth 差异；相关快照在全部 Change Task 集成后由 Main/Architect 统一核对。

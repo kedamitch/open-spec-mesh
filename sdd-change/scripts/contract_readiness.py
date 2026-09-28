@@ -2,7 +2,6 @@
 import re
 from markdown_contract import split_contract, visible_lines
 from sdd_common import metadata
-from path_contract import parse_path_contract
 
 AC = re.compile(r'(?<![A-Za-z0-9_-])AC-[0-9]+(?![A-Za-z0-9_-])')
 DESIGN = re.compile(r'(?<![A-Za-z0-9_-])(D[0-9]+)(?![A-Za-z0-9_-])')
@@ -366,7 +365,6 @@ def validate_full_task_design(text, label):
     scope = _section(text, '范围与代码落点', label)
     if _subsection_or_none(scope, '代码结构 / 模块落点') is None:
         raise ValueError(f'{label}: missing subsection: 代码结构 / 模块落点')
-    parse_path_contract(text, label)
 
     detail = _section(text, '详细设计', label)
     for heading in ('核心逻辑', 'Components', '接口变化', '领域模型 / 状态变化',

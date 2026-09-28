@@ -146,7 +146,7 @@ def event(task, state, **details):
     task['state'] = state
 
 
-def validate_delivery(root, task, report, task_contract, label='Task Path Contract'):
+def validate_delivery(root, task, report, task_contract, label=None):
     fields, body = metadata(report)
     if fields.get('status') != 'submitted':
         raise ValueError('Worker delivery missing')

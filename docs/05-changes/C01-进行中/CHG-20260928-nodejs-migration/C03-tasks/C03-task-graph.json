@@ -103,7 +103,7 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "planned",
+      "state": "accepted",
       "history": [
         {
           "state": "running",
@@ -194,11 +194,31 @@
             "agent_session": "/root/node_task_02_workflow_runtime"
           },
           "user_confirmed": true
+        },
+        {
+          "state": "running",
+          "baseline": "ceaeedd42d9908d524234815d05792e9474a073f",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02-attempt4",
+          "attempt": 4
+        },
+        {
+          "state": "submitted",
+          "revision": "af7274c4d030955ed8a7a3bef3c2792540f1d6aa",
+          "attempt": 4
+        },
+        {
+          "state": "accepted",
+          "reason": "Main independently verified C03-02 attempt 4: Node 24.21.0 workflow suite 26/26; Python contract/readiness/lifecycle suite 95/95; git diff --check and no active path-authorization references in runtime/docs. Delivery binds the frozen digest, attempt 4, baseline, and revision af7274c; regression tests prove conflicting legacy allow/deny tables no longer gate delivery while real diff/file-table/AC, identity, ancestry, and safety checks remain.",
+          "revision": "af7274c4d030955ed8a7a3bef3c2792540f1d6aa"
         }
       ],
-      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02",
-      "attempt": 3,
-      "agent_session": "/root/node_task_02_workflow_runtime"
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02-attempt4",
+      "attempt": 4,
+      "agent_session": "/root/node_task_02_workflow_runtime",
+      "contract_digest": "b0b6e31739f771467859a3d73868da2bfa85fab4eecd80057ff428259a72b4a2",
+      "baseline": "ceaeedd42d9908d524234815d05792e9474a073f",
+      "result_revision": "af7274c4d030955ed8a7a3bef3c2792540f1d6aa",
+      "report_digest": "a70d7a85a90ad6dc87b43ad5c4b596cb6cf37578786a3237e8d16ab04b72982f"
     },
     {
       "id": "C03-03",
@@ -206,7 +226,7 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "planned",
+      "state": "accepted",
       "history": [
         {
           "state": "running",
@@ -273,11 +293,31 @@
             "agent_session": "/root/node_task_03_observation_diagnostics"
           },
           "user_confirmed": true
+        },
+        {
+          "state": "running",
+          "baseline": "ceaeedd42d9908d524234815d05792e9474a073f",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-03-attempt3",
+          "attempt": 3
+        },
+        {
+          "state": "submitted",
+          "revision": "ceaeedd42d9908d524234815d05792e9474a073f",
+          "attempt": 3
+        },
+        {
+          "state": "accepted",
+          "reason": "Main independently reran the AC-06/07 Node 24.21.0 observation/diagnostics suite (33/33), the 5-test store suite three times (15/15 total), CLI help and syntax checks; report identity matches attempt 3/baseline, diff is empty, and evidence is acceptance-ready.",
+          "revision": "ceaeedd42d9908d524234815d05792e9474a073f"
         }
       ],
-      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-03",
-      "attempt": 2,
-      "agent_session": "/root/node_task_03_observation_diagnostics"
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-03-attempt3",
+      "attempt": 3,
+      "agent_session": "/root/node_task_03_observation_diagnostics",
+      "contract_digest": "66827d8e5ba69f838956e292c0d103f728341c1c70a997db552cd5ff4a6854a9",
+      "baseline": "ceaeedd42d9908d524234815d05792e9474a073f",
+      "result_revision": "ceaeedd42d9908d524234815d05792e9474a073f",
+      "report_digest": "9c53d38880a7fc02e880fac7c3db03ecbf9b308ac4f7551d8ee7b8fa38bd2f98"
     },
     {
       "id": "C03-04",
@@ -285,7 +325,7 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "planned",
+      "state": "accepted",
       "history": [
         {
           "state": "running",
@@ -388,11 +428,31 @@
             "agent_session": "/root/node_task_04_systemone_client"
           },
           "user_confirmed": true
+        },
+        {
+          "state": "running",
+          "baseline": "ceaeedd42d9908d524234815d05792e9474a073f",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04-attempt4",
+          "attempt": 4
+        },
+        {
+          "state": "submitted",
+          "revision": "ceaeedd42d9908d524234815d05792e9474a073f",
+          "attempt": 4
+        },
+        {
+          "state": "accepted",
+          "reason": "Main independently reran AC-08 Node 24.21.0 suite (23/23), AC-09 GPU service suite (6/6), and npm pack dry-run (80 files; GPU Python helper/server excluded); report matches the assigned attempt/baseline and empty diff, all evidence is acceptance-ready.",
+          "revision": "ceaeedd42d9908d524234815d05792e9474a073f"
         }
       ],
-      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04",
-      "attempt": 3,
-      "agent_session": "/root/node_task_04_systemone_client"
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04-attempt4",
+      "attempt": 4,
+      "agent_session": "/root/node_task_04_systemone_client",
+      "contract_digest": "4509c950bf446b33b6876f904e5182d8edd63763c570fc1c96c3a641fc8b13fd",
+      "baseline": "ceaeedd42d9908d524234815d05792e9474a073f",
+      "result_revision": "ceaeedd42d9908d524234815d05792e9474a073f",
+      "report_digest": "d4c3d2f7af0c3b177352df4b40781611ba37720ab80fe99dd8aea2241d92ac68"
     },
     {
       "id": "C03-05",

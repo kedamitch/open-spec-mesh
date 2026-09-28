@@ -19,7 +19,6 @@ import new_release
 import check_change
 from sdd_common import metadata, render_spec
 from delivery_evidence import validate_evidence, require_evidence_body
-from path_contract import validate_changed_paths
 
 
 class TemplateGenerationTests(unittest.TestCase):
@@ -75,15 +74,14 @@ class TemplateGenerationTests(unittest.TestCase):
             self.assertIn(heading + '\n\n待补充。', design)
         self.assertNotIn('| 表 / 存储 | Current | Delta / Target | 数据迁移 / 兼容 |', design)
         self.assertIn('> **交付目标**：待补充。', task)
-        for heading in ('## 范围与代码落点', '### 输入 / 依赖', '### Path Contract', '### 代码结构 / 模块落点', '## Task 实现流程', '### Components', '### 接口变化', '### 领域模型 / 状态变化', '### 数据与表结构变化', '### Tests', '### Expected Output'):
+        for heading in ('## 范围与代码落点', '### 输入 / 依赖', '### 代码结构 / 模块落点', '## Task 实现流程', '### Components', '### 接口变化', '### 领域模型 / 状态变化', '### 数据与表结构变化', '### Tests', '### Expected Output'):
             self.assertIn(heading, task)
         self.assertIn('flowchart', task)
         for heading in ('### Components', '### 接口变化', '### 领域模型 / 状态变化',
                         '### 数据与表结构变化'):
             self.assertIn(heading + '\n\n待补充。', task)
         self.assertNotIn('| 表 / 存储 | 字段 / 索引 / 约束 | 操作 | 影响 |', task)
-        self.assertIn('| 规则 | 路径 |', task)
-        self.assertIn('| allow | 待补充 |', task)
+        self.assertNotIn('### Path Contract', task)
         self.assertIn('只运行当前 Task 直接相关的定向测试', task)
         for heading in ('### 前置任务', '### 关联设计', '### 验收标准', '### 验证要求'):
             self.assertIn(heading, task)
@@ -172,42 +170,41 @@ class EvidenceTests(unittest.TestCase):
             + '- **说明**：测试夹具，无 Current Truth 影响。\n'
         )
 
-    def path_contract(self, allow='app.py', deny='无'):
-        return (
-            '# Task `T1`：详细设计\n\n'
-            '## 范围与代码落点\n\n'
-            '### Path Contract\n\n'
-            '| 规则 | 路径 |\n'
-            '| --- | --- |\n'
-            f'| allow | `{allow}` |\n'
-            + (f'| deny | `{deny}` |\n' if deny != '无' else '| deny | 无 |\n')
-            + '\n## 依赖与验收\n\n### 验收标准\n\n- `AC-01`：验证夹具行为。\n'
-        )
+    def task_contract(self, allow=None, deny=None):
+        text = '# Task `T1`：详细设计\n\n## 范围与代码落点\n\n'
+        if allow is not None:
+            text += ('### Path Contract\n\n| 规则 | 路径 |\n| --- | --- |\n'
+                     f'| allow | `{allow}` |\n')
+            if deny is not None:
+                text += f'| deny | `{deny}` |\n'
+            text += '\n'
+        return text + '## 依赖与验收\n\n### 验收标准\n\n- `AC-01`：验证夹具行为。\n'
 
-    def test_path_contract_accepts_allowed_diff_and_rejects_outside_or_denied(self):
-        contract = self.path_contract()
+    def test_delivery_ignores_missing_and_conflicting_legacy_path_tables(self):
         self.assertEqual({'app.py': 'A'}, validate_evidence(
             self.root, self.base, self.result, self.evidence(),
-            task_contract=contract, label='T1'))
-        with self.assertRaisesRegex(ValueError, 'outside allow paths'):
-            validate_evidence(
-                self.root, self.base, self.result, self.evidence(),
-                task_contract=self.path_contract('src/**'), label='T1')
-        with self.assertRaisesRegex(ValueError, 'denied by app.py'):
-            validate_evidence(
-                self.root, self.base, self.result, self.evidence(),
-                task_contract=self.path_contract('**', 'app.py'), label='T1')
-
-    def test_overlapping_task_path_contracts_are_independently_valid(self):
-        first = self.path_contract('shared/**')
-        second = self.path_contract('shared/**')
-        paths = {'shared/component.py': 'M'}
-        self.assertEqual(paths, validate_changed_paths(first, paths, 'T1'))
-        self.assertEqual(paths, validate_changed_paths(second, paths, 'T2'))
+            task_contract=self.task_contract()))
+        contradictory = self.task_contract('src/**', 'app.py')
+        self.assertEqual({'app.py': 'A'}, validate_evidence(
+            self.root, self.base, self.result, self.evidence(),
+            task_contract=contradictory))
 
     def test_real_table_and_fenced_test_output_are_valid(self):
         self.assertEqual({'app.py': 'A'}, validate_evidence(
             self.root, self.base, self.result, self.evidence(verification='3 passed')))
+
+    def test_file_table_still_must_match_diff_and_operation(self):
+        contract = self.task_contract()
+        for files in (
+            '',
+            '| `other.py` | A | Extra file not in the diff |',
+            '| `app.py` | M | Wrong operation for the added file |',
+        ):
+            with self.subTest(files=files):
+                with self.assertRaises(ValueError):
+                    validate_evidence(
+                        self.root, self.base, self.result,
+                        self.evidence(files=files), task_contract=contract)
 
     def test_example_table_does_not_count_as_delivery(self):
         for wrapper in ('```markdown\n{}\n```', '<!--\n{}\n-->'):
@@ -223,7 +220,7 @@ class EvidenceTests(unittest.TestCase):
                     validate_evidence(self.root, self.base, self.result, self.evidence(verification=value))
 
     def test_structured_delivery_requires_exact_ac_coverage_and_enums(self):
-        contract = self.path_contract()
+        contract = self.task_contract()
         missing = self.evidence().replace('| `AC-01` | isolated test | 通过 | isolated test passed |\n', '')
         with self.assertRaisesRegex(ValueError, 'result row|AC rows must match'):
             validate_evidence(self.root, self.base, self.result, missing, task_contract=contract)
@@ -239,7 +236,7 @@ class EvidenceTests(unittest.TestCase):
                 self.evidence(snapshot_scope='unknown'), task_contract=contract)
 
     def test_delivery_cannot_claim_pass_with_failed_unverified_or_deviation(self):
-        contract = self.path_contract()
+        contract = self.task_contract()
         for evidence in (
             self.evidence(ac_result='失败'),
             self.evidence(unverified='异常路径未执行'),
