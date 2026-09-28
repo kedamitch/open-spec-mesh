@@ -48,7 +48,7 @@ function flattenMarker(obj,marker){
 function pathOfKey(raw){
   const marker="__osm_marker__";
   const obj=parse(raw+"."+marker+" = true");
-  return flattenMarker(obj,marker).slice(0,-1);
+  return flattenMarker(obj,marker);
 }
 function assignmentKey(stmt){
   let quote=null,escaped=false;
