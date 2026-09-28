@@ -4,8 +4,32 @@
       "id": "C03-01",
       "path": "C03-tasks/C03-01-document-tooling",
       "depends_on": [],
-      "state": "planned",
-      "history": []
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "f532f190864e8c4489230c7a5ef171e76ac21aa8",
+          "workspace": "/home/fatfei/code/open-spec-mesh",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "3f66a13433eed73895e5bc423c2f9da2c6d2f969",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "复核冻结契约、Task Delivery、Node 24.21.0 定向套件与 Path Contract；AC-01/02 通过。",
+          "revision": "3f66a13433eed73895e5bc423c2f9da2c6d2f969"
+        }
+      ],
+      "contract_digest": "0febdf0c58a0bec4ff445ee2f1a97418fb20dabd250aa0d85196b7455b61bf7d",
+      "workspace": "/home/fatfei/code/open-spec-mesh",
+      "baseline": "f532f190864e8c4489230c7a5ef171e76ac21aa8",
+      "attempt": 1,
+      "agent_session": "/root/node_task_01_document_tooling",
+      "result_revision": "3f66a13433eed73895e5bc423c2f9da2c6d2f969",
+      "report_digest": "a464975947f5940a92837c493b6f192d46b3e90ff22fb4d7f0f17d000b5afe9f"
     },
     {
       "id": "C03-02",
