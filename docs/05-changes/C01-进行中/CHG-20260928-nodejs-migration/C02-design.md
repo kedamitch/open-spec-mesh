@@ -1,6 +1,6 @@
 # 公共设计
 
-> **设计结论**：以 Node ESM 和纯 JS/WASM 依赖迁移消费端；保留 canonical 文档、Git 身份、精确摘要、SQLite 与 MCP 协议，通过显式 npm install CLI 和稳定已安装 runtime 提供同一平台能力。独立 GPU Python 服务不进入消费包。
+> **设计结论**：以 Node ESM 和纯 JS/WASM 依赖迁移消费端；保留 canonical 文档、Git 身份、精确摘要算法、SQLite 与 MCP 协议，并取消 Task 文件路径授权器及其全链路依赖，通过显式 npm install CLI 和稳定已安装 runtime 提供同一平台能力。独立 GPU Python 服务不进入消费包。
 
 ## Current 基线与变更范围
 
@@ -19,6 +19,20 @@
 
 **证据优先级**：T03仍写 CODEX_HOME/sdd-observe，但 `sdd-do/scripts/observe.py:32–43` 和P02-04已使用 OPEN_SPEC_MESH_STATE_HOME → XDG_STATE_HOME/open-spec-mesh → ~/.local/state/open-spec-mesh。按实际源码迁移，绝不恢复过期默认。Current Truth的最终修订留给已集成diff同步，不在规划时写成事实。
 
+### 本轮重规划的真实起点与授权
+
+本轮只读起点为 Main HEAD `b8328f5c7ddd5590717badf58a3f2c9aef3ac403`。runtime 的权威状态是 C03-01 accepted/integrated（attempt 2）、C03-02/03/04 accepted/integrated（attempt 3/2/3），C03-05 blocked（attempt 1、无改动/交付），C03-06 随依赖 block 为 blocked（从 planned 传播而来）。根 `node_modules/` 物理存在且尚未永久忽略。用户已批准整个文件路径授权删除、发行清单/发布锁和依赖产物忽略；本轮不再把旧路径门当兼容承诺。
+
+| 受影响面 | Current | Delta | Target |
+| --- | --- | --- | --- |
+| Task 生成与写作 | 模板/规范必填 Path Contract 和 allow/deny | C03-01 删除生成与必填要求 | 保留业务范围、代码落点与完整局部设计，无文件路径授权清单 |
+| SDD runtime 与 packet | readiness/草稿/evidence 调用路径解析/匹配，间接传播至验收/集成/收口；packet 提示 diff 需授权 | C03-02 删除授权模块、入口和依赖 | 全链路只有真实 diff/AC/身份/冻结/依赖等保留门，不按路径 glob 拒绝 |
+| 角色/Skill/规则/质量 | 写入路径边界被当作授权；测试断言越界拒绝 | C03-02 修改活动执行规则，C03-06 做完整消费审计 | 业务范围仍冻结；文件选择不再触发授权/replan，角色能力和安全边界不变 |
+| 本地 artifact | package.json files 只含文档骨架；根开发锁不等于可消费发布锁 | C03-05 扩充发行资源并生成 npm-shrinkwrap.json | tarball 完整、自包含、依赖树锁定且不依赖源码 checkout |
+| 根依赖产物 | 未跟踪 node_modules 使清洁检查受干扰 | C03-01 先加入根限定 .gitignore，C03-06 验证 | 用户目录原地保留，两个 lockfile 可跟踪 |
+
+受影响 Current Truth 还包括 P02-02 的运行边界、T02 的 deliver 规则、T03 的 Task 文本说明与 O01 的路径授权操作。快照仍保持真实既有事实，本轮只记录最终同步清单。
+
 ### 当前兼容敏感实现
 
 - `workflow.py:62–94` 对 scoped Change/Design/Own Task文本以 `\n---SDD-CONTRACT---\n` 拼接后SHA-256；Python文本读取的通用换行、rstrip及引用抽取影响精确结果。
@@ -33,7 +47,7 @@
 
 源码新增 `bin/open-spec-mesh.js`、`lib/{cli,runtime,documents,workflow,release,observation,diagnostics,systemone,installation}/`，保留各Skill目录的 `.js`入口/模板/参考。CLI路由是固定command→模块映射，延迟加载对应能力，禁止任意模块路径/动态用户代码替代平台操作。共享机制放runtime，业务实现按能力落点。
 
-消费包不捆绑node_modules或Python；随包包含package参考docs，供原--include-project-docs显式选项完整复制，默认不写Home/docs。installer将包的runtime/resources复制到stage，使用锁定package-lock执行 `npm ci --omit=dev --ignore-scripts --no-audit --no-fund`，验证资源后与host资产一起发布到 `<host-home>/open-spec-mesh/runtime/`。因此不依赖npm exec临时cache生命周期、源码cwd、全局npmroot或Python安装。
+消费包不捆绑node_modules或Python；随包包含package参考docs，供原--include-project-docs显式选项完整复制，默认不写Home/docs。installer将包的runtime/resources复制到stage，使用由根开发锁派生并随包发布的 npm-shrinkwrap.json 执行 `npm ci --omit=dev --ignore-scripts --no-audit --no-fund`，验证资源后与host资产一起发布到 `<host-home>/open-spec-mesh/runtime/`。因此不依赖npm exec临时cache生命周期、源码cwd、全局npmroot或Python安装。
 
 已安装Skills仍位于 `<host-home>/skills/<skill>/`；其脚本调用共享 `sdd-init/scripts/node_runtime.js` bootstrap：源码优先固定包根lib；installed布局选择Home/open-spec-mesh/runtime。校验package身份和必要文件，依赖从该runtime/node_modules解析，不以进程cwd猜测。入口语义的完整映射见“接口变更”。
 
@@ -60,7 +74,7 @@ sequenceDiagram
 
 ## 产品变更
 
-产品模块/功能规则不扩展：Quick/SDD、角色delegation allowlist、显式Reviewer、Task完整设计前置、Path Contract和人工Acceptance均无变化。改变的是运行前置、入口和版本升级边界。
+Quick/SDD、角色 delegation allowlist、显式 Reviewer、Task 完整设计前置和人工 Acceptance 无变化。用户已明确取消 Task 文件范围锁定：不再要求 Path Contract，不按 allow/deny 或 changed paths 判断是否可以交付。业务目标/范围/AC/依赖和设计仍冻结，改变业务行为仍需批准；新增文件落点本身不再要求路径扩权。安全路径、ownership 与互斥域锁不是该机制，不得一起删除。
 
 - 消费端统一Node；Research keys仍是原真实工具安装前置，--skip-tools可单命令安装core。
 - npm package获取不代表宿主已经配置；只有显式install会写Home。
@@ -72,7 +86,7 @@ sequenceDiagram
 
 ### 公共命令与原脚本映射
 
-所有CLI保留原positionals、flag含义、互斥、默认、JSON字段和退出类别：参数错误非零、业务保护失败非零，status/delivery/dispatch等机器stdout不混入日志。错误原文不必逐字符相同，但标识和语义可测试；help不得显示不存在的成功能力。
+除 Path Contract 私有解析/匹配 helper 整体删除、路径越界错误整体取消外，所有CLI保留原positionals、flag含义、互斥、默认、JSON字段和退出类别：参数错误非零、业务保护失败非零，status/delivery/dispatch等机器stdout不混入日志。错误原文不必逐字符相同，但标识和语义可测试；help不得显示不存在的成功能力。
 
 | 公共command | Node脚本映射 / 能力 | 原输入保留 |
 | --- | --- | --- |
@@ -87,6 +101,8 @@ sequenceDiagram
 | observe / diagnose | observe.js / sdd-diagnose/scripts/bundle.js | 原host/db、collect/scan/report/group/summary及bundle输入 |
 | systemone | mcp/laya_http_mcp.js | 缺省stdio；--input一击JSON模式，无SDK之外的解释器 |
 | recover-lock | runtime维修入口 | 显式namespace/root或Home/db、owner token及--writers-stopped；不接受任意锁路径 |
+
+删除 `parsePathContract/validateChangedPaths/matchesPath` 与 Python 对等 helper，不留 stub/default allow/环境开关。`validateEvidence`/`validateDelivery` 的 Task 文本输入保留供逐 AC 校验，label 改为 Delivery 语义；`changedFiles` 仍读取实际 Git diff。packet 无路径匹配约束或新增 allow/deny 字段，保留 artifacts、runtime、dependencies 和业务 scope。
 
 对应的底层helper不承诺Python import API。迁移后的Skill示例使用 `node "$SKILL_ROOT/.../script.js"`；便捷new_change/init/close/new_release shell脚本继续存在且调用Node。Node wrappers只做固定路由，不内置第二份业务逻辑。
 
@@ -104,6 +120,8 @@ Q01仍要求唯一 `## Validation Entry Point`，取首个非空声明：
 
 **业务领域/状态机无变化**：Change、Task、Contract、ExecutionIdentity、Delivery、Acceptance、Integration、ObservationRun及其边界保持；Task状态仍planned/running/submitted/accepted/blocked，integrated只由Git ancestry推导。原history字段、attempt增长/session不可改绑、submitted不解锁下游不变。
 
+Path Contract 不再是执行授权对象；Task 的 Included/Excluded、代码结构和 AC 仍是人类 Review 与冻结的业务设计。旧文本即使留有 Path Contract，也只是历史/过渡正文：新 runtime 不解析其 allow/deny，但全文仍参与既有摘要算法，不能静默剥离来沿用旧 digest。
+
 新增的RuntimeLocation、InstallStage、DirectoryLockOwner和SqliteSession是内部运行对象，不成为Graph字段或新业务状态。MCP建议仍不触发Task动作。不同宿主能力继续由Adapter/coverage表达，不写入Task状态。
 
 ## 数据与表结构变更
@@ -118,6 +136,7 @@ Q01仍要求唯一 `## Validation Entry Point`，取首个非空声明：
 | validation receipt | schema1、change/revision/entrypoint/passed/exit_code/stdout_sha256/stderr_sha256 | 旧script descriptor原SHA；新argv种类采用上述绑定，失败先覆盖旧成功 |
 | observations.sqlite3 | application_id=0x5344444F；user_version1；runs(run_id PK,scope_key,schema_version=1,report_json) | sql.js读入/事务/export/原子替换；run_id和Python scope_key兼容 |
 | System One | JSON模板、settings、现有env名、进程缓存及metrics | 模板digest/encode兼容；进程缓存换进程自然清空，不作数据迁移 |
+| npm 发布锁 | 新增 npm-shrinkwrap.json，lockfileVersion 与根 package-lock.json 一致 | 根开发锁只读为单一来源；发布锁原字节复制，全部 packages/version/resolved/integrity 与源相同；包身份/依赖不改 |
 
 SQLite不改表/列/索引/约束，不将数据转成JSON或新DB；不自动升级未知schema。旧锁文件与Python工具cache不是数据权威，新版不猜测删除。GPU Pythonhelper独立迁出客户端后不在npmfiles中。
 
@@ -135,7 +154,7 @@ SQLite不改表/列/索引/约束，不将数据转成JSON或新DB；不自动�
 - observation导出 `collect/normalize/diagnose/report/summarize`；bundle只调用这些纯采集/诊断接口，不能fork CLI或加模型调用。
 - systemone导出 `clientConfig/managedLaunchShape/toolSchemas/runDecision`；installer消费同一工具/launch/env描述，不重新定义四工具或权限过滤。
 
-选定依赖：sql.js 1.14.2、@modelcontextprotocol/sdk 1.30.1、smol-toml 1.4.2、jszip 3.10.2、lossless-json 4.3.1；由文档Task建立精确dependencies和lockfile。SDK使用v1实际包API，禁止复制v2拆分包示例。全部采用registry已编译JS/WASM资源；消费者不运行构建/生命周期。传递依赖通过lock固定；所有五项属于普通compiled Node artifact依赖，default-off仅保证不执行System One专属安装/加载transport/检测Provider，不承诺npm包下载不含SDK字节。后续Task不得无依据引入native/编译依赖。
+选定依赖：sql.js 1.14.2、@modelcontextprotocol/sdk 1.30.1、smol-toml 1.4.2、jszip 3.10.2、lossless-json 4.3.1；由文档Task建立精确dependencies和lockfile。SDK使用v1实际包API，禁止复制v2拆分包示例。全部采用registry已编译JS/WASM资源；消费者不运行构建/生命周期。传递依赖通过根 package-lock 固定；C03-05 从其原字节派生发布锁，根开发锁不改；所有五项属于普通compiled Node artifact依赖，default-off仅保证不执行System One专属安装/加载transport/检测Provider，不承诺npm包下载不含SDK字节。后续Task不得无依据引入native/编译依赖。
 
 ## 关键决策
 
@@ -161,11 +180,11 @@ SQLite不改表/列/索引/约束，不将数据转成JSON或新DB；不自动�
 
 - **结论**：lib是单一实现；各Skill .js wrapper经bootstrap找到源码或已安装open-spec-mesh/runtime；installer自包含发布package+锁定deps，不能指向npmcache/symlink。
 - **原因**：单次npm exec可清理cache；消费Skills不应依赖clone/cwd和全局模块搜索。
-- **影响**：package files白名单含bin/lib、canonical rules/roles/config、Skill references/templates/Node scripts、mcp JSON/JS、assets SVG、package参考docs和许可资源；不含tests、Python实现、GPU服务或node_modules。参考docs内历史记录不是消费脚本，保持原--include-project-docs能力；默认安装只发布runtime资源和Skills，不写Home/docs。引用重定位验证跨installed布局。
+- **影响**：package files 是发行资源选择，不能与已删除的 Task 写入授权混同；它仍必须完整、精确。白名单含 npm-shrinkwrap.json、install.sh/scripts 安装 Node 入口、bin/lib、canonical rules/roles/config、Skill references/templates/Node scripts、mcp JSON/JS、assets SVG、package参考docs和许可资源；不含tests、Python实现、GPU服务或node_modules。参考docs内历史记录不是消费脚本，保持原--include-project-docs能力；默认安装只发布runtime资源和Skills，不写Home/docs。引用重定位验证跨installed布局。
 
 ### D005｜SDD生命周期和Git身份不重设计
 
-- **结论**：原readiness/冻结/scoped digest、五状态/attempt/session、Delivery/AC/Path Contract、rework/replan、wave ancestry原样移植；git使用argv子进程，不用shell拼接。
+- **结论**：原readiness（仅去掉 Path Contract 必填与解析）/冻结/scoped digest 算法、五状态/attempt/session、Delivery/AC、rework/replan、wave ancestry保持；取消所有 Task 文件路径匹配门；git使用argv子进程，不用shell拼接。
 - **原因**：语言迁移不能削弱保护或把accepted当integrated。
 - **影响**：公共graphSchema来自文档Task，状态业务由workflow独占；跨Task不得引入第二份transition或修改schema。
 
@@ -195,9 +214,23 @@ SQLite不改表/列/索引/约束，不将数据转成JSON或新DB；不自动�
 
 ### D010｜回归映射和最终快照时机
 
-- **结论**：Node测试/validator是消费端required路径；422原静态方法逐项映射到实际Node case或独立GPUlane。移植职责跟能力Task；最后verificationTask聚合覆盖、CI和操作指南，不代替Main最终验收。
+- **结论**：Node测试/validator是消费端required路径；422原静态方法逐项映射到实际Node case或独立GPUlane；仅用户授权取消的路径行为按“有意行为替换”映射到新反向测试并注明 R06/D011，其他场景不允许豁免。移植职责跟能力Task；最后verificationTask聚合覆盖、CI和操作指南，不代替Main最终验收。
 - **原因**：保留失效Python测试或大量skip不能证明功能保留；计划不应预写现状。
 - **影响**：最终Node全量入口和明确GPU/fixture外部lane均须真实验证；失败无豁免。全部集成后Main再交Architect按diff同步受影响Current Truth，尤其state home失配；不是新增Worker任务来伪造现状。
+
+### D011｜取消 Task 文件路径授权，不取消业务 Contract 与安全保护
+
+- **结论**：删除 Task Path Contract 生成/必填/解析/allow-deny/glob 匹配、changed-path authorization 与所有消费者；不是 `allow **`、默认允许或隐藏开关。业务范围和完整设计仍冻结；路径选择不是独立授权门。
+- **保留**：Git diff/Delivery 文件表集合与操作精确相等、全部 AC 的结构化结果、baseline/revision/attempt/workspace/session、scoped digest/漂移、history/replan、Git ancestry/依赖状态、人工 Acceptance、用户文件保全、symlink/path traversal、ownership、角色委派 allowlist、project/install/store 域锁及 rollback。
+- **兼容**：Graph/Delivery/receipt 的 schema 无变化，旧合同正文仍参与原摘要，不篡改旧 Delivery/历史工件或重置数据。含旧 Path Contract 的 Task 可被新 runtime 读取，缺该节的新 Task 也可正常冻结；两者都没有文件路径授权。所有本轮旧冻结身份按机械 drift + 依赖传播撤销。
+- **过渡边界**：当前已安装协调器仍要求 Path Contract。仅本 Change 六份既有 Contract 保留精确路径表作为旧协调器启动格式，不用全路径授权替代；它们不是目标模板、目标 runtime 的限制或全局质量豁免。新模板直接不生成该节。C03-02/03/04 wave 复验集成完成后，Main 停止旧 writer，再切到已集成 Node 协调器；新协调器不执行这些历史表。无需届时再补设计或改合同/摘要，旧表永久留作本 Change 过渡记录即可。目标删除验收必须在没有路径节及含故意冲突旧表的隔离项目两种场景中证明，不能只用本 Change 旧格式证明。
+
+### D012｜完整发行清单与唯一来源的 npm 发布锁
+
+- **结论**：C03-05 修订 `package.json.files` 并新增 `npm-shrinkwrap.json`，根 `package-lock.json` 原字节为唯一来源；包名/version/private/engine/bin 与五个直接依赖和传递树不改。禁止在 Main 根执行 `npm shrinkwrap`、`npm install/ci`，也不能重解析最新依赖；派生与打包验证用隔离目录。
+- **发行语义**：`package-lock.json` 是开发来源，不假定它会出现在 npm tarball。发布锁须实际出现在 tarball，RuntimeStager 复制并使用它进行 `npm ci --omit=dev --ignore-scripts --no-audit --no-fund`。源码若同时有两个锁，打包前验证原字节相同；缺失/分叉/资源不全明确失败，不无锁 install/fallback。
+- **完整边界**：除现有文档骨架，还包含 installation/workflow/release/observation/diagnostics/systemone、Node 薄入口/便捷 shell、canonical Rules/roles/dispatch/config、所有被引用 Skill 模板/reference/JSON、MCP JS/模板/settings、SVG 和 package 参考 docs。files 可预声明 C03-06 的 Node 质量文件模式，但 C03-05 不伪造未实现文件；C03-06 最终 tarball 审计所有消费能力。
+- **排除与保全**：tests、Python/GPU 实现、node_modules、真实凭据/状态/临时包不入消费 artifact；仅获取 artifact 不写 Home，公开发布仍独立 release。C03-01 前移 `/node_modules/` 忽略以保证工作区可协调，C03-06 验证根限定规则、两个锁仍跟踪和用户目录未变。package 参考 docs 在最终同步前仍描述既有真实 Current Truth；C03-05 验证显式复制完整树/导航和操作资源，不能为中途打包修改快照。全局 Current Truth 的 Node/路径规则及源码链接待最终真实同步，再由 Main 全量验证。
 
 ## 公共设计与不变量
 
@@ -205,7 +238,22 @@ SQLite不改表/列/索引/约束，不将数据转成JSON或新DB；不自动�
 - **幂等 / 并发**：锁顺序为能力的外层域锁→文件写；workflow不取store/install锁，store不取project锁；bundle不写项目。相同Graph/runtime/schema操作保持幂等。不同Task worktree允许并行，但同一Task不能并发执行；新/旧runtime禁止并写。
 - **失败与恢复**：失败必须非零/原fallback，不能假通过或补造历史时间；保留旧数据/temp恢复信息。不自动replan/reset/rebase/prune脏workspace。crash残锁按D003显式恢复。
 - **兼容**：canonical持久formats/IDs/schema保持；lossless/legacy codec以基线golden为准。旧Python命令/私有importAPI不兼容；GPU Python不是fallback。安全输入边界不因JS prototype pollution、symlink或shell注入放宽。
+- **文件选择与真实范围**：不以路径 glob 判断越界，不重引入 path ownership 作为 Task 授权器。新增实现落点只需符合当前业务目标/Included/Excluded、设计与 AC；改变业务 Contract 仍须 replan。保护 Git/workspace/报告目的路径及安装 ownership 的 allowlist 是真实数据/执行安全，不是 Task 文件范围门。
+- **用户根依赖**：Main 根 node_modules 只读，任何 Task 都不能移动/删除/清理/覆盖/暂存；依赖安装与测试数据仅在隔离 workspace/temp/Home。永久忽略由 C03-01 修改根 .gitignore；提交前若旧协调器被根 untracked 产物阻挡，Main 只可临时采用根限定 Git exclude（不忽略任何其他改动），不能通过清理用户目录使检查变绿，临时 exclude 不能代替版本化规则。
 - **安全**：研究工具和runtime依赖安装的子进程移除provider/API key；日志隐藏registry可能凭据，保留env变量名不保存值；系统建议不能扩权，session/receipt/flags不冒充认证。
+
+### 返工、复验和撤销范围
+
+| Task | 是否撤销旧验收 | 本轮执行要求 | 旧身份/工作区 |
+| --- | --- | --- | --- |
+| C03-01 | 是，共享需求/自身生成设计变化，且作为其他 Task 上游传播 | 原 Worker replan 后实现模板/规范与 ignore，复跑 AC-01/02，不能只复用旧锁修复 Delivery | attempt 2 和原 session/工作区保留历史 |
+| C03-02 | 是，路径授权实际仍存在，AC/局部设计变化 | 原 Worker 修改全链路删除并复跑 AC-03/04/05；不是只 revalidation | attempt 3、既有源码/revision/Delivery 不回滚 |
+| C03-03 | 是，共享需求、D004/D011/自身过渡正文变化与 C03-01 依赖传播 | 原 Worker 新 attempt 下定向复验 AC-06/07；无证据要求新业务改动；有缺陷仅在原业务范围修复 | attempt 2/session/原 worktree 保留 |
+| C03-04 | 是，同上；取消 Task 文件授权不取消候选角色权限 | 原 Worker 新 attempt 定向复验 AC-08/09，包含原 GPU factory lane；不因此改 provider/SDK/权限 | attempt 3/session/原 worktree 保留 |
+| C03-05 | 无旧验收；撤销旧冻结/blocked identity | 原 Worker 从用户确认的新 Contract 继续，新 attempt、完整 pack/发布锁/安装证据 | attempt 1、无实现/交付；保留 root workspace/session |
+| C03-06 | 尚未执行，随下游失效后 planned | 实现质量/指南/退休，验证 C03-01 已交付的 ignore，不再负责写 ignore | 无 attempt/session，不伪造身份 |
+
+共享 Change 规划正文、Design 公共不变量/停止条件和被引用决策变化，五个既有 frozen digest 必然漂移。调用合法 `task_graph.py --action replan --task C03-01 --user-confirmed --workers-stopped` 一次，脚本收集目标 + 所有 drift + 依赖后继，全部回 planned；旧 baseline/revision/report/contract_digest 存入 history，workspace/attempt/session 依脚本保留。新摘要只做只读计算以证明范围，不在规划期手填/approve。Main 按整图重冻和派发；代码已经在 HEAD 中并不代表新 Contract 已验收。纯复验 Task 可在新 baseline 上没有实现 diff，但必须有新 attempt/revision 绑定的真实逐 AC 证据与 Delivery，不能冒用旧报告。
 
 ## Task 关系与设计落点
 
@@ -222,22 +270,22 @@ flowchart LR
 
 | Task | 交付结果 | 前置任务 | 关联设计 | 验收 |
 | --- | --- | --- | --- | --- |
-| `C03-01` 文档工具与共享基础 | package/bin/compat/锁/allocator、Node文档创建与迁移 | 无 | `D001` npm边界、`D002`精确编码、`D003`锁与保全、`D004`稳定布局 | `AC-01` 公共基础、`AC-02` 文档工具 |
-| `C03-02` SDD生命周期 | readiness/状态、执行/交付/集成、验证/归档/Release（`lib/release/**`） | `C03-01` 文档与公共接口 | `D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D005`Git身份、`D006`项目验证 | `AC-03` 冻结状态、`AC-04` 执行集成、`AC-05` 验证归档 |
-| `C03-03` 观测与诊断 | trace/coverage、兼容SQLite和离线ZIP | `C03-01` codec/IO/锁及resources | `D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D007`WASM SQLite | `AC-06` 观测数据、`AC-07` 私有诊断 |
-| `C03-04` System One客户端 | Node MCP/HTTP/template/runtime与外部GPU隔离 | `C03-01` codec/依赖/入口 | `D002`精确编码、`D004`稳定布局、`D008`客户端解耦 | `AC-08` MCP协议、`AC-09` GPU隔离 |
-| `C03-05` 宿主安装 | 完整tarball消费、native资产、自包含runtime及升级回滚 | `C03-02` workflow、`C03-03` observation、`C03-04` System One | `D001` npm边界、`D002`精确编码、`D003`锁与保全、`D004`稳定布局、`D008`客户端解耦、`D009`ownership | `AC-10` 显式单命令、`AC-11` 宿主安全 |
-| `C03-06` 验证与使用指南 | Node全量/CI、回归映射、操作引用、完整纯Node消费证据及根 `.gitignore` 依赖产物忽略配置 | `C03-05` 完整installed产物 | `D001` npm边界、`D004`稳定布局、`D006`项目验证、`D009`ownership、`D010`回归与快照时机 | `AC-12` 消费验证 |
+| `C03-01` 文档工具与共享基础 | 既有基础复验、去路径清单的生成模板/写作规范、根 .gitignore | 无 | `D001` npm边界、`D002` 精确编码、`D003` 锁与保全、`D004` 稳定布局、`D011` 取消路径授权 | `AC-01` 公共基础、`AC-02` 文档工具 |
+| `C03-02` SDD生命周期 | Node/Python 路径授权模块与全链路门删除、packet/角色/Skills 更新、完整身份与 Delivery 复验 | `C03-01` 文档与公共接口 | `D002` 精确编码、`D003` 锁与保全、`D004` 稳定布局、`D005` Git身份、`D006` 项目验证、`D011` 取消路径授权 | `AC-03` 冻结状态、`AC-04` 执行集成、`AC-05` 验证归档 |
+| `C03-03` 观测与诊断 | 新 Contract/attempt 下复验既有 trace/SQLite/ZIP；无预设业务实现改动 | `C03-01` codec/IO/锁及resources | `D002` 精确编码、`D003` 锁与保全、`D004` 稳定布局、`D007` WASM SQLite、`D011` 保留数据安全 | `AC-06` 观测数据、`AC-07` 私有诊断 |
+| `C03-04` System One客户端 | 新 Contract/attempt 下复验既有 MCP/HTTP/GPU隔离；无预设业务实现改动 | `C03-01` codec/依赖/入口 | `D002` 精确编码、`D004` 稳定布局、`D008` 客户端解耦、`D011` 保留角色权限 | `AC-08` MCP协议、`AC-09` GPU隔离 |
+| `C03-05` 宿主安装 | 完整 package files/发布锁、三宿主 tarball 单命令、自包含 runtime/升级回滚 | `C03-02` workflow、`C03-03` observation、`C03-04` System One | `D001` npm边界、`D002` 精确编码、`D003` 锁与保全、`D004` 稳定布局、`D008` 客户端解耦、`D009` ownership、`D011` 无路径门、`D012` 完整发行/发布锁 | `AC-10` 显式单命令、`AC-11` 宿主安全 |
+| `C03-06` 验证与使用指南 | Node全量/CI、422项回归映射（明确行为替换）、最终发行/无路径门/根 ignore 保全审计 | `C03-05` 完整installed产物 | `D001` npm边界、`D004` 稳定布局、`D006` 项目验证、`D009` ownership、`D010` 回归与快照时机、`D011` 无路径门、`D012` 发行/锁审计 | `AC-12` 消费验证 |
 
-**过渡编排**：本Change实施期间Main固定使用既有已安装协调器写权威Change；旧源码只保留为基线/编排直到C03-06统一退休。候选Node操作只在隔离fixture或各自受控项目验证，不能与旧协调器并写本Change。全部集成后停止旧writer，再切换完整Node读取既有Graph和执行最终验证/收口；不能因源码退休破坏中途协调器，也不能通过Python后台提供新消费能力。
+**ready waves**：C03-01 → C03-02/03/04（独立原 worktree 并行复验/返工）→ C03-05 → C03-06。依赖拓扑不改：C03-05 必须消费三个真实新验收、已集成的精确结果；C03-06 必须消费完整安装。模板与 workflow 的公共重叠由已有 C03-01→C03-02 依赖解决，不新增按文件互斥的 Task。旧工作区复用必须先保全未提交内容，按既有流程集成上游真实结果，再用 reuse/base；不 reset/rebase 或创建覆盖原 session 的第二个 writer。
 
-**ready waves**：先C03-01；其result revision集成后C03-02/03/04在独立worktree并行；三个revision均集成后C03-05；C03-05集成后C03-06。全部Contract此刻就完成，不等ready补设计。相邻Skill参考可能低度重叠，按Path Contract合并；T5必须消费真实客户端/观测/workflow产物，T6必须验证真实安装，是语义依赖而非路径互斥。
+**过渡编排**：本轮规划和 C03-01/02/03/04 的启动可由既有已安装协调器操作权威 Change；六份兼容表满足其解析，不是最终路径策略。该 wave 集成后由 Main 停止全部旧 writer，使用兼容 Node≥24.21.0 和锁定现有依赖读取同一 Graph，核对精确摘要/状态一致后单写切换；不重新分配 attempt/session，不允许两种协调器并写。C03-05/06 的新 Node 消费从此不再执行路径门；Python 源码协调器的路径门在 C03-02 先删除，剩余过渡源码在 C03-06 退休。不得修改全局已安装 skill 来绕过当前 readiness，不能用 Python 后台提供新能力。
 
 ## 实现自由度与停止条件
 
-- **Worker可自行决定**：模块内部函数/类、等价parser组织、test fixture分布、不影响schema/协议的日志措辞；可在局部提出更清晰文件拆分，但必须留在Path Contract。
+- **Worker可自行决定**：模块内部函数/类、等价parser组织、test fixture分布、不影响schema/协议的日志措辞；可按同一业务 scope 选择更清晰的文件拆分；不以新增路径作为单独授权/replan 理由。
 - **不可改变**：上述依赖/版本与跨Task接口、公开行为/数据/摘要/权限、GPU例外、单显式npm安装、无Python/native消费前置、one-version upgrade和验收责任。
-- **必须停止并replan**：需换SQLite数据格式/receipt schema/冻结算法、取消旧scope兼容、引入native构建或Pythonfallback、改变provider/host默认、扩大GPU/registry发布、改变Task边界/依赖或越Path Contract；取得用户确认后原Architect修订。
+- **必须停止并replan**：需换SQLite数据格式/receipt schema/冻结算法、取消旧scope兼容、引入native构建或Pythonfallback、改变provider/host默认、扩大GPU/registry发布、改变业务 Task 边界/AC/依赖；单纯新增实现文件落点不属停止条件；取得用户确认后原Architect修订。
 
 ## 风险与未决问题
 
@@ -257,6 +305,31 @@ Librarian按只读Dispatch Packet完成核对；使用仓库明确支持的独�
 
 以上只读网络核对不代表已安装、通过协议测试或已公开发布。基线Python脚本只用于本次canonical规划创建/readiness，不是目标实现。
 
+### 本轮机制审计证据与计划落点
+
+| 证据面 | 核对到的事实 | 删除或保留 / 责任 |
+| --- | --- | --- |
+| Node 授权器 | lib/workflow/path-contract.js 的 parsePathContract/matchesPath/validateChangedPaths，sdd-change/scripts/path_contract.js 薄入口 | C03-02 整体删除，无默认允许 stub |
+| Node 直接门 | readiness.js:188 必填解析；lifecycle.js:168 草稿校验；evidence.js:148 实际 diff 授权 | C03-02 删除；实际 diff/结构/逐 AC/身份检查保留 |
+| Node 间接消费者 | contract.js.validateDelivery → evidence；record/import/submit/accept/integration 调用 validateDelivery；closure/check/close 复核身份/报告 | C03-02 逐入口验证不再经过授权器，不能删掉整个 validator |
+| packet | lifecycle.js.workerDispatchPacket 第 100 行的 diff/Path Contract 约束；workspace 同步 Task 正文 | C03-02 去提示，保留 artifacts/runtime/dependencies/scope、planning mirror 与用户报告保全 |
+| Python 直接与间接门 | path_contract.py；contract_readiness.py:369；sdd.py:270 draft；delivery_evidence.py:204；workflow.py.validate_delivery；record/import/accept/check/close 共用 | C03-02 删除路径门与 helper/import/错误文案，保留过渡身份/真实文件证据；C03-06 退休其余 Python 源码 |
+| 生成与规范 | sdd-task-contract-template.md；sdd-init/references/document-contract.md 的 Task 格式；runtime-guide/workflow-policy 中路径约定 | C03-01 修改模板/写作规范；C03-02 修改 runtime/protocol 规则，保留业务范围与全部必需局部设计 |
+| 活动执行规则 | AGENTS.md；agents/{architect,worker}.toml；sdd-change/SKILL.md、references/task-graph.md；sdd-do/SKILL.md、references/delivery-template.md；dispatch-contract 的 scope 为业务范围 | C03-02 去路径清单依赖，不改 model/effort/可委派角色、V2/session 或 scope 业务停止语义 |
+| 既有测试 | Node workflow/contracts.test.js 的两类路径断言；Python test_contract_readiness/test_lean_contracts/test_sdd/test_process_modes 的 Path Contract 断言/fixtures | C03-01 新生成模板测试；C03-02 将 removed behavior 逐项替换为无路径门正例，保留混合用例中的文件完整性负例；C03-06 422项映射/static 聚合 |
+| 历史/兼容文本 | completed Changes、Delivery、legacy golden 以及本 Change 六份启动格式 | 不批量重写；新 runtime 不把它们当授权。全文 digest 仍敏感，新的无路径正文必须有独立 fixture |
+| Current Truth | P02-01/02、T02/T03、O01 仍描述路径规则；其他 Node 化快照与 state-home 失配亦受影响 | 本轮不改，最后按真实 integrated diff/Delivery 同步 |
+
 ### 规划完整性证据
 
-2026-09-28，现有canonical Python规划工具完成本Change的只读检查：planning_complete与sdd status均返回planning_ready=true；task_graph校验6个planned Task、仅C03-01 ready、其余等待本图真实依赖；validate_docs返回docs: valid，git diff --check通过。12个AC/10个Dxxx均有Task落点，全部6份详细Contract均已生成并校验。检查未运行approve/prepare/bind-session、未写冻结digest/baseline/attempt/workspace/session，未执行目标实现或最终验收。这些是规划工件完整性证据，不是Node迁移已经通过的测试证据。
+2026-09-28，本轮完成所有六份局部详细设计和 C01/C02 对齐后，以已获用户授权执行一次正式 replan；不是手工改 Graph 状态。记录如下：
+
+- 已安装 Python 协调器和已集成 Node 只读 reader 均返回 `graph_ready=true`、`planning_ready=true`、`planning_error=null`。
+- 六个 Task 的当前 scoped digest 经两种实现只读计算逐项相等；五个旧冻结在修订前与旧正文相等、修订后全部漂移，replan 后 `frozen_contract_drifts=[]`。当前六个 Task 均 planned、**未重新冻结**；旧 digest/baseline/revision/report 身份在 history 的 previous 中完整保留，Main 才可 approve/prepare 新 Contract。
+- C03-01 的唯一下一机械动作是 prepare；C03-02/03/04 等待 C03-01，C03-05 等待三者，C03-06 等待 C03-05。Graph 拓扑、Task ID/path、原 attempt/workspace/agent_session 均保留。
+- `validate_docs.py --root /home/fatfei/code/open-spec-mesh` 返回 `docs: valid`；`git diff --check` 通过。这些是规划/readiness/格式检查，不是实现测试或最终验收。
+- Main HEAD 仍为 `b8328f5c7ddd5590717badf58a3f2c9aef3ac403`；Git worktree 登记及三个原 Worker 工作区 status 与调查前逐项相同。六份 Main Delivery SHA-256 相同，未覆盖其正文。
+- 根 package.json/package-lock.json/.gitignore 原字节、inode/mtime 均未变；根 node_modules 目录 inode/mode/mtime、内部 .package-lock.json 原字节/inode/mtime 均未变。未执行安装、shrinkwrap、打包、实现测试、Worker 派发、approve/prepare、接受/集成或任何清理。
+- 只读审计快照和计算结果位于 `/tmp/architect-path-scope-replan-mtdynrae`：before.json/原规划字节备份、status-python.json、status-node.json、scoped-digests-node.json、after.json；运行态仍以项目 Graph/脚本为准，不将这份快照作为新冻结或 Delivery。
+
+全部局部设计在此次交付前一次性完成；Main 不需要再次拆分/翻译 Graph。六份 Path Contract 表是明确标记的旧协调器过渡格式；目标删除在 C03-01/02 的实现与新/旧正文反向用例中验收，不能宣称本次规划已删除实现代码或已重新验收旧结果。执行环境需沿用已验证的 Node≥24.21.0；当前 shell 默认 v24.19.0 仅用于本轮只读摘要/status 对照，不作为目标 engine 合规或测试通过证据。

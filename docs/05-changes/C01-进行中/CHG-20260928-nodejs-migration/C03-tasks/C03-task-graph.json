@@ -54,15 +54,48 @@
           "state": "accepted",
           "reason": "Main 已核对 C03-01 attempt 2 Delivery、Task Path Contract、锁 owner 原子发布与 fail-closed 回归；Node 24.21.0 下 npm run test:document-tooling 29/29 通过，基线到 revision diff check 通过，无未验证 AC 或契约偏差。",
           "revision": "a015cdac052bf419a9c11e5c5f9c3e641f823322"
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户于2026-09-28批准完整取消Task文件路径授权及其Node/Python/runtime/packet/模板/角色/质量依赖；批准C03-05完整发行清单与根package-lock原字节派生npm-shrinkwrap且不变依赖；根node_modules忽略前移C03-01、C03-06审计。全部Contract设计已完成；共享冻结漂移和C03-01上游传播撤销C03-01/02/03/04旧验收并重开05/06，保留既有代码/Delivery/工作区/session/attempt历史。C03-01/02实施增量并复验，03/04仅定向新attempt复验，Main随后按原图重冻派发。",
+          "invalidated_by": "C03-01",
+          "previous": {
+            "state": "accepted",
+            "baseline": "a2170defde70084d181b712f03b2987baff53a76",
+            "workspace": "/home/fatfei/code/open-spec-mesh",
+            "result_revision": "a015cdac052bf419a9c11e5c5f9c3e641f823322",
+            "report_digest": "38d723548dc2eb330bb1f2b78be5386ed42b135fe8670881b9803375b7779160",
+            "contract_digest": "0febdf0c58a0bec4ff445ee2f1a97418fb20dabd250aa0d85196b7455b61bf7d",
+            "attempt": 2,
+            "agent_session": "/root/node_task_01_document_tooling"
+          },
+          "user_confirmed": true
+        },
+        {
+          "state": "running",
+          "baseline": "b8328f5c7ddd5590717badf58a3f2c9aef3ac403",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-01",
+          "attempt": 3
+        },
+        {
+          "state": "submitted",
+          "revision": "54cd1ee88951a447492db6fe53dd8c8fdde1e5ab",
+          "attempt": 3
+        },
+        {
+          "state": "accepted",
+          "reason": "Main已核对C03-01 attempt 3 Delivery、当前冻结摘要4231a991…、baseline b8328f5…与revision 54cd1ee…；实际六个改动均在本次旧协调器过渡期的Path Contract中。新增根限定 /node_modules/ 规则，不改、移动或暂存Main用户安装目录；模板和写作规范不再要求/生成文件allow-deny；回归测试保留完整Task设计维度并验证root-only忽略和lockfiles可跟踪。Worker使用Node 24.21.0，document-tooling 30/30通过，语法与diff检查通过。Worker worktree记录的planning_ready=false是C03-02兄弟文档在其快照中的旧错配；Main当前权威状态经Architect修订后planning_ready=true、无drift。AC-01/02无未验证项、无契约偏差，故接受。",
+          "revision": "54cd1ee88951a447492db6fe53dd8c8fdde1e5ab"
         }
       ],
-      "workspace": "/home/fatfei/code/open-spec-mesh",
-      "attempt": 2,
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-01",
+      "attempt": 3,
       "agent_session": "/root/node_task_01_document_tooling",
-      "contract_digest": "0febdf0c58a0bec4ff445ee2f1a97418fb20dabd250aa0d85196b7455b61bf7d",
-      "baseline": "a2170defde70084d181b712f03b2987baff53a76",
-      "result_revision": "a015cdac052bf419a9c11e5c5f9c3e641f823322",
-      "report_digest": "38d723548dc2eb330bb1f2b78be5386ed42b135fe8670881b9803375b7779160"
+      "contract_digest": "4231a991138db9311c08a61d34d490eea6cca573884370bee4d7625fd893dd8f",
+      "baseline": "b8328f5c7ddd5590717badf58a3f2c9aef3ac403",
+      "result_revision": "54cd1ee88951a447492db6fe53dd8c8fdde1e5ab",
+      "report_digest": "1683e1f3b598ce8d78b6254a60e6ebe85ef8eaca999035b113396f817c92dded"
     },
     {
       "id": "C03-02",
@@ -70,7 +103,7 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "accepted",
+      "state": "planned",
       "history": [
         {
           "state": "running",
@@ -144,15 +177,28 @@
           "state": "accepted",
           "reason": "C03-02 attempt 3 Delivery 与冻结 Contract / digest 一致；baseline ce7bd584 包含已集成 C03-01 锁修复。Node 24.21.0 workflow 定向套件 24/24 通过，并发 receipt AC-05 连续 10/10 次（每次 1/1）通过；本 attempt 无源码改动，未触碰共享锁实现。",
           "revision": "ce7bd584e3d05b942f7717f99dcfdd953f9d295c"
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户于2026-09-28批准完整取消Task文件路径授权及其Node/Python/runtime/packet/模板/角色/质量依赖；批准C03-05完整发行清单与根package-lock原字节派生npm-shrinkwrap且不变依赖；根node_modules忽略前移C03-01、C03-06审计。全部Contract设计已完成；共享冻结漂移和C03-01上游传播撤销C03-01/02/03/04旧验收并重开05/06，保留既有代码/Delivery/工作区/session/attempt历史。C03-01/02实施增量并复验，03/04仅定向新attempt复验，Main随后按原图重冻派发。",
+          "invalidated_by": "C03-01",
+          "previous": {
+            "state": "accepted",
+            "baseline": "ce7bd584e3d05b942f7717f99dcfdd953f9d295c",
+            "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02",
+            "result_revision": "ce7bd584e3d05b942f7717f99dcfdd953f9d295c",
+            "report_digest": "51ed6c06b449a7f4b46b79d5fba91e54ef33058032c4fdfa272d3bf8e01b8b73",
+            "contract_digest": "b20c1e28363d50cff7ccb6ef4358fa9b26b0d17a436b75d2d7f5874ca79b8e66",
+            "attempt": 3,
+            "agent_session": "/root/node_task_02_workflow_runtime"
+          },
+          "user_confirmed": true
         }
       ],
       "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02",
       "attempt": 3,
-      "agent_session": "/root/node_task_02_workflow_runtime",
-      "contract_digest": "b20c1e28363d50cff7ccb6ef4358fa9b26b0d17a436b75d2d7f5874ca79b8e66",
-      "baseline": "ce7bd584e3d05b942f7717f99dcfdd953f9d295c",
-      "result_revision": "ce7bd584e3d05b942f7717f99dcfdd953f9d295c",
-      "report_digest": "51ed6c06b449a7f4b46b79d5fba91e54ef33058032c4fdfa272d3bf8e01b8b73"
+      "agent_session": "/root/node_task_02_workflow_runtime"
     },
     {
       "id": "C03-03",
@@ -160,7 +206,7 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "accepted",
+      "state": "planned",
       "history": [
         {
           "state": "running",
@@ -210,15 +256,28 @@
           "state": "accepted",
           "reason": "C03-03 attempt 2 Delivery 与冻结 digest 一致，revision 62c308ac 的唯一代码改动为允许路径内的观测 store 并发测试（2→8 writer）。Node 24.21.0 定向套件 33/33，通过；并发 store 测试连续 3 次每次 5/5；相关语法、入口 smoke 与 diff check 通过。无生产实现或契约变化。",
           "revision": "62c308ac36ff491a61d58071f009db3e96d6f809"
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户于2026-09-28批准完整取消Task文件路径授权及其Node/Python/runtime/packet/模板/角色/质量依赖；批准C03-05完整发行清单与根package-lock原字节派生npm-shrinkwrap且不变依赖；根node_modules忽略前移C03-01、C03-06审计。全部Contract设计已完成；共享冻结漂移和C03-01上游传播撤销C03-01/02/03/04旧验收并重开05/06，保留既有代码/Delivery/工作区/session/attempt历史。C03-01/02实施增量并复验，03/04仅定向新attempt复验，Main随后按原图重冻派发。",
+          "invalidated_by": "C03-01",
+          "previous": {
+            "state": "accepted",
+            "baseline": "a015cdac052bf419a9c11e5c5f9c3e641f823322",
+            "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-03",
+            "result_revision": "62c308ac36ff491a61d58071f009db3e96d6f809",
+            "report_digest": "a894a55788463c4e535d43d15f0f7e629a0e1e629e5808ecf36583d2f9ec24bc",
+            "contract_digest": "a0d87189b6aa6745fb28a7ac9c783d5e75641a5baf0990875feff9c21e539e7b",
+            "attempt": 2,
+            "agent_session": "/root/node_task_03_observation_diagnostics"
+          },
+          "user_confirmed": true
         }
       ],
       "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-03",
       "attempt": 2,
-      "agent_session": "/root/node_task_03_observation_diagnostics",
-      "contract_digest": "a0d87189b6aa6745fb28a7ac9c783d5e75641a5baf0990875feff9c21e539e7b",
-      "baseline": "a015cdac052bf419a9c11e5c5f9c3e641f823322",
-      "result_revision": "62c308ac36ff491a61d58071f009db3e96d6f809",
-      "report_digest": "a894a55788463c4e535d43d15f0f7e629a0e1e629e5808ecf36583d2f9ec24bc"
+      "agent_session": "/root/node_task_03_observation_diagnostics"
     },
     {
       "id": "C03-04",
@@ -226,7 +285,7 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "accepted",
+      "state": "planned",
       "history": [
         {
           "state": "running",
@@ -312,15 +371,28 @@
           "state": "accepted",
           "reason": "Main 已核对 attempt 3 Delivery 的 Task/Contract digest（1f7941c3…）、baseline 与 revision（均为 a015cdac…）及提交文件路径为空；此前 C03-04 实现 revision 090e28a8… 已在该 baseline 中。AC-08：指定 Node 24.21.0、C03-04 worktree 内 System One 定向测试 23/23，覆盖 SDK stdio/fake HTTP 等，未调用真实 Provider。AC-09：GPU helper/FakeRouter 6/6，npm pack dry-run 清单 80 文件且排除 GPU helper 与 laya_batch_server.py；无 tarball、Git 状态执行前后相同。均满足当前 Task Contract；真实 CUDA 与完整安装 smoke 属于明确非本 Task 范围/后续 C03-05。",
           "revision": "a015cdac052bf419a9c11e5c5f9c3e641f823322"
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户于2026-09-28批准完整取消Task文件路径授权及其Node/Python/runtime/packet/模板/角色/质量依赖；批准C03-05完整发行清单与根package-lock原字节派生npm-shrinkwrap且不变依赖；根node_modules忽略前移C03-01、C03-06审计。全部Contract设计已完成；共享冻结漂移和C03-01上游传播撤销C03-01/02/03/04旧验收并重开05/06，保留既有代码/Delivery/工作区/session/attempt历史。C03-01/02实施增量并复验，03/04仅定向新attempt复验，Main随后按原图重冻派发。",
+          "invalidated_by": "C03-01",
+          "previous": {
+            "state": "accepted",
+            "baseline": "a015cdac052bf419a9c11e5c5f9c3e641f823322",
+            "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04",
+            "result_revision": "a015cdac052bf419a9c11e5c5f9c3e641f823322",
+            "report_digest": "017b0d1ea17d2c9fcc611ad73260f28afa701390563b43b69afeb82b1b9e76f7",
+            "contract_digest": "1f7941c3b3ba87ce1ef2dfddbe44696f2dae53ad87d87b927a1519398ea1adb2",
+            "attempt": 3,
+            "agent_session": "/root/node_task_04_systemone_client"
+          },
+          "user_confirmed": true
         }
       ],
       "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04",
       "attempt": 3,
-      "agent_session": "/root/node_task_04_systemone_client",
-      "contract_digest": "1f7941c3b3ba87ce1ef2dfddbe44696f2dae53ad87d87b927a1519398ea1adb2",
-      "baseline": "a015cdac052bf419a9c11e5c5f9c3e641f823322",
-      "result_revision": "a015cdac052bf419a9c11e5c5f9c3e641f823322",
-      "report_digest": "017b0d1ea17d2c9fcc611ad73260f28afa701390563b43b69afeb82b1b9e76f7"
+      "agent_session": "/root/node_task_04_systemone_client"
     },
     {
       "id": "C03-05",
@@ -381,8 +453,47 @@
             "state": "blocked"
           },
           "user_confirmed": false
+        },
+        {
+          "state": "running",
+          "baseline": "b8328f5c7ddd5590717badf58a3f2c9aef3ac403",
+          "workspace": "/home/fatfei/code/open-spec-mesh",
+          "attempt": 1
+        },
+        {
+          "state": "blocked",
+          "action": "block",
+          "reason": "C03-05 Worker attempt 1 停止并返回 contract_change_required：AC-10 要求从完整本地 npm tarball 安装，但当前 package.json files 白名单排除 C03-05 安装入口/runtime、package-lock 等路径，且 Path Contract 不允许修改 package.json/lock；需 Architect 判断最小 replan 后再恢复。未改源码，Main 根 node_modules 保留。",
+          "invalidated_by": "C03-05",
+          "previous": {
+            "state": "running",
+            "baseline": "b8328f5c7ddd5590717badf58a3f2c9aef3ac403",
+            "workspace": "/home/fatfei/code/open-spec-mesh",
+            "contract_digest": "be836f0dc095c7a2bf43f838023d56b1416377c8a250db2c073ae11eb0728744",
+            "attempt": 1,
+            "agent_session": "/root/worker_task_05_host_installer"
+          },
+          "user_confirmed": false
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户于2026-09-28批准完整取消Task文件路径授权及其Node/Python/runtime/packet/模板/角色/质量依赖；批准C03-05完整发行清单与根package-lock原字节派生npm-shrinkwrap且不变依赖；根node_modules忽略前移C03-01、C03-06审计。全部Contract设计已完成；共享冻结漂移和C03-01上游传播撤销C03-01/02/03/04旧验收并重开05/06，保留既有代码/Delivery/工作区/session/attempt历史。C03-01/02实施增量并复验，03/04仅定向新attempt复验，Main随后按原图重冻派发。",
+          "invalidated_by": "C03-01",
+          "previous": {
+            "state": "blocked",
+            "baseline": "b8328f5c7ddd5590717badf58a3f2c9aef3ac403",
+            "workspace": "/home/fatfei/code/open-spec-mesh",
+            "contract_digest": "be836f0dc095c7a2bf43f838023d56b1416377c8a250db2c073ae11eb0728744",
+            "attempt": 1,
+            "agent_session": "/root/worker_task_05_host_installer"
+          },
+          "user_confirmed": true
         }
-      ]
+      ],
+      "workspace": "/home/fatfei/code/open-spec-mesh",
+      "attempt": 1,
+      "agent_session": "/root/worker_task_05_host_installer"
     },
     {
       "id": "C03-06",
@@ -441,6 +552,26 @@
             "state": "blocked"
           },
           "user_confirmed": false
+        },
+        {
+          "state": "blocked",
+          "action": "block",
+          "reason": "C03-05 Worker attempt 1 停止并返回 contract_change_required：AC-10 要求从完整本地 npm tarball 安装，但当前 package.json files 白名单排除 C03-05 安装入口/runtime、package-lock 等路径，且 Path Contract 不允许修改 package.json/lock；需 Architect 判断最小 replan 后再恢复。未改源码，Main 根 node_modules 保留。",
+          "invalidated_by": "C03-05",
+          "previous": {
+            "state": "planned"
+          },
+          "user_confirmed": false
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户于2026-09-28批准完整取消Task文件路径授权及其Node/Python/runtime/packet/模板/角色/质量依赖；批准C03-05完整发行清单与根package-lock原字节派生npm-shrinkwrap且不变依赖；根node_modules忽略前移C03-01、C03-06审计。全部Contract设计已完成；共享冻结漂移和C03-01上游传播撤销C03-01/02/03/04旧验收并重开05/06，保留既有代码/Delivery/工作区/session/attempt历史。C03-01/02实施增量并复验，03/04仅定向新attempt复验，Main随后按原图重冻派发。",
+          "invalidated_by": "C03-01",
+          "previous": {
+            "state": "blocked"
+          },
+          "user_confirmed": true
         }
       ]
     }

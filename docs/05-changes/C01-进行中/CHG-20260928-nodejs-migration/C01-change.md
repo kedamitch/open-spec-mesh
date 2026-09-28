@@ -6,7 +6,7 @@ operations: pending
 ---
 # 变更说明
 
-> **目标**：将 Open Spec Mesh 第一方消费端平台迁移为可由一条显式 npm 命令安装的 Node.js 工具包，保留现有宿主能力、SDD 行为、协议、数据和安全边界。
+> **目标**：将 Open Spec Mesh 第一方消费端平台迁移为可由一条显式 npm 命令安装的 Node.js 工具包，保留宿主能力、Git/交付身份、协议、数据和其他安全边界，同时按用户授权取消 Task 文件范围授权机制。
 
 ## 背景与问题
 
@@ -14,13 +14,15 @@ operations: pending
 
 2026-09-28 的只读审计确认 75 个 tracked Python 文件，其中消费端逻辑、仓库质量辅助、测试、Docker fixture 和独立 GPU 服务职责不同。本 Change 按完整平台能力迁移，不按文件扩展名清理全部 Python。既有 Task/契约/观测是用户数据，不能为了换语言重新分配身份、重置或自动 replan。
 
+2026-09-28 用户进一步明确授权：删除“文件范围锁定”整个机制，而非仅放宽路径或删文档；补全安装 tarball 的发行清单和发布锁，并永久忽略根依赖产物。此次是已冻结 Contract 的正式重规划，不是普通实现返工。已集成代码、历次 Delivery、Git 祖先关系和用户工作区保留；旧验收身份是否可续用由 scoped drift 与依赖传播判定。
+
 ## 目标与范围
 
 ### 目标
 
 - Node 承载第一方消费端安装/Adapter、SDD、文档工具、观测/诊断及 System One MCP/HTTP 客户端；正常消费无需 Python、pip 或本地编译工具链。
 - 一条明确且可重复的 npm CLI 调用配置所选宿主；下载包与配置宿主是显式动作，生命周期脚本不隐式修改 Home。
-- 继续读取/写入当前 canonical 工件、冻结摘要、安装 ownership、validation receipt 和 observation SQLite；操作、flags、JSON 字段及错误保护保持。
+- 继续读取/写入当前 canonical 工件、冻结摘要、安装 ownership、validation receipt 和 observation SQLite；操作、flags、JSON 字段及其他错误保护保持；仅取消 Task allow/deny 文件路径授权及由此产生的越界拒绝。
 
 ### 本次包含
 
@@ -30,6 +32,8 @@ operations: pending
 - Codex trace、非 Codex artifact-only observation、兼容 SQLite 读写及私有离线 ZIP。
 - Codex-only/default-off System One 的四个 MCP 工具、Laya/Jev transport、模板、缓存/熔断与 fallback。
 - 默认/生成的 Node 验证入口、原有回归场景的 Node 测试、CI、Skills/角色操作引用与使用指南。
+- Task Path Contract 必填/allow-deny 解析、changed-path authorization、草稿与提交/验收/集成/收口中的路径授权检查，以及模板、packet、Skills、角色规则和测试依赖的完整取消。真实业务范围和冻结需求仍存在，不把取消路径清单解释成无限业务授权。
+- C03-05 完整 npm 发行资源与 `npm-shrinkwrap.json` 发布锁；根 `package-lock.json` 为唯一依赖来源，本轮不改变依赖版本或解析树。根 `/node_modules/` 版本化忽略在 C03-01 前移落实，C03-06 复核消费与仓库保全。
 
 ### 本次不做
 
@@ -45,31 +49,35 @@ operations: pending
 
 - **R01｜Node 消费运行时**：消费包的实际实现为 Node；不得通过 Python wrapper、pip、node-gyp 或 shell-to-Python 回退伪装迁移。
 - **R02｜显式 npm 安装**：包提供明确的 install CLI；默认宿主和原安装选项保留，无自动 Home 写入生命周期脚本。
-- **R03｜行为与数据兼容**：保留身份、状态、摘要、协议、ownership、SQLite 和安全不变量；升级不自动 replan/reset。
+- **R03｜行为与数据兼容**：除用户明确取消的 Task 文件路径授权外，保留身份、状态、摘要算法、协议、ownership、SQLite 和安全不变量；升级不自动 replan/reset。
 - **R04｜验证责任归属**：平台默认验证使用 Node；用户项目命令继续归用户所有，receipt 仍由真实 revision-bound 执行产生。
 - **R05｜完整执行规划**：实现前形成公共 Design、整张 Graph 和全部 Task Design；并行能力按真实产物依赖决定。
+- **R06｜取消文件范围授权、保留真实证据**：不要求 Task Path Contract、不匹配 Task allow/deny、不在任何消费链路按 changed-path 拒绝；不能用 `allow **`、默认全允许或空壳授权器冒充删除。保留真实 Git diff/Delivery 文件表和 AC 完整性、baseline/revision/attempt/session、scoped digest/冻结漂移、ancestry/依赖、用户文件保全、安全路径、ownership 及项目/install/store 并发锁。
+- **R07｜完整、锁定的发行消费**：安装 Task 可修订 `package.json` 的发行清单及发布锁；发布锁从根开发锁确定性派生，包身份、engine、全部直接和传递依赖版本/解析/integrity 不漂移，不在 Main 根依赖目录执行安装或 shrinkwrap。
 
 ## 行为与验收标准
 
 ### AC-01｜Node 公共运行基础与发行骨架
 
 - **行为**：Node 24.21.0+ 的 ESM artifact 具备显式 CLI/稳定模块定位、纯 JS/WASM 依赖与无 Home 写入生命周期；安全路径、项目锁、原子替换和 Python 兼容编码为各模块提供公共实现。缺失模块/资源显式失败，不回退 Python。
-- **验证**：定向测试检查 engine、bin/files、CLI 参数/退出码、跨 cwd 与有空格路径、序列化黄金向量、锁并发/崩溃、symlink 和同目录原子写；安装依赖使用 ignore-scripts 且不需要编译。后续全包 smoke 由 AC-12 完成。
+- **验证**：定向测试检查 engine、bin/files、CLI 参数/退出码、跨 cwd 与有空格路径、序列化黄金向量、锁并发/崩溃、symlink 和同目录原子写；安装依赖使用 ignore-scripts 且不需要编译。后续全包 smoke 由 AC-12 完成。根 `.gitignore` 使用 `/node_modules/`，不泛化忽略嵌套目录，两个版本化 lockfile 不被忽略；用户根依赖目录原地不变且不暂存。
 
 ### AC-02｜文档创建与旧 docs 保全
 
-- **行为**：Node 能创建 canonical scaffold、编号/索引、Change/Task、Research/ADR；可校验文档，安全迁移旧 docs；保留模板正文、工件命名、planned Task schema 和旧 docs 原字节。
+- **行为**：Node 能创建 canonical scaffold、编号/索引、Change/Task、Research/ADR；可校验文档，安全迁移旧 docs；保留其他模板正文、工件命名、planned Task schema 和旧 docs 原字节；新 Task 模板不生成 Path Contract/allow-deny，Goal/Included/Excluded/代码落点/流程/AC 等详细设计仍完整。
 - **验证**：移植原 scaffold/编号/模板/迁移/文档用例；测试并发分配、无模板/坏索引/重复编号/路径逃逸、迁移失败恢复及生成的 Node Validation Entry Point 指引。
 
 ### AC-03｜完整规划、冻结与状态门保持
 
-- **行为**：完整性/readiness、AC/Dxxx/Graph 对照、精确 scoped contract digest、五种 Task 状态、history 与 rework/replan 保护保持；已有合法冻结记录在正文未变时摘要不漂移。
+- **行为**：完整性/readiness（不再要求或解析 Task 路径节）、AC/Dxxx/Graph 对照、精确 scoped contract digest、五种 Task 状态、history 与 rework/replan 保护保持；已有合法冻结记录在正文未变时摘要不漂移。
 - **验证**：基线黄金契约含 CRLF/Unicode/无变化维度；缺任一设计/流程/引用不能派发；修改引用项触发漂移、修改非引用兄弟项不误伤；确认和 workers-stopped 保护保持。
 
 ### AC-04｜执行、交付、验收及集成保持
 
-- **行为**：prepare/resume/session/baseline/attempt、leaf cwd、Path Contract/真实 diff、结构化 Delivery、显式接受、单 Task/wave ancestry 集成保持；下游只在上游精确 revision 已集成后解锁。
+- **行为**：prepare/resume/session/baseline/attempt、leaf cwd、真实 diff/完整文件表、结构化 Delivery、显式接受、单 Task/wave ancestry 集成保持；下游只在上游精确 revision 已集成后解锁。
 - **验证**：隔离 Git 仓库的完整主链、并行兄弟 Task、stale attempt、报告篡改、失败/未验证 AC、冲突 wave、idempotence、session 改绑及三宿主命令构造回归。
+
+- **删除路径门的可观察结果**：新 Task 无文件路径清单也可 approve/prepare；旧 Path Contract 即使含不匹配或 deny 行，新 runtime 也不据此拒绝。draft、deliver、record/import、submit、accept、integrate、check/close 链路均不执行 Task changed-path authorization。真实 diff 文件漏项/多项/重复/错误操作、失败或缺失 AC、stale attempt、漂移 Contract/报告和未集成依赖仍拒绝；不得删除这些反例测试。
 
 ### AC-05｜项目验证、receipt、归档与 Release 保持
 
@@ -99,7 +107,7 @@ operations: pending
 ### AC-10｜一条显式 npm 命令安装并可重跑
 
 - **行为**：从本地 tarball 以 `npm exec --yes --ignore-scripts --package=<绝对路径.tgz> -- open-spec-mesh install --host <host>` 配置宿主；可追加原安装选项，重复运行幂等。真实安装默认仍要求 Research key；core-only 可显式加 --skip-tools。
-- **验证**：隔离 cache/Home、无 Python PATH 下，对三宿主执行该单调用的 tarball smoke、重复安装和 dry-run；用户 Home 在仅获取/安装包而未调用 install 时保持不变。公共 registry E404 不作为本地 artifact失败，也不宣称已发布。
+- **验证**：隔离 cache/Home、无 Python PATH 下，对三宿主执行该单调用的 tarball smoke、重复安装和 dry-run；用户 Home 在仅获取/安装包而未调用 install 时保持不变。tarball 必须包含安装入口、全部已实现命令/模块/模板/roles/配置/显式项目参考 docs，以及由根 `package-lock.json` 原字节派生的 `npm-shrinkwrap.json`；解包 stage 能 `npm ci --omit=dev --ignore-scripts`，锁定树不变。公共 registry E404 不作为本地 artifact失败，也不宣称已发布。
 
 ### AC-11｜宿主升级、ownership 与工具安全保持
 
@@ -108,9 +116,9 @@ operations: pending
 
 ### AC-12｜纯 Node 消费验证与完整回归证据
 
-- **行为**：所有第一方消费操作和指南不再要求 Python；Node全量入口执行平台 required tests/build/static checks。原 422 个静态测试方法逐项映射到 Node 等价场景或明确独立 GPU lane，不以 skip/删除测试取得通过；Docker Python fixture 可保留。
+- **行为**：所有第一方消费操作和指南不再要求 Python；Node全量入口执行平台 required tests/build/static checks。原 422 个静态测试方法逐项映射到 Node 等价场景或明确独立 GPU lane；仅对 R06 明确取消的路径授权行为，逐项记录“有意行为替换”、授权/新反向场景与实际 Node 测试，不计为 skip 或丢失。其余场景不以删除/skip 取得通过；Docker Python fixture 可保留。
 - **验证**：消费端无 Python环境的完整功能/打包测试；迁移覆盖清单、语法/文档/角色/包内容检查和 CI矩阵，保留 Mermaid/Docker/三宿主/Research/GPU lanes。Main 在最终 integrated revision 上运行 required全量及receipt；Worker只做定向验证。
-- **仓库配置保全**：根 `.gitignore` 增补 `/node_modules/`，仅忽略根依赖安装产物；`package-lock.json` 保持版本控制。Main 已有用户根 `node_modules/` 必须原地保留，不移动、删除、清理、覆盖或暂存其中内容。
+- **仓库配置保全**：根 `.gitignore` 增补 `/node_modules/`，仅忽略根依赖安装产物；由 C03-01 实现、C03-06 复核，`package-lock.json` 与 `npm-shrinkwrap.json` 保持版本控制。Main 已有用户根 `node_modules/` 必须原地保留，不移动、删除、清理、覆盖或暂存其中内容。
 
 ## 约束与待确认
 
@@ -120,6 +128,8 @@ operations: pending
 - 当前基线 revision：`dc9ba409fb17632b333be679ab7b7c5b364aa4e1`。Python旧调用不承诺兼容；现有数据/协议承诺兼容。
 - orderly upgrade：先停止旧写进程并保全工作区，安装后启动新 session；不自动清理用户活动Task或工作区。
 - npm artifact 名称采用 open-spec-mesh，仅指本地包名，不证明 registry所有权；实际公共发布和许可证/发布凭据核对由release完成。
+- 本轮调查 HEAD 为 `b8328f5c7ddd5590717badf58a3f2c9aef3ac403`。C03-01/02/03/04 的旧结果已集成，但共享需求及 Contract 已变，必须正式 replan 撤销旧验收后重新验证；不回滚代码、改写旧 Delivery 或手工伪造新冻结身份。C03-05 attempt 1 无实现/Delivery，保留历史并恢复原 Worker；其后 C03-06 不降低 AC。
+- 根依赖目录只读使用；依赖安装/lock 派生与 smoke 在隔离位置，不移动、清理、覆盖、暂存 Main 的 `node_modules/`。
 - Current Truth 同步只在 Main 提供已集成 diff、Delivery、验收结果后进行；本次规划不预写现状。
 
 ### 待确认
@@ -130,10 +140,10 @@ operations: pending
 
 | 维度 | 影响 |
 | --- | --- |
-| 产品模块 | 安装、SDD runtime、Routing承载、观测/诊断与可选System One，能力和权限边界不变 |
+| 产品模块 | 安装、SDD runtime、Routing承载、观测/诊断与可选System One，能力和角色权限边界不变，仅 Task 文件路径授权取消 |
 | 应用 / 组件 | Python消费逻辑改为Node ESM；增加明确npm/bin入口及自包含已安装runtime |
 | Domain | 原状态机/ID不变；新增工具内部安装stage/锁owner，不写Graph |
-| Database | Graph/manifest/receipt/SQLite schema不变；SQLite文件持久化实现更换，精确scope编码兼容 |
+| Database | Graph/manifest/receipt/SQLite schema不变；Task 路径规则不再参与授权但旧全文摘要算法不变；新增由根开发锁派生的发布锁，SQLite精确scope编码兼容 |
 | API / Protocol | Node入口、原动作/flags/JSON语义；验证声明增加显式argv命令；MCP/HTTP既有协议不变 |
 | Operations | Node前置、显式npm安装、一版本升级、纯Node平台验证；GPU Python独立说明 |
 

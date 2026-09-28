@@ -42,12 +42,14 @@ test('fixed registry lists only implemented capabilities and missing routes fail
   const available = implementedCommands(repo);
   assert.ok(available.includes('init-project'));
   assert.ok(available.includes('new-task'));
-  assert.ok(!available.includes('sdd'));
+  assert.ok(available.includes('sdd'));
+  assert.ok(!available.includes('install'));
   assert.match(renderHelp(repo, '0.1.0'), /init-project/u);
-  assert.doesNotMatch(renderHelp(repo, '0.1.0'), /\n  sdd\n/u);
-  assert.ok(Object.hasOwn(COMMAND_REGISTRY, 'sdd'));
+  assert.match(renderHelp(repo, '0.1.0'), /\n  sdd\n/u);
+  assert.doesNotMatch(renderHelp(repo, '0.1.0'), /\n  install\n/u);
+  assert.ok(Object.hasOwn(COMMAND_REGISTRY, 'install'));
   let stderr = '';
-  assert.equal(await runCommand('sdd', [], { stderr: { write: (text) => { stderr += text; } } }), 1);
+  assert.equal(await runCommand('install', [], { stderr: { write: (text) => { stderr += text; } } }), 1);
   assert.match(stderr, /not available in this runtime/u);
   assert.equal(await runCommand('not-a-command', [], { stderr: { write: () => {} } }), 2);
 });

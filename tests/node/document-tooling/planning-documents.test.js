@@ -30,7 +30,20 @@ test('Change/Task, Research and ADR preserve templates, names and planned Graph 
   assert.equal(Object.hasOwn(graph, 'acceptance'), false);
   assert.ok(existsSync(path.join(task, 'C03-01-01-task.md')));
   assert.ok(existsSync(path.join(task, 'C03-01-02-delivery.md')));
-  assert.ok(readFileSync(path.join(task, 'C03-01-01-task.md'), 'utf8').includes('Task `' + taskId + '`'));
+  const generatedTask = readFileSync(path.join(task, 'C03-01-01-task.md'), 'utf8');
+  assert.ok(generatedTask.includes('Task `' + taskId + '`'));
+  assert.doesNotMatch(generatedTask, /Path Contract|allow\/deny|^\|\s*(?:allow|deny)\s*\|/imu);
+  for (const requiredSection of [
+    '### 要做', '### 不做', '### 输入 / 依赖', '### 代码结构 / 模块落点',
+    '## Task 实现流程', '### Components', '### 接口变化', '### 领域模型 / 状态变化',
+    '### 数据与表结构变化', '### 失败与兼容', '### Tests', '### 验收标准',
+    '## 实现自由度', '### Expected Output',
+  ]) assert.ok(generatedTask.includes(requiredSection), `generated Task is missing ${requiredSection}`);
+  const writingContract = readFileSync(path.resolve('sdd-init/references/document-contract.md'), 'utf8');
+  const taskWritingRules = writingContract.split('## Task\n')[1]?.split('\n## Delivery')[0];
+  assert.ok(taskWritingRules, 'document contract must define Task writing rules');
+  assert.doesNotMatch(taskWritingRules, /Path Contract/u);
+  assert.match(taskWritingRules, /不生成文件路径 allow\/deny 清单/u);
   assert.equal(await ensureDesign(root, changeId), path.join(change, 'C02-design.md'));
 
   assert.throws(() => createTask(root, changeId, 'duplicate-dependency', [taskId, taskId]), /Duplicate dependencies/u);
