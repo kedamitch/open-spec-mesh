@@ -1,0 +1,58 @@
+{
+  "tasks": [
+    {
+      "id": "C03-01",
+      "path": "C03-tasks/C03-01-document-tooling",
+      "depends_on": [],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-02",
+      "path": "C03-tasks/C03-02-workflow-runtime",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-03",
+      "path": "C03-tasks/C03-03-observation-diagnostics",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-04",
+      "path": "C03-tasks/C03-04-systemone-client",
+      "depends_on": [
+        "C03-01"
+      ],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-05",
+      "path": "C03-tasks/C03-05-host-installation",
+      "depends_on": [
+        "C03-02",
+        "C03-03",
+        "C03-04"
+      ],
+      "state": "planned",
+      "history": []
+    },
+    {
+      "id": "C03-06",
+      "path": "C03-tasks/C03-06-validation-guides",
+      "depends_on": [
+        "C03-05"
+      ],
+      "state": "planned",
+      "history": []
+    }
+  ]
+}
