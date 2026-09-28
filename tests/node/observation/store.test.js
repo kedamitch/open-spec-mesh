@@ -80,9 +80,10 @@ test('directory lock prevents concurrent processes from losing distinct run upda
   const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-store-'));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const db = path.join(temp, 'nested', 'observations.sqlite3');
-  await Promise.all([runChild(db, 'run-a', 'project-a'), runChild(db, 'run-b', 'project-b')]);
+  const ids = Array.from({ length: 8 }, (_, index) => `run-${index}`);
+  await Promise.all(ids.map((id, index) => runChild(db, id, `project-${index}`)));
   const runs = await withStore(db, (store) => store.allRuns(), { create: false });
-  assert.deepEqual(runs.map((run) => run.run_id).sort(), ['run-a', 'run-b']);
+  assert.deepEqual(runs.map((run) => run.run_id).sort(), ids.sort());
 });
 
 test('ancestor symlink is refused before the target database is touched', async (t) => {
