@@ -2,7 +2,6 @@
 import re
 import subprocess
 from markdown_contract import visible_lines
-from path_contract import validate_changed_paths
 
 SECTIONS = ('文件改动', '验证结果', '自审结论', '剩余问题', '快照影响')
 CONCLUSIONS = {'通过', '部分通过', '未通过'}
@@ -184,7 +183,8 @@ def acceptance_blockers(evidence, task_contract):
     return blockers
 
 
-def validate_evidence(root, baseline, revision, evidence, task_contract=None, label='Task Path Contract'):
+def validate_evidence(root, baseline, revision, evidence, task_contract=None, label=None):
+    """Validate delivery evidence; legacy label is ignored and grants no path authorization."""
     bodies = _sections(evidence)
     structured_delivery(evidence, task_contract)
 
@@ -200,8 +200,6 @@ def validate_evidence(root, baseline, revision, evidence, task_contract=None, la
         notes[path] = cells[1:]
 
     actual = changed_files(root, baseline, revision)
-    if task_contract is not None:
-        validate_changed_paths(task_contract, actual, label)
     if set(notes) != set(actual):
         raise ValueError(f'File notes must match Git diff; missing={sorted(set(actual) - set(notes))}; extra={sorted(set(notes) - set(actual))}')
     names = {'A': {'新增', 'A'}, 'M': {'修改', 'M'}, 'D': {'删除', 'D'}, 'T': {'类型变化', 'T'}}

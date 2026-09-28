@@ -297,13 +297,6 @@ flowchart LR
 
 - 使用现有 booking 上下文。
 
-### Path Contract
-
-| 规则 | 路径 |
-| --- | --- |
-| allow | `**` |
-| deny | 无 |
-
 ### 代码结构 / 模块落点
 
 | 目录 / 文件 / 类 | 计划变更 | 责任 |
@@ -542,18 +535,19 @@ booking 进入 cancelled 结果；其他状态语义不变。
         self.assertEqual(1, report.count('# 任务交付报告'))
         self.assertNotIn('待交付', report)
 
-    def test_worker_delivery_rejects_diff_outside_path_contract(self):
+    def test_worker_delivery_ignores_conflicting_legacy_path_contract(self):
         task = self.task()
         ctx = self.ctx(task)
         contract_path = ctx[5] / ctx[6]['contract']
-        contract_path.write_text(
-            contract_path.read_text().replace('| allow | `**` |', '| allow | `allowed/**` |'),
-            encoding='utf-8',
-        )
+        contract = contract_path.read_text()
+        insertion = ('### Path Contract\n\n| 规则 | 路径 |\n| --- | --- |\n'
+                     '| allow | `allowed/**` |\n| deny | `outside.txt` |\n\n')
+        contract_path.write_text(contract.replace('### 代码结构 / 模块落点', insertion + '### 代码结构 / 模块落点'), encoding='utf-8')
         location = self.worktree(task)
         (location/'outside.txt').write_text('out of scope')
-        with self.assertRaisesRegex(ValueError, 'outside allow paths'):
-            self.deliver(task, location)
+        self.deliver(task, location)
+        self.assertEqual('running', self.info(task)['state'])
+        self.assertIn('outside.txt', self.report(task, location).read_text())
 
     def test_import_then_accept_worktree_delivery(self):
         task = self.task(); location = self.worktree(task)

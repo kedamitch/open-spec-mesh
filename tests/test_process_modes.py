@@ -46,7 +46,7 @@ class ProcessModeTests(unittest.TestCase):
                      'Main 不重新拆分'):
             self.assertIn(name, sdd)
         change = text('sdd-change/SKILL.md')
-        self.assertIn('Architect 直接调用 `new_task.py` 形成完整 Task Graph', change)
+        self.assertIn('Architect 使用 Node `open-spec-mesh new-task` 命令形成完整 Task Graph', change)
         for value in ('产品模块 / 功能 / 规则', '接口 / 协议及兼容', '领域模型 / 状态机 / 不变量', '表 / 字段 / 索引 / 约束 / 数据迁移', '总业务流程 / 主时序'):
             self.assertIn(value, change)
 
@@ -106,14 +106,17 @@ class ProcessModeTests(unittest.TestCase):
         self.assertIn('任何失败都必须修到通过', rules)
 
         self.assertIn('业务模块优先', architect)
-        self.assertIn('Path Contract 是写入边界，不是互斥锁', architect)
+        self.assertIn('代码落点重叠不是授权判断', architect)
+        self.assertIn('Task 实施范围由冻结的业务目标、纳入/排除项和 AC 表达', architect)
+        self.assertIn('在冻结 Task 的目标、纳入/排除项、AC 和局部设计内实现', worker)
         self.assertIn('不要反复运行项目全量测试', worker)
         self.assertIn('不维护存量失败、已知失败或 baseline failure 豁免', close)
         self.assertIn('最终全量验证前退役已完成 Worker 的 Git worktree', close)
         self.assertIn('禁止 `--force` 丢弃', close)
 
-        self.assertIn('### Path Contract', task_template)
-        self.assertIn('兄弟 Task 可以声明重叠路径', task_template)
+        self.assertIn('### 代码结构 / 模块落点', task_template)
+        self.assertIn('### 验收标准', task_template)
+        self.assertNotIn('### Path Contract', task_template)
         self.assertIn('只运行当前 Task 直接相关的定向测试', task_template)
 
     def test_common_dispatch_contract_has_no_global_routing_table(self):

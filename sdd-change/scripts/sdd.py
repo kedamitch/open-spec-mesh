@@ -23,7 +23,6 @@ from import_delivery import import_delivery
 from record_acceptance import accept
 from close_change import close_change
 from delivery_evidence import changed_files, task_ac_refs
-from path_contract import validate_changed_paths
 
 
 def select_task(root, change_id, task_id=None):
@@ -191,7 +190,6 @@ def worker_dispatch_packet(root, change_id, task_id, *, resume=False):
         'dependencies': dependencies,
         'constraints': [
             '以 Task Contract 和其引用的 Design/Change 为准，不依赖调用方重新转述需求。',
-            '实际 diff 必须符合当前 Task Path Contract；兄弟 Task 路径重叠不是越界。',
             '只运行当前 Task 的定向测试和必要 build/static check；不要反复运行项目全量测试。',
             '不得自行改变冻结 Contract、拆分 Task 或扩大授权范围。',
             '普通实现缺陷在当前执行上下文修复；设计缺口或契约变化必须停止并上报。',
@@ -267,10 +265,6 @@ def draft_delivery(root, change_id, task_id, result, attempt, evidence_file):
             raise ValueError('Result must descend from assigned baseline')
         files = changed_files(root, task['baseline'], sha)
         task_contract_path = document(root, directory, tf, 'contract')
-        validate_changed_paths(
-            read_text(task_contract_path), files,
-            str(task_contract_path.relative_to(root)),
-        )
         task_contract = read_text(task_contract_path)
         acs = task_ac_refs(task_contract)
         rows = ['| 文件 | 操作 | 行为影响 |', '| --- | --- | --- |']
@@ -331,7 +325,6 @@ def validate_accepted_task(root, change_id, task_id):
             or task.get('report_digest') != hashlib.sha256(report.encode()).hexdigest()
             or validate_delivery(
                 root, task, report, read_text(task_contract_path),
-                str(task_contract_path.relative_to(root)),
             ) != task.get('result_revision')):
         raise ValueError('Accepted Contract or report changed')
     return change, task

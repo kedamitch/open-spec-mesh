@@ -100,14 +100,10 @@ class ContractReadinessTests(unittest.TestCase):
         )
         self.rejection_preserves_graph(task, 'missing section: 数据与表结构变更')
 
-    def test_task_requires_path_contract(self):
+    def test_task_without_path_contract_can_be_frozen(self):
         task = self.f.task()
-        path = self.task_contract(task)
-        text = path.read_text()
-        start = text.index('### Path Contract')
-        end = text.index('### 代码结构 / 模块落点', start)
-        path.write_text(text[:start] + text[end:], encoding='utf-8')
-        self.rejection_preserves_graph(task, 'Path Contract')
+        self.f.approve(task)
+        self.assertTrue(self.f.info(task)['contract_digest'])
 
     def test_design_requires_main_flow_mermaid(self):
         task = self.f.task()

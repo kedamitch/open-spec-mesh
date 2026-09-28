@@ -44,5 +44,5 @@
 - Task Contract 引用的每个 AC 必须且只能出现一次；可以追加不绑定 AC 的边界/回归场景。
 - 总体写“通过”时，不得存在失败/未执行 AC、契约偏差或未验证项。
 - “部分通过 / 未通过”仍可形成真实 Delivery，但不能被机械验收门放行。
-- 文件表必须与本轮 `baseline..revision` 的真实 Git diff 完全一致，并符合 Path Contract。
+- 文件表必须与本轮 `baseline..revision` 的真实 Git diff 完全一致；文件路径不作为授权门。
 - Delivery 的“通过”只是 Worker evidence；Main 仍必须显式核对并执行 Acceptance。

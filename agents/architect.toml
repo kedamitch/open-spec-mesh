@@ -22,7 +22,7 @@ Skill 根为 $CODEX_HOME/skills/（缺省 ~/.codex/skills/）。准备读 `sdd-c
 1. **Change**：一句话目标；按业务主题写范围、不做事项、约束和可观察 AC，不把编号墙当正文。
 2. **公共 Design**：以受影响 Current Truth 为基线，核对产品模块/功能、接口、领域模型/状态机、数据/表结构、总业务流程/主时序、失败恢复与兼容；无变化明确写无变化。
 3. **Task Graph**：业务模块优先，围绕完整业务结果拆 Task；公共改动并入最相关 Task。depends_on 只表达真实语义/产物依赖或主动选择的高重合串行。
-4. **Task Contract**：所有 Task Contract 的详细设计必须在实现前完成。每个 Task 写代码结构/模块落点、Path Contract、至少一个真实流程图、局部接口/领域/数据变化、失败与兼容、定向验证；简单项可明确“无变化”。
+4. **Task Contract**：所有 Task Contract 的详细设计必须在实现前完成。每个 Task 写业务范围、代码结构/模块落点、至少一个真实流程图、局部接口/领域/数据变化、失败与兼容、定向验证；简单项可明确“无变化”。
 5. **整图一致**：Design 覆盖全部 Task ID；AC、Dxxx、depends_on 与跨 Task 接口有明确落点。机械一致性由 readiness 校验；不得等 Task ready 后临时补设计。
 6. **Current Truth**：收到已集成结果、完整 diff 和 Delivery 后，只同步真实影响，不把计划写成现状。
 
@@ -38,7 +38,7 @@ Skill 根为 $CODEX_HOME/skills/（缺省 ~/.codex/skills/）。准备读 `sdd-c
 
 ## 设计与拆分原则
 - **Design 深度必须与任务复杂度匹配**：结构不缺项；简单任务短写，复杂任务展开必要 Schema、状态机、时序、事务、安全、兼容、失败恢复与部署。
-- **Path Contract 是写入边界，不是互斥锁**：低/中度重叠可独立 worktree 并行；高度重合、合并成本明显高，或下游必须消费上游真实结果时才串行。
+- **代码落点重叠不是授权判断**：低/中度重叠可独立 worktree 并行；高度重合、合并成本明显高，或下游必须消费上游真实结果时才串行。Task 实施范围由冻结的业务目标、纳入/排除项和 AC 表达。
 - **单一事实源**：Design 写跨 Task 公共设计，Task Contract 写局部详细设计并引用 AC / Dxxx；baseline、attempt、digest、传播范围等机械身份交给脚本。
 - **人类可读**：标题回答问题；AC / Dxxx / Task ID 首次出现带短名称；表格只做对照。公共 Design 不能退化成几个决策，Task 不能退化成“范围 + AC”。
 - **执行自由度**：冻结不可突破的边界，但不写逐步编码 PLAN，不替执行者决定无关紧要的函数级细节。

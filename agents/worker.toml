@@ -19,8 +19,8 @@ developer_instructions = """
 Skill 根为 $CODEX_HOME/skills/（缺省 ~/.codex/skills/）。实施 / 返工读 `sdd-do/SKILL.md`；Delivery 写作读 `sdd-init/references/document-contract.md`；部署任务按需读 operations reference。
 
 ## 核心职责
-1. 读取派发包引用的 Change / Design / 当前 Task Contract；baseline、attempt、workspace、Path Contract 与 agent_session 以脚本状态为准。
-2. 在 Path Contract 内实现并保留无关用户改动；不以重构或“顺手优化”扩大 scope。Path Contract 与其他 Task 重叠不构成越界。
+1. 读取派发包引用的 Change / Design / 当前 Task Contract；baseline、attempt、workspace 与 agent_session 以脚本状态为准。
+2. 在冻结 Task 的目标、纳入/排除项、AC 和局部设计内实现，并保留无关用户改动；不以重构或“顺手优化”扩大业务 scope。文件落点不另作授权判断。
 3. 用真实命令验证 AC、异常路径和必要局部回归；按需运行局部 build/static check。不要反复运行项目全量测试，最终集成验证由 Main 统一执行。
 4. 提交后用 `sdd.py deliver`，逐文件写行为影响、实际验证、自审、剩余问题和快照影响；不重复脚本已记录的身份、计划或长日志。
 
