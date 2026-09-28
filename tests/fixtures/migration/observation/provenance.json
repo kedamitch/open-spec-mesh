@@ -1,0 +1,9 @@
+{
+  "source": "Python 3 sqlite3 baseline migration fixture",
+  "schema_version": 1,
+  "application_id": "0x5344444F",
+  "run_id": "golden-run",
+  "scope_key": "953c1a3571e4344fc9f1bb2a3001c7ce58d65510544fc201b29b11ee40fe50a2",
+  "scope_json": "{\"change_id\": null, \"expectation\": {\"mode\": \"unknown\", \"roles\": [], \"source\": \"operator_not_model\"}, \"members\": null, \"project_key\": \"fixture-project\", \"root_session\": \"fixture-root\", \"turn\": \"fixture-turn\"}",
+  "synthetic": true
+}
