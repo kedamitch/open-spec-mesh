@@ -131,7 +131,7 @@ export function renderDispatchContract(source,host,home){
   return adaptPrompt(
     fs.readFileSync(path.join(source,"agents","dispatch-contract.md"),"utf8"),
     hostProfile(host,home)
-  ).trimEnd()+"\\n";
+  ).trimEnd()+"\n";
 }
 
 export function renderMcpOverlay(host,commands,{laya=null}={}){
@@ -146,7 +146,7 @@ export function renderMcpOverlay(host,commands,{laya=null}={}){
     };
     if(laya)servers.laya={type:"local",command:[laya.command,...(laya.args||[])],
       environment:Object.fromEntries((laya.env_vars||[]).map(n=>[n,"{env:"+n+"}"]))};
-    return JSON.stringify({$schema:"https://opencode.ai/config.json",mcp:{servers}},null,2)+"\\n";
+    return JSON.stringify({$schema:"https://opencode.ai/config.json",mcp:{servers}},null,2)+"\n";
   }
   if(host==="claude"){
     const servers={
@@ -156,7 +156,7 @@ export function renderMcpOverlay(host,commands,{laya=null}={}){
     };
     if(laya)servers.laya={type:"stdio",command:laya.command,args:[...(laya.args||[])],
       env:Object.fromEntries((laya.env_vars||[]).map(n=>[n,"\${"+n+"}"]))};
-    return JSON.stringify({mcpServers:servers},null,2)+"\\n";
+    return JSON.stringify({mcpServers:servers},null,2)+"\n";
   }
   throw new Error("MCP overlay is only used for opencode/claude");
 }
