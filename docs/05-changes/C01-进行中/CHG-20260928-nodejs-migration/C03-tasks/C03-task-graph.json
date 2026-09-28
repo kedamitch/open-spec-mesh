@@ -444,15 +444,48 @@
           "state": "accepted",
           "reason": "Main independently reran AC-08 Node 24.21.0 suite (23/23), AC-09 GPU service suite (6/6), and npm pack dry-run (80 files; GPU Python helper/server excluded); report matches the assigned attempt/baseline and empty diff, all evidence is acceptance-ready.",
           "revision": "ceaeedd42d9908d524234815d05792e9474a073f"
+        },
+        {
+          "state": "planned",
+          "action": "rework",
+          "reason": "Architect verified two ordinary C03-04 implementation/test defects without frozen Contract drift: public systemone route requests runSystemOne while module exports only main; GPU pack assertion rejects the C03-05-required README instead of limiting exclusion to Python/GPU implementation. Rework C03-04 and invalidate dependent C03-05/C03-06 attempts; preserve all prior deliveries/evidence.",
+          "invalidated_by": "C03-04",
+          "previous": {
+            "state": "accepted",
+            "baseline": "ceaeedd42d9908d524234815d05792e9474a073f",
+            "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04-attempt4",
+            "result_revision": "ceaeedd42d9908d524234815d05792e9474a073f",
+            "report_digest": "d4c3d2f7af0c3b177352df4b40781611ba37720ab80fe99dd8aea2241d92ac68",
+            "contract_digest": "4509c950bf446b33b6876f904e5182d8edd63763c570fc1c96c3a641fc8b13fd",
+            "attempt": 4,
+            "agent_session": "/root/node_task_04_systemone_client"
+          },
+          "user_confirmed": false
+        },
+        {
+          "state": "running",
+          "baseline": "360c803c7f3ee309365aca6c15c974171445733e",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04-attempt5",
+          "attempt": 5
+        },
+        {
+          "state": "submitted",
+          "revision": "0283a13099331bd26c5828ae2c06d5e53950ebb8",
+          "attempt": 5
+        },
+        {
+          "state": "accepted",
+          "reason": "Main independently reviewed attempt 5 diff and Worker Delivery; Node v24.21.0 System One suite 24/24 passed, including the new public registry handler smoke and exact npm packlist assertion; isolated GPU FastAPI/FakeRouter unittest 6/6 passed (temporary test-only venv, no GPU/model). Handler export now matches registry, and package includes only the intended README under integrations/laya-gpu while excluding Python implementation and mcp/laya_batch_server.py. No frozen Contract drift.",
+          "revision": "0283a13099331bd26c5828ae2c06d5e53950ebb8"
         }
       ],
-      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04-attempt4",
-      "attempt": 4,
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04-attempt5",
+      "attempt": 5,
       "agent_session": "/root/node_task_04_systemone_client",
       "contract_digest": "4509c950bf446b33b6876f904e5182d8edd63763c570fc1c96c3a641fc8b13fd",
-      "baseline": "ceaeedd42d9908d524234815d05792e9474a073f",
-      "result_revision": "ceaeedd42d9908d524234815d05792e9474a073f",
-      "report_digest": "d4c3d2f7af0c3b177352df4b40781611ba37720ab80fe99dd8aea2241d92ac68"
+      "baseline": "360c803c7f3ee309365aca6c15c974171445733e",
+      "result_revision": "0283a13099331bd26c5828ae2c06d5e53950ebb8",
+      "report_digest": "5fc456f1732dd9fac0303479cff0b58388f5e911ece3508d3ac4db5deca309e8"
     },
     {
       "id": "C03-05",
@@ -549,10 +582,43 @@
             "agent_session": "/root/worker_task_05_host_installer"
           },
           "user_confirmed": true
+        },
+        {
+          "state": "running",
+          "baseline": "2ac3a03806727cafc187238ab106e35c60cc3c9d",
+          "workspace": "/home/fatfei/code/open-spec-mesh",
+          "attempt": 2
+        },
+        {
+          "state": "submitted",
+          "revision": "0d78ad12d8c188a4db8313201b11225dc944b524",
+          "attempt": 2
+        },
+        {
+          "state": "accepted",
+          "reason": "Verified attempt 2 implementation diff contains only the three intended migration and regression-test files; Node installation suite passed 38/38 on Node v24.19.0, syntax and commit whitespace checks passed, npm pack dry-run contains 301 entries. Worker Delivery records the isolated local tarball npm-exec install smoke and historical Git regression. Main-owned task graph edits are preserved.",
+          "revision": "0d78ad12d8c188a4db8313201b11225dc944b524"
+        },
+        {
+          "state": "planned",
+          "action": "rework",
+          "reason": "Architect verified two ordinary C03-04 implementation/test defects without frozen Contract drift: public systemone route requests runSystemOne while module exports only main; GPU pack assertion rejects the C03-05-required README instead of limiting exclusion to Python/GPU implementation. Rework C03-04 and invalidate dependent C03-05/C03-06 attempts; preserve all prior deliveries/evidence.",
+          "invalidated_by": "C03-04",
+          "previous": {
+            "state": "accepted",
+            "baseline": "2ac3a03806727cafc187238ab106e35c60cc3c9d",
+            "workspace": "/home/fatfei/code/open-spec-mesh",
+            "result_revision": "0d78ad12d8c188a4db8313201b11225dc944b524",
+            "report_digest": "3127404d4d35161b7222e073d9c767a825e9b2243b2c1fd5227fa7c2d4168807",
+            "contract_digest": "e02428d08cd1e01fd1785c3538ceb4db29f9a431e1ddba00d11f2902866fbeed",
+            "attempt": 2,
+            "agent_session": "/root/worker_task_05_host_installer"
+          },
+          "user_confirmed": false
         }
       ],
       "workspace": "/home/fatfei/code/open-spec-mesh",
-      "attempt": 1,
+      "attempt": 2,
       "agent_session": "/root/worker_task_05_host_installer"
     },
     {
@@ -632,8 +698,32 @@
             "state": "blocked"
           },
           "user_confirmed": true
+        },
+        {
+          "state": "running",
+          "baseline": "767593cd18b076ed1d45211ae277141aaa97ef9f",
+          "workspace": "/home/fatfei/code/open-spec-mesh",
+          "attempt": 1
+        },
+        {
+          "state": "planned",
+          "action": "rework",
+          "reason": "Architect verified two ordinary C03-04 implementation/test defects without frozen Contract drift: public systemone route requests runSystemOne while module exports only main; GPU pack assertion rejects the C03-05-required README instead of limiting exclusion to Python/GPU implementation. Rework C03-04 and invalidate dependent C03-05/C03-06 attempts; preserve all prior deliveries/evidence.",
+          "invalidated_by": "C03-04",
+          "previous": {
+            "state": "running",
+            "baseline": "767593cd18b076ed1d45211ae277141aaa97ef9f",
+            "workspace": "/home/fatfei/code/open-spec-mesh",
+            "contract_digest": "6a3cdd96a5ab58ab3f48f594d163ac898ea6fdbe6b6695c6f8706526ae9b32bc",
+            "attempt": 1,
+            "agent_session": "/root/worker_task_06_validation_guides"
+          },
+          "user_confirmed": false
         }
-      ]
+      ],
+      "workspace": "/home/fatfei/code/open-spec-mesh",
+      "attempt": 1,
+      "agent_session": "/root/worker_task_06_validation_guides"
     }
   ]
 }

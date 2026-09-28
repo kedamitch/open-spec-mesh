@@ -11,6 +11,7 @@ import test from 'node:test';
 import { isLosslessNumber } from 'lossless-json';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { runCommand } from '../../../lib/cli/registry.js';
 import {
   BATCH_PATH, FORWARDED_ENV, MAX_RESPONSE, MODELS_PATH, SINGLE_PATH, TOOL_SCHEMAS,
   LosslessStdioTransport, Runtime, ServiceError, config, createHttpTransport, enabled, encode, fallback, guard,
@@ -556,13 +557,37 @@ test('stdio rejects an oversized trailing partial frame after a complete frame i
   stdin.destroy(); stdout.destroy(); stderr.destroy();
 });
 
+test('public systemone CLI route dispatches help without provider access', async () => {
+  let stdout = '';
+  let stderr = '';
+  let fetchCalls = 0;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    fetchCalls += 1;
+    throw new Error('unexpected provider request');
+  };
+  try {
+    const exitCode = await runCommand('systemone', ['--help'], {
+      stdout: { write: (text) => { stdout += text; } },
+      stderr: { write: (text) => { stderr += text; } },
+    });
+    assert.equal(exitCode, 0);
+    assert.match(stdout, /^Usage: node mcp\/laya_http_mcp\.js/u);
+    assert.equal(stderr, '');
+    assert.equal(fetchCalls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('npm consumer file list excludes the standalone GPU Python server and helper', () => {
   const env = { ...process.env, PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH ?? ''}` };
   const result = spawnSync('npm', ['pack', '--dry-run', '--json'], { cwd: ROOT, env, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const artifact = JSON.parse(result.stdout)[0];
   const files = artifact.files.map((entry) => entry.path.replaceAll('\\', '/'));
-  assert.equal(files.some((name) => name === 'integrations/laya-gpu/contracts.py' || name.startsWith('integrations/laya-gpu/')), false);
+  const gpuFiles = files.filter((name) => name.startsWith('integrations/laya-gpu/')).sort();
+  assert.deepEqual(gpuFiles, ['integrations/laya-gpu/README.md']);
   assert.equal(files.includes('mcp/laya_batch_server.py'), false);
 });
 
