@@ -37,8 +37,56 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "planned",
-      "history": []
+      "state": "running",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "95a4717ff26d5cf841fe6ddad1bbc3a54a710874",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02",
+          "attempt": 1
+        },
+        {
+          "state": "blocked",
+          "action": "block",
+          "reason": "冻结 Task Contract 只允许 lib/workflow/** 与 sdd-release/**，但既有 CLI registry 路由要求 lib/release/**；当前模块落点与冻结写入范围冲突，需用户确认最小 Path Contract replan。",
+          "invalidated_by": "C03-02",
+          "previous": {
+            "state": "running",
+            "baseline": "95a4717ff26d5cf841fe6ddad1bbc3a54a710874",
+            "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02",
+            "contract_digest": "f2fa2eda157863fb26bbac844733fa9201c1c6890601055ff8c2f1d63a045c2d",
+            "attempt": 1,
+            "agent_session": "/root/node_task_02_workflow_runtime"
+          },
+          "user_confirmed": false
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户已批准将 Release 实现落点统一为 lib/release/**，并相应更新 C02/C03-02 Path Contract；保持公开行为不变。",
+          "invalidated_by": "C03-02",
+          "previous": {
+            "state": "blocked",
+            "baseline": "95a4717ff26d5cf841fe6ddad1bbc3a54a710874",
+            "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02",
+            "contract_digest": "f2fa2eda157863fb26bbac844733fa9201c1c6890601055ff8c2f1d63a045c2d",
+            "attempt": 1,
+            "agent_session": "/root/node_task_02_workflow_runtime"
+          },
+          "user_confirmed": true
+        },
+        {
+          "state": "running",
+          "baseline": "c6ba2cc7c76275a483ca9b7c428d39b4c3767c8e",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02",
+          "attempt": 2
+        }
+      ],
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-02",
+      "attempt": 2,
+      "agent_session": "/root/node_task_02_workflow_runtime",
+      "contract_digest": "b20c1e28363d50cff7ccb6ef4358fa9b26b0d17a436b75d2d7f5874ca79b8e66",
+      "baseline": "c6ba2cc7c76275a483ca9b7c428d39b4c3767c8e"
     },
     {
       "id": "C03-03",
@@ -46,8 +94,32 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "planned",
-      "history": []
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "95a4717ff26d5cf841fe6ddad1bbc3a54a710874",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-03",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "e14ae6e433a140672a0935538a66baa66a98dbf7",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "已对照 C03-03 冻结 Task Contract 与交付文件表，确认 AC-06/AC-07 定向用例在 Node 24.21.0 下 33/33 通过，diff check 通过，Delivery 无契约偏差或未验证项。",
+          "revision": "e14ae6e433a140672a0935538a66baa66a98dbf7"
+        }
+      ],
+      "contract_digest": "a0d87189b6aa6745fb28a7ac9c783d5e75641a5baf0990875feff9c21e539e7b",
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-03",
+      "baseline": "95a4717ff26d5cf841fe6ddad1bbc3a54a710874",
+      "attempt": 1,
+      "agent_session": "/root/node_task_03_observation_diagnostics",
+      "result_revision": "e14ae6e433a140672a0935538a66baa66a98dbf7",
+      "report_digest": "9624c6f55425c6daa004b84129bd40a3d8370f1cd1ea3327c6f57df784ea52ec"
     },
     {
       "id": "C03-04",
@@ -55,8 +127,32 @@
       "depends_on": [
         "C03-01"
       ],
-      "state": "planned",
-      "history": []
+      "state": "accepted",
+      "history": [
+        {
+          "state": "running",
+          "baseline": "95a4717ff26d5cf841fe6ddad1bbc3a54a710874",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04",
+          "attempt": 1
+        },
+        {
+          "state": "submitted",
+          "revision": "090e28a81358baea51d74765e3aeacf7c925bc44",
+          "attempt": 1
+        },
+        {
+          "state": "accepted",
+          "reason": "已核对冻结 C03-04 Contract、AC-08/09、Delivery 与实际 revision；Node 24.21.0 定向测试 23/23、GPU factory/helper 6/6、包排除断言及 diff check 通过。按用户明确决定，本次未确认到达的基线 oracle 事件不作为凭据轮换阻塞，Delivery 已透明记录；实现 AC 无未验证项。",
+          "revision": "090e28a81358baea51d74765e3aeacf7c925bc44"
+        }
+      ],
+      "contract_digest": "1f7941c3b3ba87ce1ef2dfddbe44696f2dae53ad87d87b927a1519398ea1adb2",
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-04",
+      "baseline": "95a4717ff26d5cf841fe6ddad1bbc3a54a710874",
+      "attempt": 1,
+      "agent_session": "/root/node_task_04_systemone_client",
+      "result_revision": "090e28a81358baea51d74765e3aeacf7c925bc44",
+      "report_digest": "7c33bd5285453a8e52eef997cfe81c3914075522233996d4a8e4fbe45a7b6982"
     },
     {
       "id": "C03-05",
@@ -67,7 +163,28 @@
         "C03-04"
       ],
       "state": "planned",
-      "history": []
+      "history": [
+        {
+          "state": "blocked",
+          "action": "block",
+          "reason": "冻结 Task Contract 只允许 lib/workflow/** 与 sdd-release/**，但既有 CLI registry 路由要求 lib/release/**；当前模块落点与冻结写入范围冲突，需用户确认最小 Path Contract replan。",
+          "invalidated_by": "C03-02",
+          "previous": {
+            "state": "planned"
+          },
+          "user_confirmed": false
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户已批准将 Release 实现落点统一为 lib/release/**，并相应更新 C02/C03-02 Path Contract；保持公开行为不变。",
+          "invalidated_by": "C03-02",
+          "previous": {
+            "state": "blocked"
+          },
+          "user_confirmed": true
+        }
+      ]
     },
     {
       "id": "C03-06",
@@ -76,7 +193,28 @@
         "C03-05"
       ],
       "state": "planned",
-      "history": []
+      "history": [
+        {
+          "state": "blocked",
+          "action": "block",
+          "reason": "冻结 Task Contract 只允许 lib/workflow/** 与 sdd-release/**，但既有 CLI registry 路由要求 lib/release/**；当前模块落点与冻结写入范围冲突，需用户确认最小 Path Contract replan。",
+          "invalidated_by": "C03-02",
+          "previous": {
+            "state": "planned"
+          },
+          "user_confirmed": false
+        },
+        {
+          "state": "planned",
+          "action": "replan",
+          "reason": "用户已批准将 Release 实现落点统一为 lib/release/**，并相应更新 C02/C03-02 Path Contract；保持公开行为不变。",
+          "invalidated_by": "C03-02",
+          "previous": {
+            "state": "blocked"
+          },
+          "user_confirmed": true
+        }
+      ]
     }
   ]
 }
