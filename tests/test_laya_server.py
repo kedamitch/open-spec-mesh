@@ -9,7 +9,11 @@ import threading
 import time
 import unittest
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'mcp'))
+ROOT = Path(__file__).resolve().parents[1]
+GPU_HELPER_SPEC = importlib.util.spec_from_file_location('open_spec_mesh_gpu_contracts_test', ROOT/'integrations/laya-gpu/contracts.py')
+GPU_CONTRACTS = importlib.util.module_from_spec(GPU_HELPER_SPEC)
+GPU_HELPER_SPEC.loader.exec_module(GPU_CONTRACTS)
+sys.path.insert(0,str(ROOT/'mcp'))
 HAS_API=importlib.util.find_spec('fastapi') is not None and importlib.util.find_spec('httpx') is not None
 if HAS_API:
     from laya_batch_server import create_app
@@ -32,6 +36,22 @@ class FakeRouter:
         self.calls.append(('batch',len(requests),batch_size));time.sleep(.02);self.active-=1
         return [self.result() for _ in requests]
 
+
+
+class GPUContractsTest(unittest.TestCase):
+    def test_python_gpu_helper_is_standalone_and_preserves_request_contract(self):
+        self.assertEqual(16, GPU_CONTRACTS.MAX_ITEMS)
+        self.assertEqual(128 * 1024, GPU_CONTRACTS.MAX_REQUEST)
+        self.assertEqual({'english', 'multilingual', 'typed-decisions'}, GPU_CONTRACTS.MODELS)
+        self.assertEqual('{"text":"雪","n":1.0}'.encode(), GPU_CONTRACTS.encode({'text': '雪', 'n': 1.0}))
+        questions = {'kind': {'type': 'choice', 'instructions': 'Select.', 'criteria': ['a', 'b']}}
+        GPU_CONTRACTS.validate_questions(questions)
+        self.assertEqual({'kind': {'type': 'choice', 'choice': 'a'}}, GPU_CONTRACTS.validate_answers({'answers': {'kind': {'type': 'choice', 'choice': 'a'}}}, questions))
+        with self.assertRaises(ValueError):
+            GPU_CONTRACTS.validate_questions({'kind': {'type': 'score', 'instructions': 'Rank.', 'criteria': ['only one']}})
+        with self.assertRaises(ValueError):
+            GPU_CONTRACTS.validate_answers({'answers': {'kind': {'type': 'choice', 'choice': 'not-listed'}}}, questions)
+        self.assertNotIn('from laya_contracts import', Path(ROOT/'mcp/laya_batch_server.py').read_text())
 
 @unittest.skipUnless(HAS_API,'FastAPI/httpx integration dependencies installed in Laya CI')
 class APITest(unittest.TestCase):

@@ -1,6 +1,6 @@
 # 执行行为诊断
 
-纯 Python 标准库、离线、只读采集。**不调用模型、宿主 CLI、网络 API，不注入提示词、不新增 Skill，也不让 Agent 手写日志。** 诊断独立于开发流程运行；失败不改变 Task、代码或验收状态。
+Node.js + 锁定的纯 JavaScript/WASM 依赖，离线、只读采集。**不调用模型、宿主 CLI、网络 API，不注入提示词、不新增 Skill，也不让 Agent 手写日志。** 诊断独立于开发流程运行；失败不改变 Task、代码或验收状态。
 
 ## Host 能力
 
@@ -14,45 +14,45 @@ OpenCode / Claude Code 在私有 trace adapter 尚未稳定前明确记录 `cove
 
 ## 使用
 
-安装器自动把 `observe.py` 和 `observation/` 安装到现有 `sdd-do/scripts/`。默认数据库改为宿主无关位置：优先 `$OPEN_SPEC_MESH_STATE_HOME/observations.sqlite3`；否则使用 `$XDG_STATE_HOME/open-spec-mesh/observations.sqlite3`，再缺省到 `~/.local/state/open-spec-mesh/observations.sqlite3`。
+安装器把 `observe.js` 安装到现有 `sdd-do/scripts/`，观测实现由固定 Node runtime 提供。默认数据库改为宿主无关位置：优先 `$OPEN_SPEC_MESH_STATE_HOME/observations.sqlite3`；否则使用 `$XDG_STATE_HOME/open-spec-mesh/observations.sqlite3`，再缺省到 `~/.local/state/open-spec-mesh/observations.sqlite3`。
 
 ```sh
-OBSERVER="${CODEX_HOME:-$HOME/.codex}/skills/sdd-do/scripts/observe.py"  # Codex 示例
+OBSERVER="${CODEX_HOME:-$HOME/.codex}/skills/sdd-do/scripts/observe.js"  # Codex 示例
 
 # 一次扫描本项目的历史根会话；每个原生 turn 单独成片段，不推测多个需求的关系。
-python3 -B "$OBSERVER" scan --root "$PWD" --since 2026-09-23
+node "$OBSERVER" scan --root "$PWD" --since 2026-09-23
 
 # scan 输出 run_id；查看诊断及跨版本汇总。
-python3 -B "$OBSERVER" report --run <run_id>
-python3 -B "$OBSERVER" summary
+node "$OBSERVER" report --run <run_id>
+node "$OBSERVER" summary
 ```
 
 针对“这次为什么没有 Explorer／没有按 SDD 执行”，用操作者期望补齐适用条件，而不是让模型解释动机：
 
 ```sh
-python3 -B "$OBSERVER" collect --run inspect-one --root "$PWD" \
+node "$OBSERVER" collect --run inspect-one --root "$PWD" \
   --session-file /absolute/path/rollout.jsonl \
   --sessions-dir "${CODEX_HOME:-$HOME/.codex}/sessions" \
   --turn <turn_id> --expected-mode sdd --expect-role explorer \
   --change CHG-YYYYMMDD-example
-python3 -B "$OBSERVER" report --run inspect-one --format json
+node "$OBSERVER" report --run inspect-one --format json
 
 # 明确属于同一需求的多个片段可分组；不重复累计同一 Task 的历史。
-python3 -B "$OBSERVER" group --run feature-one --members <run_a> <run_b>
-python3 -B "$OBSERVER" report --run feature-one
+node "$OBSERVER" group --run feature-one --members <run_a> <run_b>
+node "$OBSERVER" report --run feature-one
 ```
 
 `--turn` 在根会话含多个 turn 时必须给出；单 turn 可省略。`--change`、期望模式和期望角色均可省略，此时保留 unknown，不猜用户意图。没有明确绑定时，只从成功 SDD 命令里的唯一 Change ID 关联。原生 thread、一次 turn、SDD Task 和最终需求不是同一个对象。
 
-源码测试可加 `--rules-root <package-root>`；已安装环境按 `--host` 选择对应配置根。自定义数据库参数放在子命令前：`observe.py --db /private/data/observations.sqlite3 scan ...`。数据库必须在项目外且权限为 0600。
+源码测试可加 `--rules-root <package-root>`；已安装环境按 `--host` 选择对应配置根。自定义数据库参数放在子命令前：`observe.js --db /private/data/observations.sqlite3 scan ...`。数据库必须在项目外且权限为 0600。
 
 OpenCode / Claude Code 当前使用 artifact-only collect，不读取私有 session DB：
 
 ```sh
-python3 -B "$OBSERVER" --host opencode collect \
+node "$OBSERVER" --host opencode collect \
   --run inspect-open --root "$PWD" --expected-mode sdd --change CHG-YYYYMMDD-example
 
-python3 -B "$OBSERVER" --host claude collect \
+node "$OBSERVER" --host claude collect \
   --run inspect-claude --root "$PWD" --expected-mode sdd --change CHG-YYYYMMDD-example
 ```
 
@@ -98,7 +98,7 @@ python3 -B "$OBSERVER" --host claude collect \
 单文件上限 128 MiB、单行 8 MiB；scan 默认最多 100 个片段，超限失败而不是静默漏统计。只读取无符号链接输入。数据库按 Run 原子替换；重复采集不增加样本，不兼容数据库或不同 scope 复用同 run_id 时拒绝。批量是逐 Run 提交，重跑可恢复；未增加后台进程或自动外传。
 
 ```sh
-python3 -B -m unittest discover -s tests -p 'test_observation.py' -v
+node --test tests/node/observation/*.test.js tests/node/diagnostics/*.test.js
 ```
 
 适配依据：[Codex rollout-trace agent reducer](https://github.com/openai/codex/blob/0a2eb4696c26ac33204bcd255721ab30220a4774/codex-rs/rollout-trace/src/reducer/tool/agents.rs)、[AGENTS 指令加载](https://developers.openai.com/codex/guides/agents-md/)、[Skill 渐进加载](https://developers.openai.com/codex/skills/)。本地历史格式可能不同；适配器按观测形状工作，不声称覆盖所有客户端版本。
