@@ -1,0 +1,11 @@
+{
+  "name":"open-spec-mesh",
+  "version":"0.1.0-dev.1",
+  "description":"Spec-driven multi-agent development runtime for Codex, OpenCode and Claude Code",
+  "type":"module",
+  "bin":{"osm":"./bin/osm.js","open-spec-mesh":"./bin/osm.js"},
+  "engines":{"node":">=20.18.1"},
+  "scripts":{"test":"node --test test-js/*.test.js","test:node":"node --test test-js/*.test.js"},
+  "files":["bin/","src/","AGENTS.md","index.md","config.toml","agents/","sdd-init/","sdd-migrate/","sdd-change/","sdd-do/","sdd-close/","sdd-research/","sdd-release/","sdd-diagnose/","prd-spec/","design-overview/","typesafe-laya/","mcp/"],
+  "license":"MIT"
+}
