@@ -30,7 +30,7 @@ Main 只需要知道自己可以委派的角色，不维护其他角色之间的
 
 派发遵循 `agents/dispatch-contract.md`：Role Prompt 负责长期工作方法，Dispatch Packet 只传当前任务的最小上下文。SDD state 先给出机械上允许的动作，再由 Main 在**自己可委派的角色**中做语义选择。
 
-Worker 使用 `sdd.py prepare` 生成的 Dispatch Packet；首次 spawn 后绑定 `agent_session`，返工优先恢复原 Worker。同一 SDD Change 的规划修订优先恢复原 Architect。
+Worker 使用 `open-spec-mesh sdd prepare` 生成的 Dispatch Packet；首次 spawn 后绑定 `agent_session`，返工优先恢复原 Worker。同一 SDD Change 的规划修订优先恢复原 Architect。
 
 ## 3. 协调方法
 
@@ -54,7 +54,7 @@ Task 按业务模块和可验收结果拆分，不为消灭文件冲突继续细
 
 - 实现缺陷且 Contract 不变 → 原 Worker rework。
 - 设计缺口 → 原 Architect 修正；冻结 Contract 变化仍等用户确认后 replan。
-- accepted Task 用 `sdd.py integrate` 集成；单 Task 可 `--task`，同一 accepted/pending wave 优先 `--wave --check` 后 `--wave`。Git ancestry 判断是否已进入 HEAD，下游仅在上游 revision 已集成后派发。简单冲突由 Main 解决；复杂冲突可回派原 Worker 之一处理，不新增业务 Task。
+- accepted Task 用 `open-spec-mesh sdd integrate` 集成；单 Task 可 `--task`，同一 accepted/pending wave 优先 `--wave --check` 后 `--wave`。Git ancestry 判断是否已进入 HEAD，下游仅在上游 revision 已集成后派发。简单冲突由 Main 解决；复杂冲突可回派原 Worker 之一处理，不新增业务 Task。
 - 证据不足 → 补证据，不直接验收。
 - 多个结果冲突 → Main 以冻结 Contract、真实 diff 和可复验证据收敛，不让 Agent 互相裁决。
 
@@ -69,7 +69,7 @@ Task 按业务模块和可验收结果拆分，不为消灭文件冲突继续细
 
 ## 7. 使用
 
-- 日常入口：`sdd-change/scripts/sdd.py`；旧项目文档升级使用 `sdd-migrate`，新项目骨架使用 `sdd-init`。
+- 日常入口：`open-spec-mesh sdd`；旧项目文档升级使用 `sdd-migrate`，新项目骨架使用 `sdd-init`。
 - 写作：遵循 `sdd-init/references/document-contract.md`。
 - Skill 根：`$CODEX_HOME/skills/`。
 - V2：`agent_type` + `fork_turns="none"`；model / effort 由角色 TOML 固定。

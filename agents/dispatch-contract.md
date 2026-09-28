@@ -26,7 +26,7 @@ Agent 唤起统一理解为：
 - `constraints`：兼容、安全、冻结边界及禁止事项。
 - `expected_output`：调用者真正需要的结果。
 
-正式 Task 按需附 `revision / baseline / attempt / acceptance_criteria`。正式冻结 Task 优先使用 `sdd.py prepare` 返回的 `dispatch`，直接引用 Change / Design / Task Contract、依赖、baseline、attempt、workspace 与恢复会话，不由调用方重新摘要需求。
+正式 Task 按需附 `revision / baseline / attempt / acceptance_criteria`。正式冻结 Task 优先使用 `open-spec-mesh sdd prepare` 返回的 `dispatch`，直接引用 Change / Design / Task Contract、依赖、baseline、attempt、workspace 与恢复会话，不由调用方重新摘要需求。
 
 ## 3. 最小上下文
 

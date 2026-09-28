@@ -1,0 +1,4 @@
+[mcp_servers.laya]
+command = "python3"
+args = ["mcp/laya_http_mcp.py"]
+enabled = true

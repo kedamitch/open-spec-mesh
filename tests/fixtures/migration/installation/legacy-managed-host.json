@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "package": "kedamitch/open-spec-mesh",
+  "host": "codex",
+  "paths": [
+    "open-spec-mesh/runtime",
+    "mcp/laya_http_mcp.js",
+    "mcp/laya-settings.json"
+  ]
+}

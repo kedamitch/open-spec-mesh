@@ -43,8 +43,8 @@ env_vars = ["TAVILY_API_KEY"]
 [mcp_servers.laya]
 enabled = false
 type = "stdio"
-command = "python3"
-args = ["mcp/laya_http_mcp.py"]
+command = "node"
+args = ["mcp/laya_http_mcp.js"]
 env_vars = ["SYSTEMONE_PROVIDER", "SYSTEMONE_TIMEOUT_SECONDS", "SYSTEMONE_MODEL_REVISION", "SYSTEMONE_METRICS_PATH", "LAYA_BASE_URL", "LAYA_API_KEY", "LAYA_MODEL", "LAYA_MODEL_REVISION", "LAYA_TIMEOUT_SECONDS", "LAYA_TEMPLATE_DIR", "LAYA_METRICS_PATH", "TYPESAFE_API_KEY", "TYPESAFE_BASE_URL", "TYPESAFE_DEFAULT_MODEL"]
 
 [tui]

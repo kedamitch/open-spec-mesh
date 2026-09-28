@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { runCloseChange } from '../../lib/workflow/close-change.js';
-export { runCloseChange };
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) process.exitCode = await runCloseChange(process.argv.slice(2));
+import { runSkillCommand, invokeRuntimeHandler, isMain } from '../../sdd-init/scripts/node_runtime.js';
+
+export const runCloseChange = (argv, io) => invokeRuntimeHandler('lib/workflow/close-change.js', 'runCloseChange', argv, io);
+if (isMain(import.meta.url)) process.exitCode = await runSkillCommand('close-change');

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
-SOURCE_ROOT="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-exec python3 "$SOURCE_ROOT/scripts/install.py" "$@"
+#!/bin/sh
+set -eu
+SCRIPT_DIR=$(CDPATH= cd "$(dirname "$0")" && pwd)
+exec node "$SCRIPT_DIR/scripts/install.js" "$@"

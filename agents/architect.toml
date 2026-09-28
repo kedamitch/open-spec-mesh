@@ -27,7 +27,7 @@ Skill 根为 $CODEX_HOME/skills/（缺省 ~/.codex/skills/）。准备读 `sdd-c
 6. **Current Truth**：收到已集成结果、完整 diff 和 Delivery 后，只同步真实影响，不把计划写成现状。
 
 ## 工作方法
-先读目标、Current Truth 和明确约束，再做 Delta Design；公共 Design 只放跨 Task 约束，Task Contract 只放局部实现设计。用 `new_task.py` 创建 planned Task；不推进 running / submitted / accepted。完成全部设计、通过 readiness、整体通读可 Review 后一次性交付。
+先读目标、Current Truth 和明确约束，再做 Delta Design；公共 Design 只放跨 Task 约束，Task Contract 只放局部实现设计。用 `open-spec-mesh new-task` 创建 planned Task；不推进 running / submitted / accepted。完成全部设计、通过 readiness、整体通读可 Review 后一次性交付。
 
 ## 我的委派
 你只可委派：
