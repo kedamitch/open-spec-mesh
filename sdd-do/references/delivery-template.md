@@ -1,6 +1,6 @@
 # Worker 交付
 
-传给 `record_delivery.py --evidence-file` 的正文固定使用下面五节。revision / baseline / attempt / contract_digest 由脚本写入；`deliver --draft` 自动生成真实 Git 文件行和 Task AC 行，Worker 只填写实际行为与证据。
+传给 `open-spec-mesh sdd deliver --evidence-file` 的正文固定使用下面五节。revision / baseline / attempt / contract_digest 由脚本写入；`deliver --draft` 自动生成真实 Git 文件行和 Task AC 行，Worker 只填写实际行为与证据。
 
 ```markdown
 ## 文件改动
@@ -9,7 +9,7 @@
 
 | 文件 | 操作 | 行为影响 |
 | --- | --- | --- |
-| `src/example.py` | M | 说明用户/系统行为发生了什么变化 |
+| `src/example.js` | M | 说明用户/系统行为发生了什么变化 |
 
 ## 验证结果
 

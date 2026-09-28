@@ -18,14 +18,14 @@ spawn_agent(
 角色 TOML 固定 model / effort / instructions。需要独立进程隔离时使用：
 
 ```sh
-python "$CODEX_HOME/skills/sdd-do/scripts/run_leaf.py" worker \
+node "$CODEX_HOME/skills/sdd-do/scripts/run_leaf.js" worker \
   --host codex --root "$WORKTREE" --prompt-file "$TASK_PROMPT"
 ```
 
 恢复使用精确 Codex thread UUID：
 
 ```sh
-python "$CODEX_HOME/skills/sdd-do/scripts/run_leaf.py" worker \
+node "$CODEX_HOME/skills/sdd-do/scripts/run_leaf.js" worker \
   --host codex --root "$WORKTREE" --resume "$THREAD_ID" --prompt-file "$FEEDBACK"
 ```
 
@@ -36,14 +36,14 @@ OpenCode 原生读取全局 `AGENTS.md`、`skills/` 与 `agents/*.md`。Open Spe
 独立 leaf：
 
 ```sh
-python ~/.config/opencode/skills/sdd-do/scripts/run_leaf.py worker \
+node ~/.config/opencode/skills/sdd-do/scripts/run_leaf.js worker \
   --host opencode --root "$WORKTREE" --prompt-file "$TASK_PROMPT"
 ```
 
 恢复必须传精确 session id：
 
 ```sh
-python ~/.config/opencode/skills/sdd-do/scripts/run_leaf.py worker \
+node ~/.config/opencode/skills/sdd-do/scripts/run_leaf.js worker \
   --host opencode --root "$WORKTREE" --resume "$SESSION_ID" --prompt-file "$FEEDBACK"
 ```
 
@@ -54,14 +54,14 @@ launcher 在 SDD workspace 中以进程 `cwd` 启动 `opencode run --agent <role
 Claude Code 原生读取 `CLAUDE.md`、`skills/` 与 `agents/*.md`。Main / Architect 的可委派类型由 `Agent(...)` allowlist 表达；叶子角色不获得 Agent tool。
 
 ```sh
-python ~/.claude/skills/sdd-do/scripts/run_leaf.py worker \
+node ~/.claude/skills/sdd-do/scripts/run_leaf.js worker \
   --host claude --root "$WORKTREE" --prompt-file "$TASK_PROMPT"
 ```
 
 恢复：
 
 ```sh
-python ~/.claude/skills/sdd-do/scripts/run_leaf.py worker \
+node ~/.claude/skills/sdd-do/scripts/run_leaf.js worker \
   --host claude --root "$WORKTREE" --resume "$SESSION_ID" --prompt-file "$FEEDBACK"
 ```
 
