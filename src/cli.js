@@ -1,6 +1,7 @@
 import path from "node:path";
 import { initializeProject } from "./commands/init.js";
 import { hostProfile } from "./host-adapter.js";
+import { installRuntime } from "./install.js";
 
 function option(args,name,fallback){
   const i=args.indexOf(name);
@@ -11,6 +12,7 @@ function option(args,name,fallback){
 function help(){return [
   "Open Spec Mesh","","Usage:",
   "  osm init [--root PATH]",
+    "  osm install [--host codex|opencode|claude] [--home PATH] [--dry-run] [--skip-tools]",
   "  osm host-profile --host codex|opencode|claude [--home PATH]",
   "  osm --version","",
   "The Node rewrite only exposes commands with a deterministic JS implementation."

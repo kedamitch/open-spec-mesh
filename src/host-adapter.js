@@ -116,3 +116,47 @@ export function nativeArtifactPaths(host,home){
   if(p.mcpOverlay)result.mcpOverlay=path.join(p.home,p.mcpOverlay);
   return result;
 }
+
+
+export function adaptSkillMarkdown(text,host,home){
+  if(host==="codex")return text;
+  const root=path.join(hostProfile(host,home).home,"skills");
+  return text
+    .replace('python3 "$CODEX_HOME/skills/sdd-migrate/scripts/migrate_project.py"',
+             'python3 "'+path.join(root,"sdd-migrate","scripts","migrate_project.py")+'"')
+    .replace('安装后使用 `$CODEX_HOME/skills/` 下对应脚本。','安装后使用 `'+root+'/\` 下对应脚本。');
+}
+
+export function renderDispatchContract(source,host,home){
+  return adaptPrompt(
+    fs.readFileSync(path.join(source,"agents","dispatch-contract.md"),"utf8"),
+    hostProfile(host,home)
+  ).trimEnd()+"\\n";
+}
+
+export function renderMcpOverlay(host,commands,{laya=null}={}){
+  for(const name of ["codegraph","context7","tavily"]){
+    if(!commands[name])throw new Error("Missing research tool command: "+name);
+  }
+  if(host==="opencode"){
+    const servers={
+      codegraph:{type:"local",command:[commands.codegraph,"serve","--mcp"]},
+      context7:{type:"local",command:[commands.context7],environment:{CONTEXT7_API_KEY:"{env:CONTEXT7_API_KEY}"}},
+      tavily:{type:"local",command:[commands.tavily],environment:{TAVILY_API_KEY:"{env:TAVILY_API_KEY}"}}
+    };
+    if(laya)servers.laya={type:"local",command:[laya.command,...(laya.args||[])],
+      environment:Object.fromEntries((laya.env_vars||[]).map(n=>[n,"{env:"+n+"}"]))};
+    return JSON.stringify({$schema:"https://opencode.ai/config.json",mcp:{servers}},null,2)+"\\n";
+  }
+  if(host==="claude"){
+    const servers={
+      codegraph:{type:"stdio",command:commands.codegraph,args:["serve","--mcp"]},
+      context7:{type:"stdio",command:commands.context7,args:[],env:{CONTEXT7_API_KEY:"\${CONTEXT7_API_KEY}"}},
+      tavily:{type:"stdio",command:commands.tavily,args:[],env:{TAVILY_API_KEY:"\${TAVILY_API_KEY}"}}
+    };
+    if(laya)servers.laya={type:"stdio",command:laya.command,args:[...(laya.args||[])],
+      env:Object.fromEntries((laya.env_vars||[]).map(n=>[n,"\${"+n+"}"]))};
+    return JSON.stringify({mcpServers:servers},null,2)+"\\n";
+  }
+  throw new Error("MCP overlay is only used for opencode/claude");
+}
