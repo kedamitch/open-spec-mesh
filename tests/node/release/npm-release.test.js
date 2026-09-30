@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
-import { assertPublished, assertUnpublished, fingerprint, registryMetadata, validatePack, validateSource, validateVersion, waitForPublished, isolatedConsumerEnvironment } from '../../../scripts/npm_release.js';
+import { assertPublished, assertUnpublished, fingerprint, registryMetadata, validatePack, validateSource, validateVersion, waitForPublished, isolatedConsumerEnvironment, REGISTRY_POLL_ATTEMPTS, REGISTRY_POLL_DELAY_MS } from '../../../scripts/npm_release.js';
 
 const info = { name: 'open-spec-mesh', version: '0.0.2', filename: 'open-spec-mesh-0.0.2.tgz', ...fingerprint(Buffer.from('release')) };
 test('versions are exact stable requests, not ranges or shell payloads', () => {
@@ -106,4 +106,10 @@ test('OIDC diagnosis is explicitly dry-run and cannot enter upload or public-ins
   assert.match(yaml, /Publish the verified tarball with OIDC \(no npm secret\)\n\s+if: \$\{\{ !inputs\.verify_only \}\}/u);
   assert.match(yaml, /always\(\) && !inputs\.verify_only && steps\.publish\.outcome/u);
   assert.match(yaml, /requestTokenPresent: Boolean\(process\.env\.ACTIONS_ID_TOKEN_REQUEST_TOKEN\)/u);
+});
+
+test('public registry propagation has a bounded two-minute read-only verification window', () => {
+  const budget = (REGISTRY_POLL_ATTEMPTS - 1) * REGISTRY_POLL_DELAY_MS;
+  assert.ok(budget >= 120_000);
+  assert.ok(budget <= 300_000);
 });

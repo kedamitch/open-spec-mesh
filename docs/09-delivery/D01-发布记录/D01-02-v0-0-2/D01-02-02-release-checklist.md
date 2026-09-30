@@ -29,9 +29,9 @@
 
 ## Deployment
 
-- [ ] 已核验同一 tarball 的真实 public npm 上传。
-- [ ] registry 版本、dist-tag、integrity/shasum 与 artifact 核对。
-- [ ] 从公共 registry 按包名真实 npm 安装并验证。
+- [x] 已核验同一 tarball 的真实 public npm 上传（OIDC run 36690250138）。
+- [x] registry 版本/latest=0.0.2，integrity/shasum 与 c7af582 CI artifact 一致；公开 tgz 逐字节比较通过。
+- [x] 从公共 registry 按包名真实 npm 安装并验证 CLI、Codex host 与实际本机模型更新。
 - 本文件在打包前准备；上传结果须以发布日志与 registry 结果核实，不以勾选项当成授权或上传证据。
 
 ## Rollback
@@ -68,4 +68,12 @@
 - [x] Architect 当前配置、模型校验及 Codex catalog 同步为 gpt-6.1-sol，保持 xhigh，其他角色不变；旧模型仅保留为负向回归输入。
 - [x] 更新后的完整 core 9 项通过：191 Node + 5 Agent 测试及真实 local/global npm tarball consumer。
 - [x] 原生 codex-cli 0.159.2 的确定性 fixture 验证通过，Architect 实际路由为 gpt-6.1-sol/xhigh；无远程推理请求，不等于 full 其他外部集成通过。
-- [ ] npm 页面绑定更新后的真实 0.0.2 OIDC 上传、registry 指纹/tag 及 public consumer 待重新核验。
+- [x] npm 页面绑定更新后的真实 OIDC 上传、registry 指纹/tag 及 public consumer 均独立复核通过。
+
+## 最终实际结果（2026-09-30）
+
+- 0.0.2 已公开发布，latest=0.0.2，registry 时间 2026-09-30T08:34:06.836Z，模型为 Architect gpt-6.1-sol、四个 Luna 角色 gpt-6-luna。
+- 发布前 CI core 为 191 Node + 5 Agent、9 项；原 run 最后一步因 25 秒窗口未看到版本而超时，并非整条 Actions 绿色。
+- 随后独立验证已通过：同一 CI artifact、registry 两种指纹与公开 tgz 字节一致，隔离公共 npm consumer、本机全局 npm 与 Home/runtime 模型更新完成。
+- 后续 helper 仅将只读窗口扩为约两分钟并补测试；不再次发布 0.0.2，不把后续源码当成已发布 artifact，不做自动 tag/归档。
+- 前文未发布/认证阻塞勾选保留为历史排查，仅以本节最终状态为当前事实。

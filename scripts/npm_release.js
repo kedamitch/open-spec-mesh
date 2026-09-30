@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REGISTRY = 'https://registry.npmjs.org/';
 export const NAME = 'open-spec-mesh';
+export const REGISTRY_POLL_ATTEMPTS = 25;
+export const REGISTRY_POLL_DELAY_MS = 5_000;
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', timeout: 600_000,
@@ -83,7 +85,7 @@ export function assertPublished(metadata, info) {
 }
 
 // Retry only public reads for registry propagation; never retry npm publish.
-export async function waitForPublished(info, { fetcher = fetch, pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), attempts = 6 } = {}) {
+export async function waitForPublished(info, { fetcher = fetch, pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), attempts = REGISTRY_POLL_ATTEMPTS } = {}) {
   for (let index = 0; index < attempts; index += 1) {
     const metadata = await registryMetadata(fetcher);
     const release = metadata.versions[info.version];
@@ -93,7 +95,7 @@ export async function waitForPublished(info, { fetcher = fetch, pause = (ms) => 
       assert.equal(release.dist.shasum, info.shasum);
       if (metadata['dist-tags']?.latest === info.version) return metadata;
     }
-    if (index + 1 < attempts) await pause(5_000);
+    if (index + 1 < attempts) await pause(REGISTRY_POLL_DELAY_MS);
   }
   throw new Error(    `Public registry did not expose the requested version/latest within the verification window; inspect before any upload retry`);
 }

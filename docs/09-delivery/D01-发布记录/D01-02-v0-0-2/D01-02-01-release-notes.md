@@ -3,7 +3,7 @@
 ## 版本
 
 - Version：0.0.2。
-- Release Date：待实际 registry 发布成功后记录；发布材料最初准备于 2026-09-29。
+- Release Date：2026-09-30；registry 版本记录时间 2026-09-30T08:34:06.836Z，发布材料最初准备于 2026-09-29。
 
 ## Highlights
 

@@ -1,5 +1,11 @@
 # npm 公共分发与发布操作
 
+## 当前已核验状态（2026-09-30）
+
+open-spec-mesh@0.0.2 已通过 GitHub Actions OIDC 真实发布，latest=0.0.2；registry 时间 2026-09-30T08:34:06.836Z。公开 tarball 与提交 c7af582 的已验证 CI artifact 逐字节一致，SHA-1 为 02c75cb6dadc3497846155e530d80f4a60f5d5cf。公共 registry 全新安装、CLI/Codex host smoke 和实际本机 npm/Home 更新均通过。Architect 为 gpt-6.1-sol/xhigh；Explorer/Librarian 为 gpt-6-luna/low，Worker/Reviewer 为 gpt-6-luna/max。当前源码和受管角色未发现 gpt-5.6-luna 活动配置。不得重复上传已发布的 0.0.2，其他版本需新的明确发布意图。
+
+原 run 36690250138 的 upload 步骤成功，但发布后 25 秒窗口未看见版本，verification 因超时标红；独立核验随后通过，不把整条原 Actions run 说成绿色。未来只读核验窗口扩大至约两分钟，仍不循环重传。以下未发布/认证失败章节均为历史诊断记录，不能覆盖当前已核验状态。
+
 ## 发布对象与边界
 
 包名 open-spec-mesh，目标版本 0.0.2；Node >=22.0.0，公共 registry 为 https://registry.npmjs.org/。package.json 的 publishConfig 固定 public access 与该 registry，避免误发到默认私有镜像。
@@ -203,3 +209,11 @@ GitHub MCP 的独立只读检查成功：远程 main 的 .github/workflows 仍�
 用户确认已通过 npm 页面配置 Trusted Publisher，并明确要求发布前将当前模型切换为 gpt-6.1-sol。已同步 Architect TOML、模型约束校验和原生 Codex 确定性 fixture catalog；保留 xhigh、其他角色模型及历史执行证据。新增回归同时检查新模型路由与旧模型配置拒绝。本机主角色文件已使用新模型；旧已安装 runtime 将在新包发布成功后按真实 npm 安装更新，不以旧 artifact 冒充此次模型改动。提交、验证后按明确授权重试 0.0.2 的 OIDC 流程，不使用本机长期 token 上传，不生成新版本或改写历史 tag。
 
 模型更新后的完整 core 9 项已通过（191 个 Node + 5 个 Agent 测试）；本地 codex-cli 0.159.2 的原生 Multi-Agent V2 确定性 fixture 验证通过，Architect 实际请求 model 为 gpt-6.1-sol、effort 为 xhigh，并保留 Architect -> Explorer 路由。未调用远程模型，不把 fixture 通过当成外部模型供应商可用性证明。当前活动配置无旧模型；唯一旧模型文字为负向回归测试输入。
+
+## 0.0.2 最终 registry 与本机验证（2026-09-30）
+
+用户新增的 Luna 名称要求已核对：当前仓库 Main 默认及四个 Luna 角色已是 gpt-6-luna，实际 Home 中的四个角色也是该值，无需伪造替换 diff；用户自定义 Main 模型/effort 不因此被强制覆盖。发布 run 36690250138 的源码 commit 为 c7af582792386e59ad291aed9a2316e00a5c2782，包含新 Architect 配置。上传步骤真实成功、registry version/latest 都为 0.0.2，存在 provenance 元数据；此处未声称独立验证 provenance 签名。
+
+已下载同一 run 的 release-artifact.json 和 tgz，核对 SHA-512/SHA-1，再无认证下载公开 registry tarball，与 CI artifact 逐字节比较一致。完整 SHA-512：sha512-RliTGs0juGKpP4yQN/7n1PFuooFZUqk6xoSoVIXsASRJBPjMV4YHxAT0rrT/UWL08JiBVIxjFUYdgsdeJBlvbg==；SHA-1：02c75cb6dadc3497846155e530d80f4a60f5d5cf。使用隔离 Home/cache/config 从 registry 按包名真实 npm 安装，两个 CLI 与 Codex --skip-tools 安装通过；随后本机全局 npm 从公开 registry 更新至 0.0.2，更新受管 Home/runtime，并分别确认 npm 包、Home 角色文件、安装 runtime 的五个角色模型与 effort 均正确。私有日志和 metadata 在 /var/tmp/osm-public-0.0.2-61UGV5，无 token/OTP。
+
+原 Actions 最后一步仅因 25 秒只读传播窗口未得到新版本而失败；发布后的独立复核补足真实结果，不重跑 publish、不覆盖 0.0.2、不自动 unpublish/tag/归档。脚本默认轮询预算扩为 25 次/5 秒间隔（约两分钟）并加回归；这些后续 CI helper 与记录改动只提交到 Git，不重发已公开包，也不伪称属于 c7af582 artifact。
