@@ -110,23 +110,31 @@ function readArtifact(directory, version) {
   return { info, tarball };
 }
 
-function consumerSmoke(spec, version) {
+export function isolatedConsumerEnvironment(temp, parent = process.env) {
+  const home = path.join(temp, 'home');
+  fs.mkdirSync(home);
+  const userconfig = path.join(temp, 'user.npmrc');
+  const globalconfig = path.join(temp, 'global.npmrc');
+  fs.writeFileSync(userconfig, '', { mode: 0o600 });
+  fs.writeFileSync(globalconfig, '', { mode: 0o600 });
+  const env = { ...parent };
+  for (const key of Object.keys(env)) {
+    if (/^(?:NODE_AUTH_TOKEN|NPM_TOKEN|NPM_ID_TOKEN|ACTIONS_ID_TOKEN_REQUEST_.*|NPM_CONFIG_.*(?:AUTH|TOKEN).*)$/iu.test(key)) delete env[key];
+  }
+  return { ...env, HOME: home, CODEX_HOME: path.join(home, '.codex'),
+    XDG_CONFIG_HOME: path.join(home, '.config'), XDG_STATE_HOME: path.join(home, '.state'),
+    OPEN_SPEC_MESH_STATE_HOME: path.join(home, '.state', NAME),
+    NPM_CONFIG_USERCONFIG: userconfig, npm_config_userconfig: userconfig,
+    NPM_CONFIG_GLOBALCONFIG: globalconfig, npm_config_globalconfig: globalconfig,
+    NPM_CONFIG_REGISTRY: REGISTRY, npm_config_registry: REGISTRY,
+    NPM_CONFIG_CACHE: path.join(temp, 'cache'), npm_config_cache: path.join(temp, 'cache') };
+}
+
+export function consumerSmoke(spec, version) {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'osm-release-consumer-'));
   try {
     const prefix = path.join(temp, 'prefix');
-    const home = path.join(temp, 'home');
-    fs.mkdirSync(home);
-    const userconfig = path.join(temp, 'empty.npmrc');
-    fs.writeFileSync(userconfig, '', { mode: 0o600 });
-    const env = { ...process.env, HOME: home, CODEX_HOME: path.join(home, '.codex'),
-      XDG_CONFIG_HOME: path.join(home, '.config'), XDG_STATE_HOME: path.join(home, '.state'),
-      OPEN_SPEC_MESH_STATE_HOME: path.join(home, '.state', NAME),
-      NPM_CONFIG_USERCONFIG: userconfig, npm_config_userconfig: userconfig,
-      NPM_CONFIG_GLOBALCONFIG: userconfig, npm_config_globalconfig: userconfig,
-      NPM_CONFIG_CACHE: path.join(temp, 'cache'), npm_config_cache: path.join(temp, 'cache') };
-    for (const key of Object.keys(env)) {
-      if (/^(?:NODE_AUTH_TOKEN|NPM_TOKEN|NPM_ID_TOKEN|ACTIONS_ID_TOKEN_REQUEST_.*)$/iu.test(key)) delete env[key];
-    }
+    const env = isolatedConsumerEnvironment(temp);
     const options = { cwd: temp, env };
     run('npm', ['install', '--global', '--prefix', prefix, '--ignore-scripts', '--no-audit', '--no-fund',
       `--registry=${REGISTRY}`, spec], options);

@@ -177,3 +177,9 @@ GitHub MCP 的独立只读检查成功：远程 main 的 .github/workflows 仍�
 本机 /tmp/.git 标记导致隐私路径测试将临时输出判为 Git 树内；此标记不删除。换用 /var/tmp 的真实 Git 树外私有 TMPDIR 后，当前源码完整 core 9 项均通过，包含 189 个 Node 测试和 4 个 Agent 测试、敏感资源/锁文件检查及真实 local/global tarball consumer。此前沙箱/错误临时路径下的失败保留为证据，不作为豁免。原已验证 tarball 指纹再次核对一致。
 
 下一步：推送已授权的源码快照，真实触发一次 0.0.2 OIDC workflow，记录其 build、artifact、token exchange、upload 和 public consumer 实际结果；不能将 GitHub 写入权限当作 npm Trusted Publisher 配置成功。
+
+## 首轮远程验证及 helper 修复（2026-09-30）
+
+提交 9aad63916981988b3718c64fb9e788ab8c4218c4 已真实快进推送到 main，远程工作流内容与本地核对一致。已按本次 0.0.2 发布授权触发 workflow_dispatch，run 36675589841。GitHub-hosted runner 的 core 完整通过；prepare 的同一 tarball consumer 阶段失败：npm 报 userconfig/globalconfig 共同指向一个空文件导致 double-loading config。publish job 被跳过，没有上传；失败后独立 registry 查询仍只有 0.0.1/latest=0.0.1。
+
+修复为两个独立私有空配置文件，并隔离 npm/OIDC token 环境键；新增真实 npm config get registry 回归，不能只依赖模拟测试。后续重新提交此实现修复并运行流水线，属于有明确代码修复的重新验证，不是同一错误下盲目重传。

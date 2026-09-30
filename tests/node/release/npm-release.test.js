@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { assertPublished, assertUnpublished, fingerprint, registryMetadata, validatePack, validateSource, validateVersion, waitForPublished } from '../../../scripts/npm_release.js';
+import { spawnSync } from 'node:child_process';
+import { assertPublished, assertUnpublished, fingerprint, registryMetadata, validatePack, validateSource, validateVersion, waitForPublished, isolatedConsumerEnvironment } from '../../../scripts/npm_release.js';
 
 const info = { name: 'open-spec-mesh', version: '0.0.2', filename: 'open-spec-mesh-0.0.2.tgz', ...fingerprint(Buffer.from('release')) };
 test('versions are exact stable requests, not ranges or shell payloads', () => {
@@ -79,4 +80,21 @@ test('verification retries only propagation reads, never mismatched bytes or req
   assert.equal(reads, 1);
   await assert.rejects(waitForPublished(info, { fetcher: async () => ({ status: 401 }), pause: async () => {} }), /lookup failed/u);
   await assert.rejects(waitForPublished(info, { fetcher: async () => ({ status: 200, json: async () => ({ name: info.name, versions: {} }) }), pause: async () => {}, attempts: 2 }), /verification window/u);
+});
+
+test('isolated npm consumer uses distinct private config files that npm really loads', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'osm-npm-config-regression-'));
+  try {
+    const env = isolatedConsumerEnvironment(temp, { ...process.env, NODE_AUTH_TOKEN: 'fake-test-token', NPM_CONFIG__AUTHTOKEN: 'fake-test-token' });
+    assert.notEqual(env.NPM_CONFIG_USERCONFIG, env.NPM_CONFIG_GLOBALCONFIG);
+    assert.equal(fs.readFileSync(env.NPM_CONFIG_USERCONFIG, 'utf8'), '');
+    assert.equal(fs.readFileSync(env.NPM_CONFIG_GLOBALCONFIG, 'utf8'), '');
+    assert.equal(fs.statSync(env.NPM_CONFIG_USERCONFIG).mode & 0o777, 0o600);
+    assert.equal(fs.statSync(env.NPM_CONFIG_GLOBALCONFIG).mode & 0o777, 0o600);
+    assert.ok(!Object.hasOwn(env, 'NODE_AUTH_TOKEN'));
+    assert.ok(!Object.hasOwn(env, 'NPM_CONFIG__AUTHTOKEN'));
+    const result = spawnSync('npm', ['config', 'get', 'registry'], { cwd: temp, env, encoding: 'utf8', timeout: 30_000 });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'https://registry.npmjs.org/');
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });

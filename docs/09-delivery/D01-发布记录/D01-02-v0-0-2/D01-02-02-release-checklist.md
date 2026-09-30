@@ -50,8 +50,10 @@
 
 - [x] 本地加入手动 main-only OIDC 发布工作流、同一 artifact 打包/安装/指纹保护和 7 项定向测试；定向测试及 helper 语法检查通过。
 - [x] 当前修改后的完整 core：恢复权限并换用 Git 树外 TMPDIR 后，9 项检查通过（189 个 Node + 4 个 Agent 测试及真实 local/global tarball consumer）；原失败保留。
-- [ ] 将 0.0.2 实际源码与工作流提交、推送到 main（未自动执行）。
+- [x] 用户明确授权后，0.0.2 实际源码及工作流已提交并快进推送至 main（9aad639）；未新增 tag 或更改版本。
 - [x] GitHub environment npm 已建立，部署分支限制为 main。
 - [ ] npm trusted publisher 绑定 kedamitch/open-spec-mesh / npm-publish.yml / environment npm；本机只读查询仍为 401，待实际 OIDC 验证。
 - [ ] GitHub-hosted runner 的真实 core、artifact consumer、OIDC 上传及 registry consumer 通过。
 - 原本机 tarball 保留；CI 基于实际提交重新打包、验证并上传同一 CI artifact，不伪造与此前 tarball 相同。未再次执行 npm publish。
+
+- 首轮远程 run 36675589841：core 通过，prepare 的 isolated npm 配置重复加载失败；upload 未执行。已修复并补真实 npm 配置加载回归，随后再次验证。
