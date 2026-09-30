@@ -189,3 +189,11 @@ GitHub MCP 的独立只读检查成功：远程 main 的 .github/workflows 仍�
 修复提交 0b38554f9d213620af1863c1ab17e9502fdcee0c 已推送，run 36676111203。prepare 全部通过：190 个 Node + 4 个 Agent 测试、完整 core、320 文件包审计和真实同一 tarball consumer。publish job 下载 artifact、核对 commit/integrity 并查询未发布版本成功；实际 npm publish 返回 ENEEDAUTH，未取得可用发布凭据。错误本身不能证明 npm Trusted Publisher 不存在；npm 11.19 的 OIDC helper 会吞掉 exchange 错误后回退到通用缺少认证错误。独立 registry 校验仍只有 0.0.1/latest=0.0.1。CI artifact 已从该 run 下载，SHA-1 为 272b6e0b352c54d041b4565e51df0d5045ac5e6e，SHA-512 与 release-artifact.json 核对一致，指纹不冒充原本机 tarball。
 
 加入 verify_only boolean（默认 false）进行不上传的 OIDC 诊断：先仅检查 GitHub Actions/OIDC 变量的存在性，再使用 npm publish --dry-run --loglevel=verbose，保留 exchange 的具体服务端拒绝原因；真实上传与发布后 consumer 都被条件排除。dry-run 即使回退到缺少凭据仍可返回成功，不能把绿色诊断 job 当成 OIDC 或真实发布成功；以具体 exchange 消息为证据。此诊断不是再次上传。
+
+## 当前实际结果：npm OIDC exchange 被拒绝（2026-09-30）
+
+诊断提交 306dfd0ea5b350d6706ebf44938bab70e200751d 已推送，verify_only=true 的 run 36676720147 已完成。GitHub-hosted runner 完整 core 9 项再次通过（191 个 Node + 4 个 Agent 测试），prepare、320 文件 tarball 审计和同一 tarball consumer 通过。publish job 的存在性检查为 githubActions=true、requestUrlPresent=true、requestTokenPresent=true，未读取或记录 token 值。npm 的 POST /-/npm/v1/oidc/token/exchange/package/open-spec-mesh 返回 404；verbose oidc 仅给出错误信息：OIDC token exchange error - package not found。公共包查询同时正常，仍只有 0.0.1/latest=0.0.1，不能把 exchange 的 404 当成包真的不存在。
+
+当前可确定失败点为 npm 未为当前 GitHub OIDC 声明换发发布凭据；更具体是尚无匹配信任配置还是已有配置不匹配，现有证据不能区分。本机 npm trust list 仍为 401，无法读取其实际绑定；不从此推断 token 过期。需要 npm 包维护者一次性核对/配置 kedamitch/open-spec-mesh / npm-publish.yml / environment npm，以及直接发布能力。GitHub 仓库写权限和环境已就绪，不自动赋予 npm 信任。首次绑定仍需 npm 账户认证/2FA；无桌面服务器可以 --browser=false 在终端打印链接，使用可信其他设备完成认证。无需把 token 或 OTP 给 Agent。
+
+诊断 job 的 success 只表示 dry-run 诊断执行完成：真实 Publish 步骤和公共 registry consumer 均 skipped，0.0.2 未发布。本轮未再次真实上传。此前第二轮 artifact 从 GitHub 下载后已独立核对两种指纹，并在本机隔离 Home 中真实 npm 安装和 Codex --skip-tools 验证通过；该结果仍是 tarball 消费，不是 registry 发布。配置核对完成前停止真实上传；修复绑定后可恢复同一目标版本的已有授权，不重新要求技能口令。新 CI artifact 保留，原本机 artifact 亦保留，不用本机失效的调用路径替代 OIDC 方案。

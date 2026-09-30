@@ -53,7 +53,12 @@
 - [x] 用户明确授权后，0.0.2 实际源码及工作流已提交并快进推送至 main（9aad639）；未新增 tag 或更改版本。
 - [x] GitHub environment npm 已建立，部署分支限制为 main。
 - [ ] npm trusted publisher 绑定 kedamitch/open-spec-mesh / npm-publish.yml / environment npm；本机只读查询仍为 401，待实际 OIDC 验证。
-- [ ] GitHub-hosted runner 的真实 core、artifact consumer、OIDC 上传及 registry consumer 通过。
+- [x] GitHub-hosted runner 完整 core（最新 191 个 Node + 4 个 Agent，9 项检查）、320 文件实际 artifact 审计、同一 tarball consumer 通过。
+- [x] 第二轮 CI artifact 下载后独立核对指纹，本机真实 npm tarball 安装与 Codex host smoke 通过（不是 registry 消费）。
+- [ ] npm OIDC exchange / 真实上传：run 36676111203 返回 ENEEDAUTH；只读诊断 run 36676720147 确认 exchange POST 404（package not found），不能取得发布凭据。需核对实际 npm Trusted Publisher 绑定；不盲目重传。
+- [ ] 0.0.2 公共 registry consumer：版本未发布，未执行。
 - 原本机 tarball 保留；CI 基于实际提交重新打包、验证并上传同一 CI artifact，不伪造与此前 tarball 相同。未再次执行 npm publish。
 
 - 首轮远程 run 36675589841：core 通过，prepare 的 isolated npm 配置重复加载失败；upload 未执行。已修复并补真实 npm 配置加载回归，随后再次验证。
+
+- 最新诊断 run 36676720147 虽然 success，但真实上传步骤被 verify_only 条件跳过；不表示 OIDC 认证或公共发布成功。
