@@ -7,6 +7,11 @@ on:
         description: 'Exact stable version matching package.json (for example 0.0.2)'
         required: true
         type: string
+      verify_only:
+        description: 'Diagnose OIDC with npm dry-run only; never upload'
+        required: false
+        default: false
+        type: boolean
 
 # No PR, push, tag, schedule, or automatic version bump can authorize publication.
 permissions:
@@ -77,9 +82,21 @@ jobs:
           path: ${{ env.ARTIFACT_DIR }}
       - name: Recheck registry and artifact before upload
         run: node scripts/npm_release.js check "$RELEASE_VERSION" "$ARTIFACT_DIR"
+      - name: Verify OIDC capability without reading credentials
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const capability = { githubActions: process.env.GITHUB_ACTIONS === 'true', requestUrlPresent: Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_URL), requestTokenPresent: Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN) };
+          console.log(JSON.stringify(capability));
+          assert.ok(Object.values(capability).every(Boolean), 'GitHub OIDC capability missing');
+          NODE
+      - name: Diagnose npm OIDC exchange without upload
+        if: ${{ inputs.verify_only }}
+        run: npm publish "$ARTIFACT_DIR/open-spec-mesh-$RELEASE_VERSION.tgz" --dry-run --json --loglevel=verbose --access public --tag latest --ignore-scripts --registry=https://registry.npmjs.org/
       - name: Publish the verified tarball with OIDC (no npm secret)
+        if: ${{ !inputs.verify_only }}
         id: publish
         run: npm publish "$ARTIFACT_DIR/open-spec-mesh-$RELEASE_VERSION.tgz" --access public --tag latest --ignore-scripts --registry=https://registry.npmjs.org/
       - name: Independently verify registry and fresh consumer, including after upload errors
-        if: ${{ always() && steps.publish.outcome != 'skipped' }}
+        if: ${{ always() && !inputs.verify_only && steps.publish.outcome != 'skipped' }}
         run: node scripts/npm_release.js verify "$RELEASE_VERSION" "$ARTIFACT_DIR"

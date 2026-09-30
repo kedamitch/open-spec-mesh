@@ -183,3 +183,9 @@ GitHub MCP 的独立只读检查成功：远程 main 的 .github/workflows 仍�
 提交 9aad63916981988b3718c64fb9e788ab8c4218c4 已真实快进推送到 main，远程工作流内容与本地核对一致。已按本次 0.0.2 发布授权触发 workflow_dispatch，run 36675589841。GitHub-hosted runner 的 core 完整通过；prepare 的同一 tarball consumer 阶段失败：npm 报 userconfig/globalconfig 共同指向一个空文件导致 double-loading config。publish job 被跳过，没有上传；失败后独立 registry 查询仍只有 0.0.1/latest=0.0.1。
 
 修复为两个独立私有空配置文件，并隔离 npm/OIDC token 环境键；新增真实 npm config get registry 回归，不能只依赖模拟测试。后续重新提交此实现修复并运行流水线，属于有明确代码修复的重新验证，不是同一错误下盲目重传。
+
+## 第二轮远程结果及只读 OIDC 诊断（2026-09-30）
+
+修复提交 0b38554f9d213620af1863c1ab17e9502fdcee0c 已推送，run 36676111203。prepare 全部通过：190 个 Node + 4 个 Agent 测试、完整 core、320 文件包审计和真实同一 tarball consumer。publish job 下载 artifact、核对 commit/integrity 并查询未发布版本成功；实际 npm publish 返回 ENEEDAUTH，未取得可用发布凭据。错误本身不能证明 npm Trusted Publisher 不存在；npm 11.19 的 OIDC helper 会吞掉 exchange 错误后回退到通用缺少认证错误。独立 registry 校验仍只有 0.0.1/latest=0.0.1。CI artifact 已从该 run 下载，SHA-1 为 272b6e0b352c54d041b4565e51df0d5045ac5e6e，SHA-512 与 release-artifact.json 核对一致，指纹不冒充原本机 tarball。
+
+加入 verify_only boolean（默认 false）进行不上传的 OIDC 诊断：先仅检查 GitHub Actions/OIDC 变量的存在性，再使用 npm publish --dry-run --loglevel=verbose，保留 exchange 的具体服务端拒绝原因；真实上传与发布后 consumer 都被条件排除。dry-run 即使回退到缺少凭据仍可返回成功，不能把绿色诊断 job 当成 OIDC 或真实发布成功；以具体 exchange 消息为证据。此诊断不是再次上传。

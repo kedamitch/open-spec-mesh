@@ -98,3 +98,12 @@ test('isolated npm consumer uses distinct private config files that npm really l
     assert.equal(result.stdout.trim(), 'https://registry.npmjs.org/');
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
+
+test('OIDC diagnosis is explicitly dry-run and cannot enter upload or public-install verification', () => {
+  const yaml = fs.readFileSync(new URL('../../../.github/workflows/npm-publish.yml', import.meta.url), 'utf8');
+  assert.match(yaml, /verify_only:[\s\S]*?default: false[\s\S]*?type: boolean/u);
+  assert.match(yaml, /Diagnose npm OIDC exchange without upload\n\s+if: \$\{\{ inputs\.verify_only \}\}\n\s+run: npm publish .*--dry-run/u);
+  assert.match(yaml, /Publish the verified tarball with OIDC \(no npm secret\)\n\s+if: \$\{\{ !inputs\.verify_only \}\}/u);
+  assert.match(yaml, /always\(\) && !inputs\.verify_only && steps\.publish\.outcome/u);
+  assert.match(yaml, /requestTokenPresent: Boolean\(process\.env\.ACTIONS_ID_TOKEN_REQUEST_TOKEN\)/u);
+});
