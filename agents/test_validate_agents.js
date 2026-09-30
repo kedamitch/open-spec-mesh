@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
-import {validate,validateRuntimeConfig,validateAgentName}from './validate_agents.js';
+import {validate,validateRuntimeConfig,validateAgentName,EXPECTED}from './validate_agents.js';
+import {fixtureCatalog}from '../scripts/verify_codex.js';
 test('canonical native role configuration and mirrors are valid',()=>assert.deepEqual(validate(),[]));
 test('agent names use the actual role prefix and snake_case descriptions',()=>{
  for(const [r,n]of [['explorer','explorer_python_inventory'],['librarian','librarian_node_backend'],['worker','worker_document_tools'],['architect','architect_manual_design'],['reviewer','reviewer_delivery_check']])assert.equal(validateAgentName(r,n),true);
@@ -11,4 +12,17 @@ test('role model, sandbox and mirror drift is rejected',t=>{
  fs.cpSync('agents',path.join(dir,'agents'),{recursive:true});fs.copyFileSync('config.toml',path.join(dir,'config.toml'));
  const p=path.join(dir,'agents/explorer.toml');fs.writeFileSync(p,fs.readFileSync(p,'utf8').replace('sandbox_mode = "read-only"','sandbox_mode = "workspace-write"'));
  assert.match(validate(dir).join(' '),/sandbox drift/);
+});
+
+test('Architect uses gpt-6.1-sol in canonical config and native fixture; legacy model is rejected', t => {
+  assert.equal(EXPECTED.architect[0], 'gpt-6.1-sol');
+  assert.ok(fixtureCatalog().models.some(model => model.slug === 'gpt-6.1-sol'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'osm-architect-model-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.cpSync('agents', path.join(dir, 'agents'), { recursive: true });
+  fs.copyFileSync('config.toml', path.join(dir, 'config.toml'));
+  assert.deepEqual(validate(dir), []);
+  const role = path.join(dir, 'agents/architect.toml');
+  fs.writeFileSync(role, fs.readFileSync(role, 'utf8').replace('gpt-6.1-sol', 'gpt-6-sol'));
+  assert.match(validate(dir).join(' '), /architect: model\/effort\/sandbox drift/u);
 });

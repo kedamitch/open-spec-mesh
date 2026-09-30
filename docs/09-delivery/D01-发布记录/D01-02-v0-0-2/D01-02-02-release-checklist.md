@@ -62,3 +62,10 @@
 - 首轮远程 run 36675589841：core 通过，prepare 的 isolated npm 配置重复加载失败；upload 未执行。已修复并补真实 npm 配置加载回归，随后再次验证。
 
 - 最新诊断 run 36676720147 虽然 success，但真实上传步骤被 verify_only 条件跳过；不表示 OIDC 认证或公共发布成功。
+
+## 发布前模型切换（2026-09-30）
+
+- [x] Architect 当前配置、模型校验及 Codex catalog 同步为 gpt-6.1-sol，保持 xhigh，其他角色不变；旧模型仅保留为负向回归输入。
+- [x] 更新后的完整 core 9 项通过：191 Node + 5 Agent 测试及真实 local/global npm tarball consumer。
+- [x] 原生 codex-cli 0.159.2 的确定性 fixture 验证通过，Architect 实际路由为 gpt-6.1-sol/xhigh；无远程推理请求，不等于 full 其他外部集成通过。
+- [ ] npm 页面绑定更新后的真实 0.0.2 OIDC 上传、registry 指纹/tag 及 public consumer 待重新核验。

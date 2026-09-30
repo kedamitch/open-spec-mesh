@@ -52,7 +52,7 @@ function spawnCall(taskName, role, prompt, namespace) {
   if (namespace) item.namespace = namespace;
   return item;
 }
-function fixtureCatalog() {
+export function fixtureCatalog() {
   const common = {
     description: 'Deterministic GPT-6 V2 CI fixture',
     base_instructions: 'You are a deterministic Codex CI fixture. Follow the task and use available tools.',
@@ -68,7 +68,7 @@ function fixtureCatalog() {
     supported_reasoning_levels: ['low', 'medium', 'high', 'xhigh', 'max'].map((effort) => ({ effort, description: effort })),
     priority,
   });
-  return { models: [model('gpt-6-luna', 'GPT-6-Luna', 1), model('gpt-6-sol', 'GPT-6-Sol', 2)] };
+  return { models: [model('gpt-6-luna', 'GPT-6-Luna', 1), model('gpt-6.1-sol', 'GPT-6.1-Sol', 2)] };
 }
 function waitFor(promise, ms, what) {
   return new Promise((resolve, reject) => {

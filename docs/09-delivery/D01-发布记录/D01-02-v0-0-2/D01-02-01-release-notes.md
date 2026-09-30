@@ -3,7 +3,7 @@
 ## 版本
 
 - Version：0.0.2。
-- Release Date：2026-09-29；本文件在上传前准备，真实上传状态以 registry 与发布记录为准。
+- Release Date：待实际 registry 发布成功后记录；发布材料最初准备于 2026-09-29。
 
 ## Highlights
 
@@ -15,12 +15,14 @@
 
 ### Added
 
+- 手动指定版本的 GitHub Actions OIDC 发布流程：同一 tarball 的审计、安装、指纹核对及公共 registry 验证；无需长期 npm 写入 token。
 - osm 短入口：无参数执行 Codex + skip-tools 安装，保留完整子命令与 dry-run。
 - 阶段对应的技能引导、Node.js 第一方实现与锁定依赖的独立 Home runtime。
 - Quick 发布材料可不绑定正式 Change；若提供 Change 引用，仍检查其已完成且不重复。
 
 ### Changed
 
+- Architect 模型更新为 gpt-6.1-sol，保持 xhigh；配置校验与原生 Codex 测试 catalog 同步，其他角色模型不变。
 - 串行实现由当前 Agent 连续完成；只有用户确认并行实现时使用 Worker 与独立 worktree。
 - 安装升级同步受管技能、角色提示词及 config.toml 中受管角色的选择描述，保留用户自定义配置。
 - sdd-release 支持隐式技能选择；仅准备材料、不上传等限制仍有效。

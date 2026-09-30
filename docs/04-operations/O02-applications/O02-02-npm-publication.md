@@ -197,3 +197,9 @@ GitHub MCP 的独立只读检查成功：远程 main 的 .github/workflows 仍�
 当前可确定失败点为 npm 未为当前 GitHub OIDC 声明换发发布凭据；更具体是尚无匹配信任配置还是已有配置不匹配，现有证据不能区分。本机 npm trust list 仍为 401，无法读取其实际绑定；不从此推断 token 过期。需要 npm 包维护者一次性核对/配置 kedamitch/open-spec-mesh / npm-publish.yml / environment npm，以及直接发布能力。GitHub 仓库写权限和环境已就绪，不自动赋予 npm 信任。首次绑定仍需 npm 账户认证/2FA；无桌面服务器可以 --browser=false 在终端打印链接，使用可信其他设备完成认证。无需把 token 或 OTP 给 Agent。
 
 诊断 job 的 success 只表示 dry-run 诊断执行完成：真实 Publish 步骤和公共 registry consumer 均 skipped，0.0.2 未发布。本轮未再次真实上传。此前第二轮 artifact 从 GitHub 下载后已独立核对两种指纹，并在本机隔离 Home 中真实 npm 安装和 Codex --skip-tools 验证通过；该结果仍是 tarball 消费，不是 registry 发布。配置核对完成前停止真实上传；修复绑定后可恢复同一目标版本的已有授权，不重新要求技能口令。新 CI artifact 保留，原本机 artifact 亦保留，不用本机失效的调用路径替代 OIDC 方案。
+
+## 发布前模型更新与绑定后重试（2026-09-30）
+
+用户确认已通过 npm 页面配置 Trusted Publisher，并明确要求发布前将当前模型切换为 gpt-6.1-sol。已同步 Architect TOML、模型约束校验和原生 Codex 确定性 fixture catalog；保留 xhigh、其他角色模型及历史执行证据。新增回归同时检查新模型路由与旧模型配置拒绝。本机主角色文件已使用新模型；旧已安装 runtime 将在新包发布成功后按真实 npm 安装更新，不以旧 artifact 冒充此次模型改动。提交、验证后按明确授权重试 0.0.2 的 OIDC 流程，不使用本机长期 token 上传，不生成新版本或改写历史 tag。
+
+模型更新后的完整 core 9 项已通过（191 个 Node + 5 个 Agent 测试）；本地 codex-cli 0.159.2 的原生 Multi-Agent V2 确定性 fixture 验证通过，Architect 实际请求 model 为 gpt-6.1-sol、effort 为 xhigh，并保留 Architect -> Explorer 路由。未调用远程模型，不把 fixture 通过当成外部模型供应商可用性证明。当前活动配置无旧模型；唯一旧模型文字为负向回归测试输入。

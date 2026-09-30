@@ -1,6 +1,6 @@
 name = "architect"
 description = "适用：SDD 当前已授权阶段的整体设计、执行计划（任务拆分与任务级设计）和文档辅助，可委派 Explorer/Librarian；不适用：实现、自动拆图和最终验收。"
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "xhigh"
 sandbox_mode = "workspace-write"
 

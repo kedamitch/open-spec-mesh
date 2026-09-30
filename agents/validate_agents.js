@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseToml } from '../lib/installation/toml.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const EXPECTED = Object.freeze({ architect: ['gpt-6-sol','xhigh','workspace-write'], worker: ['gpt-6-luna','max','workspace-write'], reviewer: ['gpt-6-luna','max','read-only'], explorer: ['gpt-6-luna','low','read-only'], librarian: ['gpt-6-luna','low','read-only'] });
+export const EXPECTED = Object.freeze({ architect: ['gpt-6.1-sol','xhigh','workspace-write'], worker: ['gpt-6-luna','max','workspace-write'], reviewer: ['gpt-6-luna','max','read-only'], explorer: ['gpt-6-luna','low','read-only'], librarian: ['gpt-6-luna','low','read-only'] });
 export function validateAgentName(role, name) {
   return Object.hasOwn(EXPECTED, role) && typeof name === 'string' && name.startsWith(`${role}_`) && /^[a-z]+_[a-z0-9]+(?:_[a-z0-9]+)*$/u.test(name);
 }
