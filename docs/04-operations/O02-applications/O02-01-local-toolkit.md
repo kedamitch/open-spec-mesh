@@ -2,7 +2,7 @@
 
 ## 运行边界
 
-需要 Python 3.11+、Git、Linux/macOS；Research tools 还需 Node.js 20.18.1+ / npm。Agent host 支持 Codex、OpenCode、Claude Code。本包不是常驻业务应用。
+需要 Node.js 22.0.0+、Git、Linux/macOS；Research tools 还需 Node.js 22.0.0+ / npm。Agent host 支持 Codex、OpenCode、Claude Code。本包不是常驻业务应用。
 
 ## 安装
 
@@ -45,7 +45,7 @@ Codex 继续使用现有配置角色启动方式。
 
 ## Worker / Session
 
-叶子执行见 [leaf-execution](../../../sdd-do/references/leaf-execution.md)。三宿主都必须在 `sdd.py prepare` 返回的 workspace 中执行，恢复使用绑定的 exact session ID，不使用宿主自动 worktree。
+单任务/串行由当前 Agent 在当前工作区执行；只有用户确认并行时才启动 Worker/独立 worktree。旧自动 leaf/prepare 已退出，历史会话只用于恢复证据。
 
 ## Observation
 
@@ -53,4 +53,12 @@ Codex 支持 full trace。OpenCode / Claude 当前只做 artifact snapshot；数
 
 ## 验证与恢复
 
-`scripts/sdd_validate.py` 是仓库核心入口；main/full CI 另外安装真实 Codex/OpenCode/Claude CLI 做无模型 runtime smoke。安装失败按受管事务回滚，无法确认归属的用户文件不删除。
+`scripts/sdd_validate.js` 是仓库核心入口；main/full CI 另外安装真实 Codex/OpenCode/Claude CLI 做无模型 runtime smoke。安装失败按受管事务回滚，无法确认归属的用户文件不删除。
+
+## 全局安装与升级
+
+目标公共版本为 0.0.1；发布后优先 npm install -g open-spec-mesh@0.0.1 --registry=https://registry.npmjs.org/，再执行 open-spec-mesh install --host codex --skip-tools。可先追加 --dry-run 预检；全局安装不自动配置 Home。opencode / claude 使用相同命令替换 --host。
+
+未发布或需要源码安装时，在源码目录 npm ci 后执行 npm install -g .；或 npm pack 后 npm install -g ./open-spec-mesh-0.0.1.tgz。源码链接方式需保留源码目录；便携部署使用打包产物。升级全局命令后仍需再次显式 install；npm uninstall -g open-spec-mesh 仅删命令，不删除宿主资产。认证、真实发布与消费验证见 [npm 发布操作](O02-02-npm-publication.md)。
+
+最低 Node 22.0.0 搭配兼容 npm（最低版本验证使用 npm 10）。受管 Skill 整体替换清除旧 Python/缓存；受管 Python MCP 迁移为 Node 并删除旧 helper/cache。未受管内容和自定义 MCP 保留，迁移前备份，不删除用户 Python 环境。

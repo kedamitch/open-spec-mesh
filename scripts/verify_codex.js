@@ -129,7 +129,7 @@ export async function verifyCodex() {
           if (body.model !== 'gpt-6-luna' || effort !== 'max') throw new Error('Root must run Luna 6 max');
           if (stages.get(key) !== 'spawned') {
             stages.set(key, 'spawned');
-            payload = sse(spawnCall(`probe_${role}`, role, `SDD_PROBE_CHILD:${role}`, namespace));
+            payload = sse(spawnCall(`${role}_native_probe`, role, `SDD_PROBE_CHILD:${role}`, namespace));
           } else {
             await waitFor(signals.get(role).promise, 25_000, `Child ${role}`);
             payload = sse(message('SDD_ROOT_OK'));
@@ -140,7 +140,7 @@ export async function verifyCodex() {
             const { item: spawnTool, namespace } = findTool(body, 'spawn_agent');
             if (!spawnTool) throw new Error(`Architect cannot access V2 spawn_agent: ${names.join(', ')}`);
             stages.set(key, 'spawned');
-            payload = sse(spawnCall('probe_nested_explorer', 'explorer', 'SDD_PROBE_NESTED:explorer', namespace));
+            payload = sse(spawnCall('explorer_nested_probe', 'explorer', 'SDD_PROBE_NESTED:explorer', namespace));
           } else {
             if (role === 'architect') await waitFor(signals.get('nested').promise, 25_000, 'Nested Explorer');
             signals.get(role).resolve();

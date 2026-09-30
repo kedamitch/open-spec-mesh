@@ -2,21 +2,15 @@
 
 ```mermaid
 flowchart TB
-  User[开发者] --> Codex[外部 Codex 客户端]
-  subgraph Roles[客户端内逻辑角色]
-    Main[Main] --> Arch[Architect]
-    Arch --> Research[Explorer / Librarian]
-    Main --> Worker[Worker]
-    Main --> Reviewer[Reviewer]
-  end
-  Codex --> Main
-  Codex <-->|推理请求与结果| Provider[用户模型 Provider]
-  Main --> CLI[SDD Python CLI：按需进程]
-  Worker --> CLI
-  CLI --> Markdown[Markdown 契约和交付]
-  CLI --> Graph[Task Graph JSON]
-  CLI --> Git[Git 仓库和 worktree]
-  Arch --> Markdown
+ User["用户确认"] --> Main["当前 Agent"]
+ Main --> Read["Explorer / Librarian：只读"]
+ Main --> Docs["Markdown 需求 / 设计 / 宏观任务 / Delivery"]
+ Main --> Tools["Node 辅助 CLI"]
+ Main --> Serial["单任务 / 串行：当前工作区"]
+ Main -->|"明确并行"| Worker["Worker：独立 worktree"]
+ Tools --> Install["宿主安装与配置保全"]
+ Tools --> Evidence["只读观测 / 私有诊断 / 历史兼容"]
+ Main --> Git["普通 Git 与真实验证"]
 ```
 
-无自建常驻业务应用；单个应用职责和边界见技术总览。
+没有自动审批或派发状态服务。

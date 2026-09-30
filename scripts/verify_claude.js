@@ -6,7 +6,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { installHost } from '../lib/installation/installer.js';
-import { hostCommand } from '../lib/workflow/leaf.js';
 import { resolveExecutable } from '../lib/installation/tools.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -39,10 +38,7 @@ export async function verifyClaude() {
     assert.ok(worker.includes('model: inherit') && !worker.includes('gpt-6-'), 'Worker host model must be inherited');
     const mcp = JSON.parse(fs.readFileSync(path.join(home, 'open-spec-mesh.mcp.json'), 'utf8'));
     for (const name of ['codegraph', 'context7', 'tavily']) assert.ok(Object.hasOwn(mcp.mcpServers ?? {}, name), `MCP overlay missing ${name}`);
-    const built = hostCommand('claude', binary, 'worker', project, 'session-123456', home, env);
-    for (const flag of ['--agent', '--resume', '--mcp-config', '--output-format', '--verbose']) assert.ok(built.argv.includes(flag), `Claude launcher missing ${flag}`);
-    assert.deepEqual(built.env, {});
-    assert.doesNotMatch(built.argv.join(' ').toLowerCase(), /worktree/u);
+    assert.ok(fs.readFileSync(path.join(home, 'agents/worker.md'), 'utf8').includes('宏观 Task'));
     process.stdout.write('Claude native agent/launcher smoke passed without a model call.\n');
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 }

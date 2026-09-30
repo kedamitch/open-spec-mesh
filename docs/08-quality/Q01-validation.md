@@ -1,48 +1,27 @@
 # 验证规范
 
-## Validation Entry Point
+## 实际验证
 
-`{"argv":["node","scripts/sdd_validate.js","--profile","full"],"path":"scripts/sdd_validate.js"}`
+Node.js 22.0.0+ 执行测试、语法/安全、资源保全和消费包检查。核心入口 npm run validate:core；扩展验证 npm run validate:full 还需要实际宿主 CLI、Docker、Mermaid 和 Research 工具。缺少前置条件如实失败，不伪造通过。
 
-本仓库使用版本化 Node 入口。Worker 可定向运行 `node scripts/sdd_validate.js --profile core`；Main 最终验证使用上面的 revision-bound full argv。
+文档结构、格式和链接检查是建议，不决定阶段授权或触发冻结；真实测试与安全错误必须处理。测试清单按当前 Node 场景发现，不绑定旧 Python 方法数或旧 Graph readiness。历史场景的有意退出和替代检查写本 Change Delivery，不能删除保留能力或 skip 取得通过。
 
-SDD 收口记录必须绑定实际执行时的 HEAD；required check 任一非零即失败，不允许“未执行但通过”。Core 是 Node-only 消费验证；完整项目验证还需要系统级 Git、宿主 CLI 与测试工具。Python 不是消费端运行依赖，只保留在显式的 GPU factory lane 和 Docker 应用 fixture 中。
+## 当前结果边界
 
-## 验证矩阵
+旧自动生命周期及其测试已退出；保留的 Node 回归覆盖安装/回滚、文档、观测/诊断、System One 和通用安全。用户已明确授权退出自托管 GPU 服务，剩余 3 个 Python 文件及专属 CI/依赖已删除。全仓 Python 清理检查坚持零例外；核心 Node 验证与扩展宿主/工具验证分别记录真实结果，不相互替代。没有自动验收 receipt，最终交付仍待用户确认。
 
-| 层次 | 入口 / Job | 检查对象 |
-| --- | --- | --- |
-| Node 回归 | `node --test <tests/node/**/*.test.js>` | 已迁移平台行为、异常路径与本地 fixture |
-| 角色约束 | `node agents/validate_agents.js` + `node --test agents/test_validate_agents.js` | canonical Codex Role/model/effort、职责、delegate 与 V2 tool 配置 |
-| 迁移覆盖 | `node scripts/verify_coverage.js` | 固定 baseline 的逐方法 Node/GPU 映射和 intentional behavior replacement |
-| 运行时静态 | `node scripts/check_runtime.js` | syntax、Node-only source/package、完整 tgz packlist、release lock、root ignore 与保全 fixture |
-| 文档 | `node bin/open-spec-mesh.js validate-docs --root .` | 编号、Markdown、链接、coverage/schema |
-| 安装 | `bash -n install.sh`；`bash install.sh --dry-run` | Node CLI 与受管文件事务的无写 dry-run |
-| Tarball 消费 | `node scripts/verify_tarball.js` | 隔离 npm cache/Home、临时安装、文档→SDD→SQLite→ZIP→MCP SDK consumer 路径 |
-| Codex runtime | `node scripts/verify_codex.js` | 真实 Codex V2 role routing fixture，无模型请求 |
-| OpenCode runtime | `node scripts/verify_opencode.js` | 真实 CLI 解析 native config/agents/launcher flags，无模型调用 |
-| Claude runtime | `node scripts/verify_claude.js` | 真实 CLI 校验 agent/frontmatter/launcher flags，无模型调用 |
-| 其他扩展 | `render_mermaid.js` / `verify_docker.js` / `verify_research_tools.js` / `verify_laya.js` | Mermaid、Docker fixture、真实 npm tools 与 Node MCP client |
-| 独立 GPU lane | `python3 -B -m unittest discover -s tests -p 'test_laya_server.py' -v` | GPU factory/helper/API 安全与批量调用；不声称真实 CUDA 推理 |
+## 2026-09-29 核心验证结果
 
-## 执行层级
+GPU 退出确认后，Node.js 24.21.0 核心 profile 的 9 项 required checks 全通过；159 项项目回归 + 4 项 Agent 回归共 163 项通过、零失败/skip，119 JS 语法检查、零 Python 审计、安装 dry-run 与隔离 tarball 消费均通过。扩展 profile 的环境条件未在本轮重新收敛，不声称全绿、外部推理硬件验证或最终人工验收完成。
 
-- Worker：当前 Task 定向测试 + 必要 build/static check；不重复跑全项目。
-- Main：全部 accepted result 集成、Architect 同步 Current Truth 后执行 revision-bound full validation。
-- 完成条件：任何失败都修到通过，不维护 known-failure / baseline-failure 豁免。
+## 2026-09-29 Node 22 与全局安装追加验证
 
-## CI 分层
+Node 22.0.0（npm 10.9.2）与当前 Node 24.19.0（npm 11.17.0）均通过核心 9 项 required checks，160 项项目 + 4 项 Agent 回归共 164 项、零失败/skip。真实 npm 全局 tarball 与源码目录入口、最低版本已安装 Skill/MCP、实际 Home 旧 Python/cache 清理另行验证通过。CI 核心矩阵覆盖 22.0.0、22.x、24.x。旧 24.21.0/163 项记录保持为当时事实，不代表本轮运行版本。见 [追加实施记录](../05-changes/C01-进行中/CHG-20260929-human-driven-workflow/C03-tasks/C03-06-node22-global-install/C03-06-02-delivery.md)。扩展 full 未在本轮完成，不声称全量外部环境通过或用户最终验收。
 
-- Pull Request：Node.js 24.21.0+ core 与 isolated tarball smoke。
-- `main` / manual full：同一 core + Mermaid + Docker + Codex + OpenCode + Claude + Research tools + Node MCP + 独立 GPU factory lane。
-- 同 workflow/ref 只保留最新 run。
+## 2026-09-29 npm 0.0.1 发布准备
 
-## 发行与安全边界
+0.0.1 版本/锁与 public publishConfig 下，以 Node 22.0.0 + npm 10.9.2 再跑 core：9 项 required checks、164 项 Node/Agent 回归全部通过，真实本地/全局消费验证使用 0.0.1。npm pack 文件与常见敏感模式检查、publish dry-run 通过；当前缺 npm 登录，未进行真实公共上传或 registry 按名消费，不能写“公共发布完成”。见 [发布准备记录](../05-changes/C01-进行中/CHG-20260929-human-driven-workflow/C03-tasks/C03-07-npm-publication/C03-07-02-delivery.md)。历史 0.1.0 证据不改写。
 
-发布前本地 tarball 必须携带 `npm-shrinkwrap.json`，且与唯一开发来源 `package-lock.json` 原字节一致。开发锁、依赖解析树和 package identity 不因验证改变；`private=true` 时只允许本地 artifact 验证，不公开 publish。
+## 2026-09-29 osm 与显式发布的本地验证
 
-根 `/node_modules/` 只由根 `.gitignore` 忽略；嵌套同名目录不扩大忽略。保全测试只在临时 Git/Home fixture 创建哨兵，绝不在真实根依赖目录写测试数据。
-
-## 证据边界
-
-Codex fixture 验证 V2 tool/role 配置但不证明模型质量。OpenCode/Claude jobs 使用真实 CLI，只验证安装产物、frontmatter/config 解析与当前 CLI flags；不会登录、发送 prompt 或产生模型费用。Research smoke 验证实际 npm package/CLI 安装但不做认证请求。GPU lane 只验证 factory/API 协议与 guard，不表示真实推理服务已部署。
+osm 短入口及明确 $sdd-release 授权规范下，Node 22.0.0 + npm 10.9.2 core 的 9 项 required checks、171 项项目/Agent 回归全部通过；Node 24.19.0 的短入口/规范 10 项定向回归通过。真实本地 tarball 全局安装覆盖无参数 osm、预览和兼容入口；这不是 registry 发布。已公开 0.0.1 不含该入口，本轮未发新版、未改版本号。详见 [本地实施记录](../05-changes/C01-进行中/CHG-20260929-human-driven-workflow/C03-tasks/C03-08-osm-short-command/C03-08-02-delivery.md)。

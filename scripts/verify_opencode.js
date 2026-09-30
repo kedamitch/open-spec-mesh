@@ -6,7 +6,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { installHost } from '../lib/installation/installer.js';
-import { hostCommand } from '../lib/workflow/leaf.js';
 import { resolveExecutable } from '../lib/installation/tools.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -28,30 +27,30 @@ export async function verifyOpenCode() {
     await installHost({ source: ROOT, host: 'opencode', home, skipTools: true, reporter: () => {} });
     const env = { ...process.env, HOME: userHome, XDG_CONFIG_HOME: path.join(temp, 'xdg'), OPENCODE_CONFIG_DIR: home, OPENCODE_CONFIG: path.join(home, 'open-spec-mesh.opencode.json'), OPENCODE_DISABLE_AUTOUPDATE: '1' };
     const configOutput = run(binary, ['debug', 'config'], { cwd: project, env });
-    const sources = JSON.parse(configOutput);
-    assert.ok(Array.isArray(sources), 'OpenCode debug config returned an unexpected shape');
-    const sourceText = JSON.stringify(sources);
-    assert.ok(sourceText.includes(path.join(home, 'open-spec-mesh.opencode.json')) || sourceText.includes('open-spec-mesh.opencode.json'), 'OpenCode did not load the managed overlay');
+    const parsed = JSON.parse(configOutput);
+    assert.ok(parsed && !Array.isArray(parsed) && typeof parsed === 'object', 'OpenCode V1 debug config returned an unexpected shape');
     const overlay = JSON.parse(fs.readFileSync(path.join(home, 'open-spec-mesh.opencode.json'), 'utf8'));
-    assert.equal(overlay.default_agent, 'main');
+    assert.equal(parsed.default_agent, 'main', 'OpenCode did not load the managed primary agent');
     assert.equal(Object.hasOwn(overlay, 'model'), false, 'Overlay must not select the user model');
+    assert.equal(Object.hasOwn(overlay, 'agents'), false, 'Do not emit V2-only agents input');
     const expectedRoles = new Set(['main', 'architect', 'worker', 'reviewer', 'explorer', 'librarian']);
-    assert.deepEqual(new Set(Object.keys(overlay.agents ?? {})), expectedRoles);
-    for (const [role, definition] of Object.entries(overlay.agents)) assert.equal(Object.hasOwn(definition, 'model'), false, `Managed overlay must not set ${role} model`);
-    const parsedDocument = sources.find((item) => item?.type === 'document' && String(item.path ?? '').endsWith('open-spec-mesh.opencode.json'));
-    assert.ok(parsedDocument, 'OpenCode native config source document missing');
-    const parsedAgents = parsedDocument.info?.agents ?? {};
-    assert.deepEqual(new Set(Object.keys(parsedAgents)), expectedRoles);
-    assert.equal(parsedAgents.main.mode, 'primary');
-    for (const role of expectedRoles) if (role !== 'main') assert.equal(parsedAgents[role].mode, 'subagent');
-    for (const [role, definition] of Object.entries(parsedAgents)) assert.equal(Object.hasOwn(definition, 'model'), false, `Parsed config unexpectedly selected ${role} model`);
+    assert.deepEqual(new Set(Object.keys(overlay.agent ?? {})), expectedRoles);
+    assert.deepEqual(new Set(Object.keys(parsed.agent ?? {})), expectedRoles);
+    for (const [role, definition] of Object.entries(overlay.agent)) {
+      assert.equal(Object.hasOwn(definition, 'model'), false, 'Managed overlay must inherit role model');
+      const native = parsed.agent[role];
+      assert.equal(Object.hasOwn(native, 'model'), false, 'Parsed config must inherit role model');
+      assert.equal(native.mode, role === 'main' ? 'primary' : 'subagent');
+      assert.equal(native.prompt, definition.prompt, 'Native prompt must match managed source');
+      assert.deepEqual(native.permission, definition.permission, 'Native least-privilege permissions must survive parsing');
+    }
+    for (const name of ['codegraph', 'context7', 'tavily']) {
+      assert.equal(parsed.mcp[name].type, 'local');
+      assert.deepEqual(parsed.mcp[name].command, overlay.mcp[name].command, 'OpenCode must load each managed MCP command');
+    }
     const help = run(binary, ['run', '--help'], { cwd: project, env });
-    const built = hostCommand('opencode', binary, 'worker', project, 'ses_123456', home, env);
-    for (const flag of ['--agent', '--format', '--session']) { assert.ok(help.includes(flag), `Native OpenCode help missing ${flag}`); assert.ok(built.argv.includes(flag), `OpenCode launcher missing ${flag}`); }
-    if (built.argv.some((arg) => ['--dir', '--directory'].includes(arg))) assert.ok(['--dir', '--directory'].some((flag) => help.includes(flag)), 'Launcher uses unsupported directory flag');
-    assert.equal(built.env.OPENCODE_CONFIG_DIR, home);
-    assert.doesNotMatch(built.argv.join(' ').toLowerCase(), /worktree/u);
-    process.stdout.write('OpenCode native config/agent/launcher smoke passed without a model call.\n');
+    assert.ok(fs.readFileSync(path.join(home, 'agents/worker.md'), 'utf8').includes('宏观 Task'));
+    process.stdout.write('OpenCode native config/agent/MCP smoke passed without a model call.\n');
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 }
 

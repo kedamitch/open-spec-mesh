@@ -1,20 +1,12 @@
-# Task 状态机
+# 人工阶段示意
 
 ```mermaid
-stateDiagram-v2
-  [*] --> planned
-  planned --> planned: approve / readiness passes
-  planned --> running: prepare / recheck readiness / new attempt
-  running --> submitted: matching delivery
-  submitted --> accepted: Main accept
-  planned --> blocked: block
-  running --> blocked: stop then block
-  submitted --> blocked: block
-  accepted --> blocked: explicit block / invalidate downstream
-  blocked --> planned: rework or replan
-  submitted --> planned: rework or replan
-  accepted --> planned: explicit reopen
-  running --> planned: stop then replan
+flowchart LR
+ R["需求"] -->|"人确认"| D["整体设计"]
+ D -->|"人确认"| T["宏观任务"]
+ T -->|"人确认执行方式"| I["实现 / 真实验证"]
+ I -->|"人确认"| F["交付"]
+ F -->|"最终验收"| A["归档"]
 ```
 
-重新打开包含目标、契约漂移任务及传递下游；新轮次必须重新批准、准备和验证。
+这是人的工作流程，不是机器状态机；不存在冻结、attempt、accepted 或 receipt 的授权转换。

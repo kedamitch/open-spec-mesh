@@ -1,58 +1,21 @@
 # 产品总览
 
-## 产品定位与边界
+## 定位与用户
 
-面向 Codex、OpenCode 与 Claude Code 开发者的本地 SDD 工具包：用明确契约、有限委派、真实 Git 证据和可回放交付约束研发流程。三种宿主共享一套 SDD Core；宿主差异由确定性 Adapter 处理。
+Open Spec Mesh 面向使用 Codex、OpenCode、Claude Code 的开发者，提供角色、Skills 和 Node 辅助工具，降低重复调查和文档成本，不是自动审批或常驻调度服务。
 
-边界：
+## 核心场景
 
-- 不提供常驻调度服务。
-- 不自动上线业务系统。
-- 不把 Agent 角色当独立业务应用。
-- Quick 不创建 SDD Change / Task 工件。
-- 不接管用户模型/provider；非 Codex host 默认继承宿主当前模型。
-- SDD prepare/worktree 是写任务唯一 Git 执行身份，不叠加宿主自动 worktree。
+Quick 当前 Agent 连续实现；SDD 按需求、整体设计、执行计划（任务拆分与任务设计）、实现、交付逐阶段留档并由人确认。单任务/串行不另起 Worker，明确并行时隔离 worktree。陌生事实优先只读调查，已知单点直接处理。
 
-## 用户与核心场景
+## 模块
 
-| 用户 / 角色 | 核心场景 | 目标 |
-| --- | --- | --- |
-| 开发者 / Main | Quick 或 SDD 调度 | 在任一支持宿主保持相同流程语义 |
-| Architect | SDD 规划 | 一次性形成 Change、Design、Task Graph 和 Task Design |
-| Worker | 执行冻结 Task | 在 prepare workspace 中实现、测试、自审和 Delivery |
-| Reviewer | 用户明确要求的独立复审 | 只记录真实 Findings |
+- 人工流程与辅助 CLI：[流程工具](P02-modules/P02-01-sdd-runtime.md)。
+- 本地角色与宿主语义：[角色路由](P02-modules/P02-02-agent-routing.md)。
+- 受管安装、文档脚手架、只读观测/诊断、默认关闭的 System One、发布材料等能力保留；旧自动生命周期退出。
 
-## 产品架构
+## 跨模块规则
 
-[产品架构图](P03-diagrams/P03-01-product-architecture.md) 展示 Quick / SDD、规划、实现、验收和底层证据能力。
+新代理命名 role_desc，配置角色 ID 不变；宏观业务与安全边界约束结果，必要文件和局部细节自主处理。工具通过不替代人工确认，历史和用户工作区保全；真实测试和安全保护不能降级。用户已确认退出自托管 GPU 服务，当前第一方实现、测试和自动化仅使用 Node.js；System One 仅连接外部推理服务。
 
-## 模块总览
-
-| 模块 | 职责 | 核心能力 | 主要场景 | 文档 |
-| --- | --- | --- | --- | --- |
-| SDD Runtime | 契约、Task、baseline、attempt、交付、验收与恢复 | 状态门、冻结、派发、返工、归档 | SDD 任务 | [Runtime](P02-modules/P02-01-sdd-runtime.md) |
-| Agent Routing | canonical Role → host-native Agent | Main / Architect / Worker / Reviewer / Explorer / Librarian | 多 Agent 协作 | [Routing](P02-modules/P02-02-agent-routing.md) |
-| Installation | 三宿主受管安装与升级 | Rules / Skills / Agents / MCP overlay、配置保留、失败恢复 | 初始化 / 升级 | [Installation](P02-modules/P02-03-installation.md) |
-| Behavior Observation | 零额外模型调用的运行证据 | Codex full trace；OpenCode/Claude artifact-only partial | 复盘 / 诊断 | [Observation](P02-modules/P02-04-behavior-observation.md) |
-
-## 核心业务流程
-
-[主用户流程](P03-diagrams/P03-02-main-user-flow.md)。
-
-## 跨模块业务规则
-
-- 未完成变化留在 Change；已验收事实同步回 Current Truth。
-- Delivery ≠ Acceptance；Acceptance ≠ Integration；Archive ≠ Release。
-- SDD 的 Task Graph 由 Architect 直接产出，Main 不二次拆分。
-- Task Graph JSON 只保存拓扑与运行状态，不替代人类 Design。
-- 冻结 Contract 必须变化时，先取得用户明确确认再 replan。
-- HostProfile / HostCapability 是运行时映射，不进入 Task Graph 状态。
-
-## 外部系统
-
-| 系统 | 用途 | 交互边界 |
-| --- | --- | --- |
-| Codex / OpenCode / Claude Code | Skill / Role / 会话宿主 | 用户模型/provider/UI 归宿主管理 |
-| 模型 Provider | 推理 | 由用户配置 |
-| Git | revision、diff、worktree、祖先关系 | SDD 身份与交付证据基础 |
-| CodeGraph / Context7 / Tavily / Web | 按需调查 | 只读证据，不替代设计决策 |
+[产品架构](P03-diagrams/P03-01-product-architecture.md) · [用户流程](P03-diagrams/P03-02-main-user-flow.md)。

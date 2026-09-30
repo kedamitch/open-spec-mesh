@@ -1,26 +1,24 @@
-# SDD Runtime
+# 人工研发流程与辅助工具
 
 ## 模块定位
 
-以 Change 保存意图，以 Git 和 Task 保存执行身份；日常收敛为准备、交付、收口三个动作，不新增调度服务或状态机。
+Quick 默认由当前 Agent 连续完成。SDD 分为需求、整体设计、执行计划（任务拆分与任务设计）、实现、交付，各阶段由用户明确确认；用户可一次授权多个阶段。工具不决定阶段权限。
 
-## 功能与规则
+## 能力与规则
 
-| 能力 | 行为与边界 |
-| --- | --- |
-| Quick | Main 连续完成；可用 Explorer / Librarian 调查；不建 Change / Task，不调用 Worker |
-| SDD Change / Design | Architect 直接定义；固定设计维度与标题全部保留；无变化时标题下直接写“无变化。”，不生成空表；表格已有事实不再用正文重复 |
-| 项目文档迁移 | 新项目用 sdd-init；已有旧 docs 项目用 sdd-migrate 先保留原字节到 `.sdd-migration/legacy-docs/`，再人工映射到 canonical Current Truth / ADR / Research / Change |
-| SDD Task Graph | Architect 直接生成；Graph 只保存 Task 路径、依赖、状态和运行元数据，AC/验收语义留在 Change / Task Contract；Design 映射全部 Task 并说明依赖/协作关系 |
-| Main | 校验、冻结、按 Graph 派发和验收；不重新拆分、合并、改写或转译 Task |
-| 并行 | Task 按业务模块拆分；依赖满足后可在独立 worktree 并行，Path Contract 可合理重叠；高重合或真实先后依赖才串行 |
-| 派发 | 复用原冻结、基线和 attempt 检查；运行中的同一 Task 返回恢复信息，不生成新 attempt 或第二个执行 |
-| Delivery | `deliver --draft` 自动生成真实 Git 文件行、Task AC 行和固定字段骨架；最终报告固定记录交付结果、验证结论/逐 AC 结果、契约偏差、未验证项、风险和快照影响；实际 diff 仍必须符合 Path Contract |
-| 验收 | Main 明确判断后自动 submit 或导入指定 worktree 报告；失败/未执行 AC、未验证项、契约偏差或非“通过”结论会机械阻止 Acceptance；无 blocker 也不自动验收 |
-| 集成 | `status` 用 Git ancestry 推导 pending / integrated；单 Task 可用 `integrate --task`，同一 accepted/pending wave 可用 `integrate --wave --check` 一次链式预检、再用 `integrate --wave` 批量 ancestry-preserving 集成；wave 候选按 Graph 顺序派生，不新增持久状态；简单冲突由 Main 处理，复杂冲突回原 Worker；最终集成后交 Architect 同步 Current Truth，再对最终 HEAD 做全量验证 |
-| 收口 | run_validation 将入口真实退出结果绑定最终 integration revision；归档拒绝缺失/失败/陈旧 receipt，以及验证后 active Change 之外的任何项目变化 |
-| 恢复 | 普通 rework 保持契约；漂移先获用户确认再由原 Architect 修订并 replan |
+- 陌生本地实现/调用链优先 Explorer，外部当前事实优先 Librarian；已有证据的单点直接处理。
+- 单任务/串行由当前 Agent 在当前工作区执行；仅明确并行实现才启动 Worker 与独立 worktree。Architect 可选，Reviewer 仅明确请求。
+- 新代理 task_name/可控标题为 role_desc，例如 explorer_python_inventory；历史会话不重建。
+- C01 需求与确认、C02 整体设计、C03-task-plan.md 人可读任务关系、宏观 Task 与实际 Delivery 各有独立职责，不生成执行 Graph。
+- 小改动由执行者自主处理；实质目标、验收、安全或公共设计变化才向用户说明。
+- 文档检查是建议，真实测试与安全拒绝仍保留。交付由人确认，不使用摘要/attempt/receipt/accepted/wave 门禁。
 
-SDD Task Contract 是 Task 本地详细设计的唯一事实源，并显式列出 Path Contract、`depends_on / AC / Dxxx`；这些引用必须与 Design Task 行及 Graph 一致。Path Contract 留在 Markdown，不进入 Task Graph schema，也不用于判断兄弟 Task 是否能并行。完整 Design 和全部 Task Contract 必须在实现前一次性完成，便于先 Review 再执行。冻结按 Task 实际引用收窄：公共 Change/Design 仍共享，未引用的其他 AC / Dxxx 不直接使当前 Task stale。
+辅助 CLI 提供安装、渐进文档创建、只读观测/诊断和发布材料；旧自动生命周期已移除。见 [工具指南](../../../sdd-init/references/runtime-guide.md)。
 
-日常命令见 [运行指南](../../../sdd-init/references/runtime-guide.md)，低层与恢复命令见 [Task 协议](../../../sdd-change/references/task-graph.md)。结构校验不证明业务语义或测试陈述真实。
+## 技能入口
+
+Main 在 SDD 模式主动说明当前阶段并提供调用示例：按需 `$sdd-init` → `$sdd-req`（需求）→ `$sdd-design`（整体设计）→ `$sdd-plan`（执行计划：任务拆分与任务设计），逐阶段确认 → `$sdd-do`（实现与验证）→ `$sdd-close`（交付、现状同步与最终确认后归档）。已有骨架跳过初始化；自然语言授权有效，技能调用不自动批准下一阶段。迁移、持久化研究、执行诊断与发布材料分别按需引导 `$sdd-migrate`、`$sdd-research`、`$sdd-diagnose`、`$sdd-release`；诊断仅用户要求，上传另需本次明确授权。
+
+## 当前限制
+
+用户已明确授权删除自托管 GPU 服务，仅保留 Node.js 客户端；第一方 Python 源码、专属 CI/依赖均已退出。外部推理服务仍需操作员配置，本仓库不提供本地推理后端。扩展验证依赖实际宿主 CLI、Docker、Mermaid 和 Research 运行环境，不能以核心 Node 检查替代。

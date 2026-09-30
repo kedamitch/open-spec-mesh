@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { mkdirSync, writeFileSync, symlinkSync } from 'node:fs';
+import path from 'node:path';
 import {
-  checkResearchKeys, ensureResearchTools, researchInstallEnv,
+  checkResearchKeys, ensureResearchTools, researchInstallEnv, researchExecutable,
 } from '../../../lib/installation/tools.js';
 import { FORWARDED_ENV } from '../../../lib/systemone/contracts.js';
 import { tempDirectory } from './helpers.js';
@@ -47,4 +49,35 @@ test('custom and disabled Research MCP entries are retained without probing or p
   assert.equal(messages.some((line) => line.includes('custom; not probed')), true);
   assert.equal(messages.some((line) => line.includes('preserve disabled')), true);
   assert.equal(messages.some((line) => line.includes('npm exit')), false);
+});
+
+
+test('isolated Research smoke can require managed npm tools while normal installs retain global reuse', (t) => {
+  const root = tempDirectory(t);
+  const home = path.join(root, 'home');
+  const bin = path.join(root, 'bin');
+  mkdirSync(bin);
+  for (const name of ['codegraph', 'context7-mcp', 'tavily-mcp']) writeFileSync(path.join(bin, name), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  const options = { dryRun: true, env: { PATH: bin }, reporter: () => {} };
+  const reuse = ensureResearchTools(home, options);
+  assert.equal(reuse.codegraph, path.join(bin, 'codegraph'));
+  const managed = ensureResearchTools(home, { ...options, reuseGlobal: false });
+  assert.equal(managed.codegraph, path.join(home, '.open-spec-mesh-tools/codegraph/node_modules/.bin/codegraph'));
+  assert.equal(managed.context7, path.join(home, '.open-spec-mesh-tools/context7/node_modules/.bin/context7-mcp'));
+});
+
+
+test('managed CodeGraph npm .bin symlink resolves package identity without an ancestor manifest', (t) => {
+  const root = tempDirectory(t);
+  const module = path.join(root, 'node_modules/@colbymchenry/codegraph');
+  const bin = path.join(root, 'node_modules/.bin');
+  mkdirSync(module, { recursive: true });
+  mkdirSync(bin);
+  writeFileSync(path.join(module, 'package.json'), JSON.stringify({ name: '@colbymchenry/codegraph' }));
+  writeFileSync(path.join(module, 'npm-shim.js'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  const entry = path.join(bin, 'codegraph');
+  symlinkSync('../@colbymchenry/codegraph/npm-shim.js', entry);
+  assert.equal(researchExecutable(entry, '@colbymchenry/codegraph', { managed: true }), true);
+  writeFileSync(path.join(module, 'package.json'), JSON.stringify({ name: '@astudioplus/codegraph-mcp' }));
+  assert.equal(researchExecutable(entry, '@colbymchenry/codegraph', { managed: true }), false);
 });

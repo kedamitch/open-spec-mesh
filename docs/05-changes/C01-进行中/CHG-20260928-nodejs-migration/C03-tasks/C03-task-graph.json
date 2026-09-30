@@ -647,7 +647,7 @@
       "depends_on": [
         "C03-05"
       ],
-      "state": "planned",
+      "state": "running",
       "history": [
         {
           "state": "blocked",
@@ -739,11 +739,19 @@
             "agent_session": "/root/worker_task_06_validation_guides"
           },
           "user_confirmed": false
+        },
+        {
+          "state": "running",
+          "baseline": "4d346bd265d43ec0f293e0de7511a5c8d143e107",
+          "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-06-attempt2",
+          "attempt": 2
         }
       ],
-      "workspace": "/home/fatfei/code/open-spec-mesh",
-      "attempt": 1,
-      "agent_session": "/root/worker_task_06_validation_guides"
+      "workspace": "/tmp/open-spec-mesh-workers/CHG-20260928-nodejs-migration/C03-06-attempt2",
+      "attempt": 2,
+      "agent_session": "/root/worker_task_06_validation_guides",
+      "contract_digest": "6a3cdd96a5ab58ab3f48f594d163ac898ea6fdbe6b6695c6f8706526ae9b32bc",
+      "baseline": "4d346bd265d43ec0f293e0de7511a5c8d143e107"
     }
   ]
 }

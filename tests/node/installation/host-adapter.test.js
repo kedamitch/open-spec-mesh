@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import path from 'node:path';
-import { HOSTS, ROLES, hostProfile, renderMcpOverlay, renderRole } from '../../../lib/installation/host-adapter.js';
+import { HOSTS, ROLES, hostProfile, renderMcpOverlay, renderOpenCodeAgentMap, renderRole } from '../../../lib/installation/host-adapter.js';
 import { managedLayaConfig, managedNodeLayaConfig } from '../../../lib/installation/systemone-config.js';
 import { REPO_ROOT } from './helpers.js';
 
@@ -54,4 +54,25 @@ test('non-Codex role adapters retain least-privilege permissions and inherit hos
   assert.match(architect, /librarian: allow/);
   assert.match(architect, /\"\*\": deny/);
   assert.equal(architect.includes('worker: allow'), false);
+});
+
+
+test('OpenCode uses V1 input fields and preserves prompts, native role permissions and model inheritance', () => {
+  const agents = renderOpenCodeAgentMap(REPO_ROOT, '/tmp/opencode');
+  assert.equal(agents.main.mode, 'primary');
+  assert.match(agents.main.prompt, /role_desc/);
+  assert.deepEqual(agents.main.permission.task, { '*': 'deny', ...Object.fromEntries(ROLES.map((role) => [role, 'allow'])) });
+  assert.deepEqual(agents.architect.permission.task, { '*': 'deny', explorer: 'allow', librarian: 'allow' });
+  for (const [role, agent] of Object.entries(agents)) {
+    assert.equal(Object.hasOwn(agent, 'system'), false);
+    assert.equal(Object.hasOwn(agent, 'permissions'), false);
+    assert.equal(Object.hasOwn(agent, 'model'), false);
+    if (role !== 'main') assert.equal(agent.mode, 'subagent');
+    if (['reviewer', 'explorer', 'librarian'].includes(role)) assert.equal(agent.permission.edit, 'deny');
+    if (!['main', 'architect'].includes(role)) assert.deepEqual(agent.permission.task, { '*': 'deny' });
+  }
+  const overlay = JSON.parse(renderMcpOverlay('opencode', { codegraph: 'codegraph', context7: 'context7-mcp', tavily: 'tavily-mcp' }));
+  assert.deepEqual(Object.keys(overlay.mcp), ['codegraph', 'context7', 'tavily']);
+  assert.deepEqual(overlay.mcp.codegraph.command, ['codegraph', 'serve', '--mcp']);
+  assert.equal(overlay.mcp.context7.environment.CONTEXT7_API_KEY, '{env:CONTEXT7_API_KEY}');
 });

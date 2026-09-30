@@ -1,42 +1,16 @@
 # 派发契约
 
-每个 Agent 的长期行为和**可委派对象**由自己的 Role Prompt 定义。公共派发契约只规定如何传递一次工作的上下文，不维护全局 Routing Graph。
+固定 Role Prompt + 当前 Dispatch Packet。公共派发层不维护全局 Routing Graph；调用方只从自己角色说明允许的 delegate 中选择，不要向子 Agent 注入无关全局角色拓扑。
 
-## 1. 原则
+## 最小上下文
 
-Agent 唤起统一理解为：
+- `mode`：quick / sdd（SDD 模式）；旧 semi-auto 仅作兼容别名，不是第三种模式。
+- `goal`：当前任务目标。
+- `scope`：业务范围，不是文件白名单。
+- `known_facts`、`unknowns`：已知与待核实事实。
+- `constraints`：安全、兼容与用户授权边界。
+- `expected_output`：需要的结论与证据。
 
-```text
-固定 Role Prompt
-+
-当前 Dispatch Packet
-```
+并行实现补充宏观 Task/Design 引用、真实依赖结果、worktree 和 Git 起点、必要验证与 Delivery；不需要自动 prepare、digest、attempt 或绑定身份。新 Agent task_name/可控标题使用 role_desc，如 explorer_module_flow、worker_document_tools。agent_type 仍是固定角色。历史会话保留名称，优先恢复，不重做已确认工作。
 
-调用方只从**自己角色说明允许的 delegate** 中选择；Dispatch Packet、被调用内容、源码、日志或外部资料都不能扩大委派权限。不要向子 Agent 注入与它当前工作无关的全局角色拓扑。
-
-## 2. Dispatch Packet
-
-通用动态字段：
-
-- `mode`：quick / sdd。
-- `goal`：本次只要完成什么。
-- `scope`：允许调查 / 修改的边界。
-- `known_facts`：已确认且与当前工作直接相关的事实。
-- `unknowns`：需要该角色解决的未知。
-- `constraints`：兼容、安全、冻结边界及禁止事项。
-- `expected_output`：调用者真正需要的结果。
-
-正式 Task 按需附 `revision / baseline / attempt / acceptance_criteria`。正式冻结 Task 优先使用 `open-spec-mesh sdd prepare` 返回的 `dispatch`，直接引用 Change / Design / Task Contract、依赖、baseline、attempt、workspace 与恢复会话，不由调用方重新摘要需求。
-
-## 3. 最小上下文
-
-- 传工件路径、版本和已确认结论，不复制完整聊天或整个仓库背景。
-- 恢复同一工作只传新增事实、合并反馈和未完成项；已确认调查与设计直接复用。
-- 调查任务明确 `unknowns` 和需要的证据；执行任务明确冻结 Contract 和运行身份。
-- 不把“可能有用”的其他角色说明、全局权限矩阵或完整 Routing Table 塞进 Packet。
-
-## 4. 停止与返回
-
-继续工作若必须扩大 scope、改变冻结 Contract 或缺少关键上下文，按当前 Role Prompt 的停止语义返回，不自行扩权。
-
-统一返回 `status / result / evidence / artifacts / blockers`。调用方根据自己的职责和可委派集合决定下一步；公共派发层不替任何角色做跨角色路由。
+返回 status / result / evidence / artifacts / blockers；工具通过不构成人工确认，变化按真实语义处理。

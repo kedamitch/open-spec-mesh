@@ -42,6 +42,15 @@ test('deleting a managed table leaves custom sibling servers intact', () => {
   assert.equal(Object.hasOwn(parseToml(updated).mcp_servers, 'managed'), false);
 });
 
+test('multiline prompt text containing a fake table is not interpreted as a TOML section', () => {
+  const original = '[agents.custom]\nprompt="""\n[agents.e2e]\nmodel="not a real entry"\n"""\n[agents.e2e]\nmodel="old"\n';
+  const before = parseToml(original);
+  const updated = setTomlValue(original, ['agents', 'e2e'], DELETE);
+  const after = parseToml(updated);
+  assert.deepEqual(after.agents.custom, before.agents.custom);
+  assert.equal(Object.hasOwn(after.agents, 'e2e'), false);
+});
+
 test('ambiguous and malformed edits fail without changing the input string', () => {
   const malformed = '[mcp_servers\ncommand = "bad"';
   assert.throws(() => setTomlValue(malformed, ['mcp_servers', 'laya', 'command'], 'node'));

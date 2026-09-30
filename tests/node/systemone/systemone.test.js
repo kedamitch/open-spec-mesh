@@ -96,7 +96,7 @@ test('template validation, digest, path restrictions, permissions and answer gua
 
   const state = prepareState(loadTemplate('delegation@1'), {
     request: 'ask', current_role: ' Main ', execution_mode: ' SDD ',
-    task_graph_ready: true, reviewer_requested: true,
+    execution_strategy: 'parallel', implementation_authorized: true, reviewer_requested: true,
     available_roles: ['worker', 'architect', 'explorer', 'librarian', 'reviewer', 'worker'],
   }, { root: ROOT });
   assert.deepEqual(state.available_roles, ['worker', 'architect', 'explorer', 'librarian', 'reviewer']);
@@ -127,9 +127,10 @@ test('role permission matrix, local descriptions, executor guard, normalization,
     available_roles: ['reviewer', 'worker', 'architect', 'explorer', 'librarian'], ...extras,
   }, { root: ROOT }).available_roles;
   assert.deepEqual(allowed('main', 'quick', { task_graph_ready: true, reviewer_requested: true }), ['explorer', 'librarian']);
-  assert.deepEqual(allowed('main', 'sdd', { task_graph_ready: false, reviewer_requested: true }), ['architect', 'explorer', 'librarian']);
-  assert.deepEqual(allowed('main', 'sdd', { task_graph_ready: true }), ['worker', 'architect', 'explorer', 'librarian']);
-  assert.deepEqual(allowed('main', 'sdd', { task_graph_ready: true, reviewer_requested: true }), ['reviewer', 'worker', 'architect', 'explorer', 'librarian']);
+  assert.deepEqual(allowed('main', 'sdd', { task_graph_ready: true, execution_strategy: 'serial', reviewer_requested: true }), ['reviewer', 'architect', 'explorer', 'librarian']);
+  assert.deepEqual(allowed('main', 'sdd', { execution_strategy: 'parallel', implementation_authorized: true }), ['worker', 'architect', 'explorer', 'librarian']);
+  assert.deepEqual(allowed('main', 'sdd', { task_graph_ready: true }), ['architect', 'explorer', 'librarian']);
+  assert.deepEqual(allowed('main', 'sdd', { execution_strategy: 'parallel', implementation_authorized: true, reviewer_requested: true }), ['reviewer', 'worker', 'architect', 'explorer', 'librarian']);
   assert.deepEqual(allowed('architect', 'sdd'), ['explorer', 'librarian']);
   for (const actor of ['worker', 'explorer', 'librarian', 'reviewer']) assert.deepEqual(allowed(actor, 'sdd'), []);
 
@@ -307,6 +308,15 @@ test('partial responses preserve valid IDs; malformed, uncertain, misaligned and
   assert.equal((await uncertain.run('execution-mode@1', [{ id: 'x', state: { request: 'x' } }])).results[0].reason, 'uncertain_or_disallowed');
   const misaligned = runtimeWith(async () => ({ results: [] }));
   assert.equal((await misaligned.run('execution-mode@1', [{ id: 'x', state: { request: 'x' } }])).results[0].reason, 'batch_alignment_error');
+  const manyMisaligned = runtimeWith(async () => ({ results: [answer('quick')] }));
+  const allFallback = await manyMisaligned.run('execution-mode@1', [
+    { id: 'first', state: { request: 'first' } },
+    { id: 'second', state: { request: 'second' } },
+    { id: 'third', state: { request: 'third' } },
+  ]);
+  assert.equal(allFallback.status, 'fallback');
+  assert.deepEqual(allFallback.results.map((item) => item.id), ['first', 'second', 'third']);
+  assert.ok(allFallback.results.every((item) => item.status === 'fallback' && item.reason === 'batch_alignment_error'));
   const brokenCalls = [];
   const broken = runtimeWith(async (...args) => { brokenCalls.push(args); throw new ServiceError('http_503'); });
   await broken.run('execution-mode@1', [{ id: 'a', state: { request: 'a' } }]);
@@ -580,18 +590,52 @@ test('public systemone CLI route dispatches help without provider access', async
   }
 });
 
-test('npm consumer file list excludes the standalone GPU Python server and helper', () => {
+test('npm consumer retains the Node MCP client and excludes all retired self-hosted GPU assets', () => {
   const env = { ...process.env, PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH ?? ''}` };
   const result = spawnSync('npm', ['pack', '--dry-run', '--json'], { cwd: ROOT, env, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const artifact = JSON.parse(result.stdout)[0];
   const files = artifact.files.map((entry) => entry.path.replaceAll('\\', '/'));
   const gpuFiles = files.filter((name) => name.startsWith('integrations/laya-gpu/')).sort();
-  assert.deepEqual(gpuFiles, ['integrations/laya-gpu/README.md']);
+  assert.deepEqual(gpuFiles, []);
+  assert.equal(files.includes('mcp/laya_http_mcp.js'), true);
+  assert.equal(files.includes('lib/systemone/http.js'), true);
   assert.equal(files.includes('mcp/laya_batch_server.py'), false);
 });
 
-test('GPU server Python dependencies stay out of the Node client path list', () => {
+test('Node client preserves the four public MCP tools after self-hosted GPU retirement', () => {
   assert.deepEqual(TOOL_SCHEMAS.map((tool) => tool.name), ['laya_status', 'laya_templates', 'laya_decide', 'laya_predict']);
   assert.equal(MODE_QUESTIONS.mode.type, 'choice');
+});
+
+
+test('SDD is the canonical manual mode and semi-auto input remains a compatibility alias', () => {
+  const template = loadTemplate('execution-mode@1');
+  assert.deepEqual(Object.keys(template.questions.mode.criteria), ['quick', 'sdd', 'uncertain']);
+  for (const mode of ['sdd', ' SDD ', 'semi-auto', ' SEMI-AUTO ']) {
+    const state = prepareState(template, { request: 'keep manual stages', existing_mode: mode }, { root: ROOT });
+    assert.equal(state.existing_mode, 'sdd');
+    assert.equal(guard(template, state, answer('quick').answers).mode, 'sdd');
+  }
+  assert.equal(guard(template, { existing_mode: 'semi-auto' }, answer('quick').answers).mode, 'sdd');
+  const delegation = loadTemplate('delegation@1');
+  const input = { request: 'design', current_role: 'main', available_roles: ['worker', 'architect', 'explorer', 'librarian'] };
+  const canonical = prepareState(delegation, { ...input, execution_mode: 'sdd' }, { root: ROOT });
+  const alias = prepareState(delegation, { ...input, execution_mode: ' SEMI-AUTO ' }, { root: ROOT });
+  assert.deepEqual(alias, canonical);
+  assert.deepEqual(alias.available_roles, ['architect', 'explorer', 'librarian']);
+});
+
+test('existing SDD and legacy manual modes bypass inference without restoring automatic stages', async () => {
+  let calls = 0;
+  const runtime = runtimeWith(async () => { calls += 1; throw new Error('unexpected inference'); });
+  const result = await runtime.run('execution-mode@1', ['sdd', 'semi-auto'].map((mode, index) => ({
+    id: String(index), state: { request: 'continue the confirmed stage', existing_mode: mode },
+  })));
+  assert.equal(result.status, 'ok');
+  assert.equal(calls, 0);
+  for (const row of result.results) {
+    assert.equal(row.recommendation.mode, 'sdd');
+    assert.equal(row.basis, 'existing_state');
+  }
 });

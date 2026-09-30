@@ -4,4 +4,5 @@
 
 <!-- INDEX:BEGIN -->
 - [O02-01-local-toolkit.md](O02-01-local-toolkit.md)
+- [O02-02-npm-publication.md](O02-02-npm-publication.md)
 <!-- INDEX:END -->

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, cpSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, cpSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -16,11 +16,18 @@ const root = mkdtempSync(path.join(tmpdir(), 'osm cli space '));
 test('manifest fixes ESM engine, bin, exact pure-JS/WASM dependencies and lifecycle boundary', () => {
   const manifest = JSON.parse(readFileSync(path.join(repo, 'package.json'), 'utf8'));
   assert.equal(manifest.name, 'open-spec-mesh');
-  assert.equal(manifest.version, '0.1.0');
-  assert.equal(manifest.private, true);
+  assert.match(manifest.version, /^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/u);
+  for (const lockName of ['package-lock.json', 'npm-shrinkwrap.json']) {
+    const lock = JSON.parse(readFileSync(path.join(repo, lockName), 'utf8'));
+    assert.equal(lock.version, manifest.version);
+    assert.equal(lock.packages[''].version, manifest.version);
+  }
+  assert.equal(manifest.private, false);
+  assert.deepEqual(manifest.publishConfig, { access: 'public', registry: 'https://registry.npmjs.org/' });
   assert.equal(manifest.type, 'module');
-  assert.equal(manifest.engines.node, '>=24.21.0');
+  assert.equal(manifest.engines.node, '>=22.0.0');
   assert.equal(manifest.bin['open-spec-mesh'], './bin/open-spec-mesh.js');
+  assert.equal(manifest.bin.osm, './bin/osm.js');
   assert.deepEqual(manifest.dependencies, {
     '@modelcontextprotocol/sdk': '1.30.1', 'jszip': '3.10.2', 'lossless-json': '4.3.1', 'smol-toml': '1.4.2', 'sql.js': '1.14.2',
   });
@@ -38,20 +45,28 @@ test('argument parser supports --key=value, booleans, multi-value and -- separat
   assert.throws(() => parseArgs(['--unknown'], {}), /unrecognized arguments/);
 });
 
-test('fixed registry lists only implemented capabilities and missing routes fail nonzero', async () => {
-  const available = implementedCommands(repo);
+test('fixed registry lists only modules with their registered handlers', async (t) => {
+  const available = await implementedCommands(repo);
   assert.ok(available.includes('init-project'));
   assert.ok(available.includes('new-task'));
-  assert.ok(available.includes('sdd'));
-  assert.ok(!available.includes('install'));
-  assert.match(renderHelp(repo, '0.1.0'), /init-project/u);
-  assert.match(renderHelp(repo, '0.1.0'), /\n  sdd\n/u);
-  assert.doesNotMatch(renderHelp(repo, '0.1.0'), /\n  install\n/u);
+  assert.equal(available.includes('sdd'), false);
+  assert.equal(Object.hasOwn(COMMAND_REGISTRY, 'task-graph'), false);
+  assert.ok(available.includes('install'));
+  assert.match(await renderHelp(repo, '0.0.1'), /init-project/u);
+  assert.doesNotMatch(await renderHelp(repo, '0.0.1'), /\n  sdd\n/u);
+  assert.match(await renderHelp(repo, '0.0.1'), /\n  install\n/u);
   assert.ok(Object.hasOwn(COMMAND_REGISTRY, 'install'));
-  let stderr = '';
-  assert.equal(await runCommand('install', [], { stderr: { write: (text) => { stderr += text; } } }), 1);
-  assert.match(stderr, /not available in this runtime/u);
+  let stdout = '';
+  assert.equal(await runCommand('install', ['--help'], { stdout: { write: (text) => { stdout += text; } } }), 0);
+  assert.match(stdout, /Usage: open-spec-mesh install/u);
   assert.equal(await runCommand('not-a-command', [], { stderr: { write: () => {} } }), 2);
+
+  const missingHandlerRoot = mkdtempSync(path.join(tmpdir(), 'osm-missing-command-handler-'));
+  t.after(() => rmSync(missingHandlerRoot, { recursive: true, force: true }));
+  mkdirSync(path.join(missingHandlerRoot, 'lib/installation'), { recursive: true });
+  writeFileSync(path.join(missingHandlerRoot, 'package.json'), JSON.stringify({ type: 'module' }));
+  writeFileSync(path.join(missingHandlerRoot, 'lib/installation/cli.js'), 'export function unrelatedHandler() {}\n');
+  assert.deepEqual(await implementedCommands(missingHandlerRoot), []);
 });
 
 test('explicit CLI works from a different cwd and with a project path containing spaces', () => {
@@ -89,4 +104,24 @@ test('local tarball file whitelist excludes Python source, tests and node_module
   assert.ok(entries.includes('bin/open-spec-mesh.js'));
   assert.ok(entries.includes('sdd-init/templates/files/08-quality/Q01-validation.md'));
   assert.ok(!entries.some((name) => name.endsWith('.py') || name.startsWith('tests/') || name.startsWith('node_modules/')));
+});
+
+
+test('direct Skill script entrypoints execute handlers rather than silently succeeding', () => {
+  for (const command of ['init-project', 'migrate-project', 'new-document', 'validate-docs', 'new-change', 'ensure-design', 'new-task', 'new-research', 'new-adr', 'new-release']) {
+    const relative = command === 'new-release' ? 'sdd-release/scripts/new_release.js' : COMMAND_REGISTRY[command][0];
+    const result = spawnSync(process.execPath, [path.join(repo, relative), '--help'], { cwd: tmpdir(), encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Usage:/u, command + ' must really run its handler');
+  }
+  const result = spawnSync(process.execPath, [path.join(repo, COMMAND_REGISTRY['validate-docs'][0]), '--root', root], { cwd: tmpdir(), encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), 'docs: valid');
+});
+
+
+test('runtime entry guard requires the caller URL and never infers another module is main', async () => {
+  const { isMain } = await import('../../../sdd-init/scripts/node_runtime.js');
+  assert.throws(() => isMain(), /caller import.meta.url/u);
+  assert.equal(isMain(new URL('../../../sdd-init/scripts/node_runtime.js', import.meta.url).href), false);
 });

@@ -6,7 +6,7 @@
 
 ## Validation Entry Point
 
-待核实：填写项目内一个已提交的 Node 验证入口，例如 `scripts/sdd_validate.js`。入口负责串行执行本项目全部 required checks，任一失败返回非零；尚未配置真实 checks 时必须 fail closed。
+按项目实际需要记录可复验的测试、构建和静态检查命令，可使用 Node 验证入口；真实失败非零，不将未执行项写通过。
 
 ## Required Checks
 
@@ -19,7 +19,7 @@
 
 ## Quality Gates
 
-- 最终集成验证必须通过 Validation Entry Point；自然语言“pass”不能替代机器 receipt。
+- 验证必须有实际结果；文档检查只作建议，不生成审批 receipt。
 - 待核实项目特有门禁。
 
 ## Release Validation

@@ -1,0 +1,85 @@
+name: Publish npm (OIDC)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact stable version matching package.json (for example 0.0.2)'
+        required: true
+        type: string
+
+# No PR, push, tag, schedule, or automatic version bump can authorize publication.
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+env:
+  RELEASE_VERSION: ${{ inputs.version }}
+  NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+
+jobs:
+  prepare:
+    if: github.repository == 'kedamitch/open-spec-mesh' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Select isolated artifact directory
+        run: echo "ARTIFACT_DIR=$RUNNER_TEMP/npm-release" >> "$GITHUB_ENV"
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.x'
+          package-manager-cache: false
+      - name: Pin OIDC-capable npm
+        run: npm install --global npm@11.19.0 --ignore-scripts --no-audit --no-fund
+      - run: npm ci
+      - name: Validate core (including publication safeguards)
+        run: npm run validate:core
+      - name: Prepare and test the actual release artifact
+        run: node scripts/npm_release.js prepare "$RELEASE_VERSION" "$ARTIFACT_DIR"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-release-${{ github.run_id }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Select isolated artifact directory
+        run: echo "ARTIFACT_DIR=$RUNNER_TEMP/npm-release" >> "$GITHUB_ENV"
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.x'
+          package-manager-cache: false
+      - name: Pin OIDC-capable npm
+        run: npm install --global npm@11.19.0 --ignore-scripts --no-audit --no-fund
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-release-${{ github.run_id }}
+          path: ${{ env.ARTIFACT_DIR }}
+      - name: Recheck registry and artifact before upload
+        run: node scripts/npm_release.js check "$RELEASE_VERSION" "$ARTIFACT_DIR"
+      - name: Publish the verified tarball with OIDC (no npm secret)
+        id: publish
+        run: npm publish "$ARTIFACT_DIR/open-spec-mesh-$RELEASE_VERSION.tgz" --access public --tag latest --ignore-scripts --registry=https://registry.npmjs.org/
+      - name: Independently verify registry and fresh consumer, including after upload errors
+        if: ${{ always() && steps.publish.outcome != 'skipped' }}
+        run: node scripts/npm_release.js verify "$RELEASE_VERSION" "$ARTIFACT_DIR"

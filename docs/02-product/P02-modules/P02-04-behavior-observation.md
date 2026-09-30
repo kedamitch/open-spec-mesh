@@ -9,8 +9,8 @@
 | Host | Native trace | 可确定采集 |
 | --- | --- | --- |
 | Codex | full | rollout、子会话、命令、委派、model/effort、usage、SDD artifacts |
-| OpenCode | unsupported | 当前 Rules / Agent / Skill 指纹、显式 Change / Task Graph |
-| Claude Code | unsupported | 当前 Rules / Agent / Skill 指纹、显式 Change / Task Graph |
+| OpenCode | unsupported | 当前 Rules / Agent / Skill 指纹、显式 Change / 宏观 Task；旧 Graph 可选 |
+| Claude Code | unsupported | 当前 Rules / Agent / Skill 指纹、显式 Change / 宏观 Task；旧 Graph 可选 |
 
 非 Codex 当前使用 artifact-only collect：`coverage.status=partial` 并记录 `<host>_native_trace_unsupported`。没有稳定私有 trace adapter 时，不把“没看到 spawn / Skill read / SDD command”写成未发生。
 

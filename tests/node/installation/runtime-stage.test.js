@@ -13,8 +13,15 @@ test('published file selection contains install routes and canonical resources, 
     'bin/open-spec-mesh.js', 'scripts/install.js', 'scripts/host_adapter.js',
     'scripts/install_toml.js', 'scripts/install_migrations.js', 'scripts/install-legacy.json',
     'lib/installation/cli.js', 'lib/installation/installer.js', 'mcp/laya_http_mcp.js',
-    'npm-shrinkwrap.json', 'docs/index.md', 'sdd-do/SKILL.md', 'typesafe-laya/LICENSE',
+    'npm-shrinkwrap.json', 'docs/index.md', 'sdd-req/SKILL.md', 'sdd-design/SKILL.md', 'sdd-plan/SKILL.md',
+    'sdd-req/scripts/new_change.js', 'sdd-design/scripts/ensure_design.js', 'sdd-plan/scripts/new_task.js',
+    'sdd-plan/references/task-design-template.md', 'sdd-plan/references/execution-plan-template.md',
+    'sdd-do/SKILL.md', 'typesafe-laya/LICENSE',
   ]) assert.equal(files.includes(required), true, `missing ${required}`);
+  assert.equal(files.includes('sdd-change/SKILL.md'), false);
+  assert.equal(files.some(file => file.startsWith('sdd-change/scripts/')), false);
+  assert.equal(files.some(file => file.startsWith('sdd-requirements/')), false);
+  assert.equal(files.includes('sdd-req/scripts/new_change.sh'), false);
   assert.equal(files.some((file) => file === 'package-lock.json' || file.endsWith('/package-lock.json')), false);
   assert.equal(files.some((file) => file.endsWith('/C03-task-graph.json')), false);
   assert.equal(files.some((file) => file.startsWith('tests/')), false);
@@ -78,7 +85,7 @@ test('missing required package routes fail before npm is invoked or a destinatio
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const manifest = {
     name: 'open-spec-mesh', version: '0.1.0', private: true, type: 'module',
-    engines: { node: '>=24.21.0' }, files: ['package.json', 'npm-shrinkwrap.json'], dependencies: {},
+    engines: { node: '>=22.0.0' }, files: ['package.json', 'npm-shrinkwrap.json'], dependencies: {},
   };
   const lock = { name: manifest.name, version: manifest.version, lockfileVersion: 3, packages: { '': { dependencies: {} } } };
   writeFileSync(path.join(root, 'package.json'), JSON.stringify(manifest));

@@ -1,6 +1,6 @@
 # 运行协议
 
-System One 消费端由 Node.js 24.21.0+ 的 `mcp/laya_http_mcp.js` 提供；无需 Python 或本机编译工具链。独立 GPU-host API 仍是另一项 Python/CUDA 部署，见 `integrations/laya-gpu/README.md`，客户端不会启动或调用 Python helper。
+System One 消费端由 Node.js 22.0.0+ 的 `mcp/laya_http_mcp.js` 提供；无需 Python 或本机编译工具链。自托管 GPU 服务已按用户确认退出，只保留 Node.js 客户端连接操作员提供的外部兼容服务；不会下载模型、启动本地推理或调用 Python helper。
 
 ## 工具
 
@@ -47,7 +47,7 @@ delegation@1 只判断“当前角色是自己执行，还是委派给它此刻�
 
 provider 由 `SYSTEMONE_PROVIDER=laya|jev` 指定；未指定时固定使用 Laya。Jev 默认关闭，即使环境中存在 `TYPESAFE_API_KEY` 也不会自动切换，必须显式设置 `SYSTEMONE_PROVIDER=jev`。Laya 固定调用 `POST /v1/systemone/batch`，请求为 `{"requests":[...]}`，支持裸数组或 `{"results":[...]}` 响应。Jev 使用 TypeSafe 官方 `POST /v1/systemone`，每个不同 state 一个 HTTP 请求，body 直接是 `{"state":{},"questions":{},"model":"jev-latest"}`；多 questions 仍共享同一 state。工具层返回格式保持一致。
 
-Laya 合批服务由仓库 `mcp/laya_batch_server.py` 提供，内部使用 Router.predict_batch。Jev 不需要本地模型服务，默认连接 `https://api.typesafe.ai`；认证使用 `TYPESAFE_API_KEY`，默认模型 `jev-latest`。
+Laya 的外部服务由操作员提供并配置 `LAYA_BASE_URL` / `LAYA_API_KEY`，必须兼容上述合批协议；仓库不再提供服务端或 CUDA 部署。Jev 使用外部 TypeSafe 服务；认证使用 `TYPESAFE_API_KEY`，默认模型 `jev-latest`。两种后端均不启动本地模型服务；远端推理/批处理/硬件由服务提供方负责。
 
 ## 缓存与指标
 

@@ -3,7 +3,7 @@
 ## 日常入口
 
 - [使用与安装](README.md)
-- [三动作运行指南](sdd-init/references/runtime-guide.md)
+- [人工流程与工具指南](sdd-init/references/runtime-guide.md)
 - [主代理约定](AGENTS.md)
 - [角色配置](agents/index.md)
 
@@ -11,7 +11,9 @@
 
 - [sdd-init](sdd-init/SKILL.md)
 - [sdd-migrate](sdd-migrate/SKILL.md)
-- [sdd-change](sdd-change/SKILL.md)
+- [sdd-req｜需求](sdd-req/SKILL.md)
+- [sdd-design｜整体设计](sdd-design/SKILL.md)
+- [sdd-plan｜执行计划：任务拆分与任务设计](sdd-plan/SKILL.md)
 - [sdd-do](sdd-do/SKILL.md)
 - [sdd-close](sdd-close/SKILL.md)
 - [sdd-research](sdd-research/SKILL.md)

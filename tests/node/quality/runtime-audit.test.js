@@ -11,11 +11,11 @@ test('root node_modules is ignored without generalizing to nested dependencies a
   });
 });
 
-test('publication lock is byte-identical, package stays private, and runtime entry resources exist', () => {
+test('publication lock is byte-identical, package permits global distribution, and runtime entry resources exist', () => {
   const result = verifyLockAndManifest();
   assert.equal(result.locksByteIdentical, true);
-  assert.equal(result.private, true);
-  assert.equal(result.engine, '>=24.21.0');
+  assert.equal(result.private, false);
+  assert.equal(result.engine, '>=22.0.0');
   assert.equal(result.lockfileVersion, 3);
 });
 

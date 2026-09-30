@@ -1,17 +1,15 @@
 ---
 name: sdd-do
-description: 在 SDD 冻结 Task Contract 内连续完成实现、测试、自审、修复和逐文件交付。
+description: SDD 模式已授权实现阶段的入口；当前 Agent 串行或 Worker 并行实现、验证、自审和真实交付，也可用于 Quick 已授权实现。
 ---
-# 实施与交付
+# 当前 Agent 串行或 Worker 并行的自主实现、验证、自审和真实交付。
 
-**输入**：冻结 Task Contract、授权范围、工作区、baseline / attempt。只处理当前 Task，不接管规划、调度或验收。
+单任务或串行由当前 Agent 在当前工作区连续执行；只有用户确认并行时才使用 Worker 与独立 worktree。读取需求、整体设计、执行计划及当前 Task 的任务级设计，明确目标/依赖/验收后实现。
 
-1. 先按人类阅读顺序读 Change、共享 Design 和自己的 Task Contract：目标/范围 → 设计方案 → 前置任务/验收 → 本地详细设计/实现自由度；再核对对应 AC、依赖和公共边界后直接实施。默认不读取其他 Task Contract；代码落点重叠不改变业务范围。缺失或互相矛盾时返回 needs_context，不自行补设计。
-2. 实现 → 当前 Task 定向测试 → 按 [审查清单](references/review-checklist.md) 自审 → 修复 → 复验，保持同一上下文。只在当前 Task 需要时运行 build/static check，不反复执行项目全量测试。
-3. 提交当前 Task 的实现，用 `sdd.py deliver --draft` 生成 Git 文件表；补 [交付模板](references/delivery-template.md) 的实际影响和验证，再用 `sdd.py deliver` 写入报告。脚本校验真实 Git 文件表与 AC 证据，不按文件路径授权；可直接使用已有完整证据，不重复生成草稿。
+实现 → 定向测试 → 自审 → 修复 → 复验。必要文件、内部结构和测试可自行调整；仅实质目标、验收、安全或公共方案变化返回 Main 请用户决定。完成时写真实 Delivery，不调用冻结、prepare、record-delivery 或验收状态链。不要反复跑全量，项目集成验证由当前 Agent 完成。
 
-脚本生成身份和文件清单，并检查真实 diff、文件表和 AC 证据完整性；它不代写验证结论，也不以文件路径决定授权。业务范围由冻结的 Task Contract 表达。部署任务按 [运维规范](../sdd-init/references/operations-template.md) 交付实际文件。
+## 阶段引导
 
-**完成**：返回 revision、报告路径和剩余问题。当前执行者不可委派、不改快照、不推进权威任务图。普通缺陷直接修；出现设计缺口返回 needs_context；冻结契约必须变化返回 `contract_change_required` 并停止，由调用方决定后续。
+说明当前实现授权和串并行选择。SDD 模式缺少已确认的必要需求、整体设计或执行计划时，分别推荐 `$sdd-req`、`$sdd-design` 或 `$sdd-plan` 补充受影响阶段，不自行批准；Quick 不强制建 Change/Task。实现与验证完成后报告真实结果，并推荐 `$sdd-close 汇总实现结果和验证，先供我确认`；调用下一技能不代替用户确认，也不自动归档或发布。
 
-本 Skill 不描述其他角色或全局 Routing。
+写作参考：sdd-init/references/document-contract.md。

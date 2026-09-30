@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
-  BEGIN, END, HOST_MANIFEST, MANIFEST, PACKAGE_ID, blobHash, catalog, cleanAgents, hostManifestText,
+  BEGIN, END, HOST_MANIFEST, MANIFEST, PACKAGE_ID, blobHash, catalog, cleanAgents, hostManifestText, retirement,
   readHostManifest, readManifest,
 } from '../../../lib/installation/migrations.js';
 
@@ -30,6 +30,39 @@ test('unmarked canonical history is migrated, while unrelated prose is preserved
   assert.equal(result.text.startsWith(local), true);
   assert.equal(result.text.includes('Old canonical managed instructions.'), true);
   assert.equal(result.text.includes(`${BEGIN}\n\n${oldBlock}`), true);
+});
+
+test('edited legacy rules remain untouched and produce a migration warning', () => {
+  const old = '# Old package rules\n\n[flow](sdd-plan/references/policy.md)\n';
+  const edited = old.replace('Old package', 'User edited');
+  const result = cleanAgents(edited, '# New package rules\n\nCurrent.\n', new Set([blobHash(Buffer.from(old))]));
+  assert.equal(result.unmarked, 0);
+  assert.equal(result.text.startsWith(edited), true);
+  assert.ok(result.warnings.length > 0);
+});
+
+test('legacy rules match installed skill links and CRLF fingerprints', () => {
+  const old = '# Old package rules\n\n[flow](sdd-plan/references/policy.md)\n';
+  const current = '# New package rules\n\nCurrent.\n';
+  const installed = old.replace('](sdd-plan/', '](skills/sdd-plan/').replaceAll('\n', '\r\n').replace(/\r\n$/u, '');
+  const result = cleanAgents(installed, current, new Set([blobHash(Buffer.from(old))]));
+  assert.equal(result.unmarked, 1);
+  assert.equal(result.text.includes('[flow](skills/sdd-plan/'), false);
+  assert.equal(result.text.includes(current), true);
+});
+
+test('example fences hide legacy and managed marker text from migration parsing', () => {
+  const old = '# Old package rules\n\n[flow](sdd-plan/references/policy.md)\n';
+  const example = `\`\`\`\`markdown\n${old}${BEGIN}\nexample\n${END}\n\`\`\`\`\n`;
+  const result = cleanAgents(example, '# New package rules\n\nCurrent.\n', new Set([blobHash(Buffer.from(old))]));
+  assert.equal(result.marked, 0);
+  assert.equal(result.unmarked, 0);
+  assert.equal(result.text.startsWith(example), true);
+});
+
+test('malformed visible managed markers fail closed', () => {
+  const malformed = [BEGIN, END, `${BEGIN}\n${BEGIN}\n${END}\n`];
+  for (const text of malformed) assert.throws(() => cleanAgents(text, '# current\n'));
 });
 
 test('catalog retains canonical AGENTS.md blobs from real Git history', (t) => {
@@ -81,4 +114,15 @@ test('host manifest binds host and rejects traversal paths', (t) => {
   assert.throws(() => readHostManifest(home, 'codex'), /Unknown host install manifest/);
   writeFileSync(path.join(home, HOST_MANIFEST), JSON.stringify({ schema: 1, package: PACKAGE_ID, host: 'claude', paths: ['../escape'] }));
   assert.throws(() => readHostManifest(home, 'claude'), /Unsafe paths/);
+});
+
+test('retirement preserves a user-owned personal agents README', (t) => {
+  const home = mkdtempSync(path.join(os.tmpdir(), 'osm-personal-readme-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  mkdirSync(path.join(home, 'agents'));
+  const readme = '# My agents\nKeep my personal workflows.\n';
+  writeFileSync(path.join(home, 'agents/README.md'), readme);
+  const plan = retirement(home, {}, { skills: [], roles: {} }, ['sdd-do'], ['worker']);
+  assert.equal(plan.paths.includes('agents/README.md'), false);
+  assert.equal(readFileSync(path.join(home, 'agents/README.md'), 'utf8'), readme);
 });

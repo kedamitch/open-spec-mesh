@@ -20,6 +20,7 @@ export function verifyResearchTools() {
   fs.mkdirSync(home, { recursive: true, mode: 0o700 });
   const env = {
     ...process.env,
+    PATH: path.dirname(process.execPath) + path.delimiter + (process.env.PATH ?? ''),
     CONTEXT7_API_KEY: 'fixture-not-a-real-key',
     TAVILY_API_KEY: 'fixture-not-a-real-key',
   };
@@ -27,7 +28,7 @@ export function verifyResearchTools() {
   assert.equal(Object.hasOwn(cleanEnv, 'CONTEXT7_API_KEY'), false);
   assert.equal(Object.hasOwn(cleanEnv, 'TAVILY_API_KEY'), false);
   try {
-    const commands = ensureResearchTools(home, { env, reporter: (line) => process.stdout.write(`${line}\n`) });
+    const commands = ensureResearchTools(home, { env, reuseGlobal: false, reporter: (line) => process.stdout.write(`${line}\n`) });
     for (const tool of RESEARCH_TOOLS) {
       const manifestPath = path.join(home, TOOLS_DIR, tool.server, 'node_modules', tool.package, 'package.json');
       const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));

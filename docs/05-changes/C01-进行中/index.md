@@ -2,4 +2,5 @@
 
 <!-- INDEX:BEGIN -->
 - [CHG-20260928-nodejs-migration](CHG-20260928-nodejs-migration/index.md)
+- [CHG-20260929-human-driven-workflow](CHG-20260929-human-driven-workflow/index.md)
 <!-- INDEX:END -->

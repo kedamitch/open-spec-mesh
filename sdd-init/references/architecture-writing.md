@@ -1,4 +1,6 @@
-# 技术 Current Truth 写作规范
+# 技术写作参考
+
+以下维度是需要时的写作参考，不是必须全部齐备的机器门禁。Task 只做宏观设计，不要求文件/函数级清单。
 
 技术 Current Truth 必须能回答：**系统由哪些应用/模块组成、接口是什么、数据怎么存、核心领域对象如何变化、主流程如何执行、怎么部署。**
 
@@ -69,11 +71,11 @@
 - Domain Rules / Invariants。
 - Domain Events（存在时）。
 
-存在生命周期的核心对象必须有 `stateDiagram-v2`。
+真实状态关系复杂时可用 `stateDiagram-v2`；人工阶段不伪装成机器状态机。
 
 ## 主流程时序
 
-`T05-03-main-sequence.md` 至少维护一条真实 `sequenceDiagram`：
+复杂主流程可用 `sequenceDiagram`：
 
 - 触发者。
 - 参与应用 / 模块。
@@ -83,7 +85,7 @@
 
 ## Change / Design 与 Current
 
-Architect 必须先读受影响 Current Truth，再在 Design 中按 **Current → Delta → Target** 明确：
+当前设计作者先读受影响 Current Truth，再在 Design 中按 **Current → Delta → Target** 明确：
 
 - 产品模块 / 功能变化。
 - 应用 / 组件职责变化。
@@ -93,4 +95,4 @@ Architect 必须先读受影响 Current Truth，再在 Design 中按 **Current �
 - 主流程 / 时序变化。
 - Operations 变化。
 
-没有变化也必须明确写“无变化”。Design 表达“这次怎么改”；Current Truth 只表达“集成后现在是什么”。
+按实际变化展开，不要求不适用的标题或空章节。Design 表达“这次怎么改”；Current Truth 只表达“集成后现在是什么”。

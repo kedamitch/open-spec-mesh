@@ -32,7 +32,7 @@ Provider / 工具密钥只通过环境变量继承，不写入仓库或 overlay 
 ## Observability
 
 - Logs：CLI stderr/stdout、Git、CI。
-- Trace：Task ID、baseline、attempt、revision、Delivery、history。
+- Trace：人工确认、宏观 Task、实际 Git diff、验证与 Delivery；旧身份字段仅分析历史。
 - Codex native rollout：可做 full observation。
 - OpenCode/Claude private trace：当前标记 unsupported/partial，不伪造事件。
 
@@ -46,7 +46,7 @@ Provider / 工具密钥只通过环境变量继承，不写入仓库或 overlay 
 ## Security
 
 - 密钥不写 docs、日志或受管配置值。
-- Agent/permission 是宿主约束，不替代 Path Contract/Git evidence。
+- Agent/permission 是宿主安全约束；文档校验是建议，Git diff 与测试结果由当前 Agent 真实核实，不使用自动生命周期门禁。
 - 外部 Web/MCP 证据不获得代码写权限。
 
 ## Common Operations

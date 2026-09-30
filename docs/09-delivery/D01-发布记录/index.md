@@ -1,6 +1,6 @@
 # 发布记录
 
 <!-- INDEX:BEGIN -->
-- [Laya 可复用语义判断](D01-01-laya-decisions.md)
-
+- [D01-01-laya-decisions.md](D01-01-laya-decisions.md)
+- [D01-02-v0-0-2](D01-02-v0-0-2/index.md)
 <!-- INDEX:END -->

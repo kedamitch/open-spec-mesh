@@ -7,11 +7,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const RETAINED_PYTHON = new Set([
-  'integrations/laya-gpu/contracts.py',
-  'mcp/laya_batch_server.py', 'mcp/laya_contracts.py', 'mcp/laya_http_mcp.py', 'mcp/laya_runtime.py',
-  'tests/test_laya_server.py', 'tests/fixtures/docker-app/app.py',
-]);
 const WALK_SKIP = new Set(['.git', 'node_modules', '.venv', '.validation-output']);
 
 export function walk(root, predicate = () => true) {
@@ -39,16 +34,8 @@ function run(command, args, options = {}) {
 
 export function verifyRetiredPythonSources(root = ROOT) {
   const files = walk(root, (file) => file.endsWith('.py')).map((file) => path.relative(root, file).split(path.sep).join('/'));
-  const forbidden = files.filter((file) => (
-    /^(scripts|agents)\//.test(file)
-    || /^sdd-[^/]+\/scripts\//.test(file)
-    || (/^tests\/test_[^/]+\.py$/.test(file) && !RETAINED_PYTHON.has(file))
-  ));
-  const unexpected = files.filter((file) => !RETAINED_PYTHON.has(file));
-  assert.deepEqual(forbidden, [], `First-party Python platform source remains: ${forbidden.join(', ')}`);
-  assert.deepEqual(unexpected, [], `Unclassified Python source remains: ${unexpected.join(', ')}`);
-  for (const keep of RETAINED_PYTHON) assert.ok(fs.existsSync(path.join(root, keep)), `Required GPU/fixture exception missing: ${keep}`);
-  return { files, retained: [...RETAINED_PYTHON].sort() };
+  assert.deepEqual(files, [], `First-party Python migration is incomplete: ${files.join(', ')}`);
+  return { files, retained: [] };
 }
 
 export function verifyRootIgnore(root = ROOT) {
@@ -95,14 +82,14 @@ export function verifyLockAndManifest(root = ROOT) {
   assert.ok(packageBytes.equals(shrinkwrapBytes), 'npm-shrinkwrap.json must be the byte-identical publication lock copied from package-lock.json');
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   const lock = JSON.parse(packageBytes.toString('utf8'));
-  assert.equal(manifest.private, true, 'Public publish remains disabled for this local artifact');
-  assert.equal(manifest.engines?.node, '>=24.21.0');
+  assert.equal(manifest.private, false, 'Package must support npm registry distribution; tests never publish it');
+  assert.equal(manifest.engines?.node, '>=22.0.0');
   assert.equal(lock.name, manifest.name);
   assert.equal(lock.version, manifest.version);
   assert.equal(lock.lockfileVersion, 3);
   assert.deepEqual(lock.packages?.['']?.dependencies, manifest.dependencies, 'Development lock dependencies drifted from package manifest');
   assert.ok(manifest.files?.includes('npm-shrinkwrap.json'), 'Published artifact must carry its npm release lock');
-  for (const required of ['bin/open-spec-mesh.js', 'lib/runtime/location.js', 'lib/workflow/cli.js', 'lib/observation/store.js', 'mcp/laya_http_mcp.js', 'install.sh']) {
+  for (const required of ['bin/open-spec-mesh.js', 'bin/osm.js', 'lib/cli/entry.js', 'lib/runtime/location.js', 'lib/documents/change.js', 'lib/observation/store.js', 'mcp/laya_http_mcp.js', 'install.sh']) {
     assert.ok(fs.existsSync(path.join(root, required)), `Required runtime resource missing: ${required}`);
   }
   return { private: manifest.private, engine: manifest.engines.node, lockfileVersion: lock.lockfileVersion, locksByteIdentical: true };
@@ -115,7 +102,7 @@ function verifyPack(root) {
     const data = JSON.parse(output);
     assert.equal(data.length, 1, 'Expected a single npm pack result');
     const files = new Set(data[0].files.map((item) => item.path));
-    for (const required of ['package.json', 'npm-shrinkwrap.json', 'bin/open-spec-mesh.js', 'lib/runtime/location.js', 'install.sh']) {
+    for (const required of ['package.json', 'npm-shrinkwrap.json', 'bin/open-spec-mesh.js', 'bin/osm.js', 'lib/cli/entry.js', 'lib/runtime/location.js', 'install.sh']) {
       assert.ok(files.has(required), `Tarball packlist is missing ${required}`);
     }
     const forbidden = [...files].filter((file) => file.endsWith('.py') || file.includes('/node_modules/'));
@@ -163,7 +150,7 @@ export function verifyRuntime({ root = ROOT, syntax = true, pack = true } = {}) 
   const locks = verifyLockAndManifest(root);
   const ignore = verifyRootIgnore(root);
   const packResult = pack ? verifyPack(root) : { skipped: true };
-  process.stdout.write(`Runtime audit passed: syntax=${syntax ? sourceFiles.length : 'not-run'}, Python-exceptions=${python.retained.length}, package-files=${packResult.entryCount ?? 'not-run'}, lock=${locks.lockfileVersion}, static-files=${source.scannedRuntimeFiles}\n`);
+  process.stdout.write(`Runtime audit passed: syntax=${syntax ? sourceFiles.length : 'not-run'}, Python-sources=${python.files.length}, package-files=${packResult.entryCount ?? 'not-run'}, lock=${locks.lockfileVersion}, static-files=${source.scannedRuntimeFiles}\n`);
   return { python, source, locks, ignore, package: packResult };
 }
 

@@ -7,7 +7,7 @@ import { runChecks } from '../lib/validation/runner.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-function testFiles(directory) {
+export function testFiles(directory) {
   const found = [];
   const visit = (current) => {
     for (const entry of readdirSync(current, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -47,7 +47,7 @@ export function checksFor(profile, root = ROOT, { mermaidOutput = path.join(os.t
     { name: 'Node unit/integration regression suite', command: node, args: ['--test', ...files] },
     { name: 'Agent routing and policy regressions', command: node, args: ['--test', 'agents/test_validate_agents.js'] },
     { name: 'Agent model/effort/config/routing validation', command: node, args: ['agents/validate_agents.js'] },
-    { name: 'Coverage manifest against frozen baseline and discovered tests', command: node, args: ['scripts/verify_coverage.js'] },
+    { name: 'Discovered Node regression inventory (not a frozen count)', command: node, args: ['scripts/verify_coverage.js'] },
     { name: 'Runtime syntax, package resources, source and ignore safety', command: node, args: ['scripts/check_runtime.js'] },
     { name: 'Documentation structure and link validation', command: node, args: ['sdd-init/scripts/validate_docs.js', '--root', '.'] },
     { name: 'Installer shell syntax', command: 'bash', args: ['-n', 'install.sh'] },
@@ -59,11 +59,10 @@ export function checksFor(profile, root = ROOT, { mermaidOutput = path.join(os.t
       { name: 'Mermaid diagrams with real renderer', command: node, args: ['scripts/render_mermaid.js', '--output', mermaidOutput] },
       { name: 'Docker application fixture smoke', command: node, args: ['scripts/verify_docker.js'] },
       { name: 'Codex native Multi-Agent V2 runtime smoke', command: node, args: ['scripts/verify_codex.js'] },
-      { name: 'OpenCode native config and launcher smoke', command: node, args: ['scripts/verify_opencode.js'] },
-      { name: 'Claude Code native agent and launcher smoke', command: node, args: ['scripts/verify_claude.js'] },
+      { name: 'OpenCode native config, agents and MCP smoke', command: node, args: ['scripts/verify_opencode.js'] },
+      { name: 'Claude Code native agent and MCP smoke', command: node, args: ['scripts/verify_claude.js'] },
       { name: 'Research npm package/CLI smoke without authenticated requests', command: node, args: ['scripts/verify_research_tools.js'] },
       { name: 'Node MCP SDK protocol client smoke', command: node, args: ['scripts/verify_laya.js'] },
-      { name: 'GPU Python factory lane (no CUDA inference claim)', command: 'python3', args: ['-B', '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_laya_server.py', '-v'] },
     );
   }
   return checks;
@@ -71,7 +70,7 @@ export function checksFor(profile, root = ROOT, { mermaidOutput = path.join(os.t
 
 function usage() {
   return 'Usage: node scripts/sdd_validate.js [--profile core|full]\n\n'
-    + 'core is the required Node-only consumer/regression profile. full additionally requires real host CLIs, Docker, Mermaid, Research packages, Node MCP, and the explicit GPU factory lane.\n';
+    + 'core checks Node regressions, zero first-party Python sources, documents and isolated consumption. full additionally requires real host CLIs, Docker, Mermaid, Research packages and Node MCP; external inference services are operator-provided and are not tested by this profile.\n';
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

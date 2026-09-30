@@ -1,20 +1,9 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
-import { auditCoverage, CONTRACT_METHOD_COUNT, GPU_API_CASES, GPU_HELPER_CASE, inspectBaselineInventory } from '../../../scripts/verify_coverage.js';
-
-test('frozen baseline inventory counts every test method without deleting the GPU helper case', () => {
-  const inventory = inspectBaselineInventory();
-  assert.equal(inventory.baseline, '767593cd18b076ed1d45211ae277141aaa97ef9f');
-  assert.equal(inventory.moduleCount, 22);
-  assert.equal(inventory.methodCount, CONTRACT_METHOD_COUNT + 1);
-  assert.deepEqual(inventory.gpuApiCases, GPU_API_CASES);
-  assert.deepEqual(inventory.gpuHelperCases, [GPU_HELPER_CASE]);
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import os from 'node:os';
+import {auditCoverage}from '../../../scripts/verify_coverage.js';
+test('Node inventory is discovered evidence without a frozen Python count',()=>{
+ const r=auditCoverage();assert.equal(r.ok,true);assert.ok(r.files.length>0);assert.ok(r.tests.length>0);assert.deepEqual(r.errors,[]);assert.match(r.limitations.join(' '),/does not prove execution/);
 });
-
-test('coverage audit fails closed on the 422-vs-423 contract mismatch and missing mapping', () => {
-  const result = auditCoverage();
-  assert.equal(result.ok, false);
-  assert.ok(result.errors.some((error) => error.includes('expects 422 test methods') && error.includes('contains 423')));
-  assert.ok(result.errors.some((error) => error.includes('additional GPU helper')));
-  assert.ok(result.errors.some((error) => error.includes('migration-coverage.json is not present')));
+test('inventory detects no tests but allows ordinary test additions without replan',t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'osm-test-inventory-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));fs.mkdirSync(path.join(root,'tests/node'),{recursive:true});
+ assert.equal(auditCoverage(root).ok,false);fs.writeFileSync(path.join(root,'tests/node/new.test.js'),"test('new behavior',()=>{});\n");const r=auditCoverage(root);assert.equal(r.ok,true);assert.deepEqual(r.tests,[{file:'tests/node/new.test.js',name:'new behavior'}]);
 });

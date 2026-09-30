@@ -59,6 +59,16 @@ test('recent diagnostic archive includes normalized evidence only and never expo
   assert.equal(result.status, 'ready');
 });
 
+test('operator expectations are recorded explicitly without inference', async (t) => {
+  const { project, home, rules, sessions } = await fixture(t);
+  await writeRows(path.join(sessions, 'root.jsonl'), [...baseRows('root', { cwd: project }), endRow()]);
+  const [runs] = await collectRecent(project, home, sessions, rules, 7, 20, 'sdd', ['explorer'], {
+    now: new Date('2026-09-28T12:00:00.000Z'),
+  });
+  assert.equal(runs.length, 1);
+  assert.deepEqual(runs[0].expectation, { mode: 'sdd', roles: ['explorer'], source: 'operator_not_model' });
+});
+
 test('discovery skips symlinks and excludes children, other projects, and malformed headers', async (t) => {
   const { temp, project, sessions } = await fixture(t);
   const linkedProject = path.join(temp, 'outside'); await mkdir(linkedProject);

@@ -73,5 +73,6 @@ test('Markdown visible lines ignore examples/comments and split only a final evi
   const [stable, evidence] = splitContract(text);
   assert.match(stable, /# Contract/u);
   assert.match(evidence, /## 最终结论/u);
+  assert.throws(() => splitContract(text.replace('## 最终结论', '## Hidden requirement\nNew requirement\n\n## 最终结论')), /only ## 验证结果 and ## 最终结论/u);
   assert.throws(() => visibleLines('```\nunfinished'), /Unclosed Markdown/);
 });

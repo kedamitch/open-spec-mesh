@@ -71,21 +71,21 @@ default_subagent_model = "gpt-6-luna"
 default_subagent_reasoning_effort = "max"
 
 [agents.architect]
-description = "适用：SDD 的需求澄清、必要 Design、Task Graph、Task Contract 与验收后快照同步，可委派 Explorer/Librarian；不适用：Quick、代码实现、测试执行和最终验收。"
+description = "适用：SDD 当前已授权阶段的整体设计、执行计划（任务拆分与任务级设计）和文档辅助，可委派 Explorer/Librarian；不适用：实现、自动拆图和最终验收。"
 config_file = "agents/architect.toml"
 
 [agents.worker]
-description = "适用：SDD 中 Architect 已冻结 Task 的实现、测试、自审、修复、复验与 Delivery；不适用：Quick、未决需求、独立调查、重新设计和最终验收；不可委派。"
+description = "适用：已获用户授权的并行实现，按宏观 Task 自主实现、测试、自审、修复和 Delivery；串行由当前 Agent 完成，不启动 Worker；不可委派。"
 config_file = "agents/worker.toml"
 
 [agents.reviewer]
-description = "适用：仅 SDD 且用户明确要求的独立复审，验证 Contract、完整 diff 与测试证据；不适用：Quick、默认审查、Main 自行加审、实现、设计和最终验收；只读不可委派。"
+description = "适用：用户明确要求的独立复审，核对目标、真实 diff 和验证证据；不适用：默认审查、设计、实现和最终用户验收；只读不可委派。"
 config_file = "agents/reviewer.toml"
 
 [agents.explorer]
-description = "适用：Quick / SDD 的未知或陌生的本地实现、调用链、状态、数据、测试及部署事实；不适用：代码实现、外部资料核对、已有充分证据的单点读取；只读不可委派。"
+description = "适用：Quick / SDD 的陌生本地实现、调用链、数据、测试和部署事实；已有证据充分的单点直接读取；只读不可委派。"
 config_file = "agents/explorer.toml"
 
 [agents.librarian]
-description = "适用：Quick / SDD 的当前或外部文档、版本、协议、SDK 与供应商行为核对；不适用：本地源码调查、代码实现、已有充分证据的单点核对；只读不可委派。"
+description = "适用：Quick / SDD 的外部当前文档、协议、SDK、版本和供应商事实；不适用：本地源码实现；只读不可委派。"
 config_file = "agents/librarian.toml"

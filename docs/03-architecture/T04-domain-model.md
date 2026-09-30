@@ -1,33 +1,17 @@
-# 领域模型与状态机
+# 领域模型
 
-## 对象与关系
+## 研发对象
 
-Change 固定包含 C01 Change、C02 Design 和 C03 Task Graph / Task Design。Task 包含依赖、冻结契约、baseline、workspace、attempt、当前 delivery 和 history。Current Truth 保存验收后的系统事实。
+Change 保存需求、人工阶段确认和整体设计；Task Plan 描述宏观任务及依赖/执行方式；Task 描述目标、范围、必要公共约定和验收结果；Delivery 保存实际变化、验证和风险。Current Truth 仅写已实际实施的现状。
 
-## 状态机与迁移
+## 人工流程
 
-[任务状态机](T05-diagrams/T05-04-domain-state.md)。
+Quick 当前 Agent 连续完成。SDD 需求 → 设计 → 执行计划（任务拆分与任务设计）→ 实现 → 交付，各阶段需要用户明确确认；用户可明确一次授权多个阶段。单任务/串行当前 Agent 执行，只有并行才 Worker/worktree。
 
-| 当前状态 | 事件与条件 | 目标状态 | 动作/失败处理 |
-| --- | --- | --- | --- |
-| planned | approve，真实正文、已完成字段、唯一非空 AC、有效 Task 引用 | planned | 完整性失败不写摘要；通过后记录摘要，不启动执行 |
-| planned | prepare，契约完整性复查通过，依赖已验收且在基线 | running | 失败不创建工作区或变更 attempt；通过才派发 |
-| running | 当前交付通过摘要、版本、文件表和 attempt 校验 | submitted | 记录结果与报告摘要 |
-| submitted | Main 验证 AC 与真实证据 | accepted | 进入集成候选；只有精确 result revision 已进入下游 baseline 才可派发依赖 Task |
-| 任意受影响状态 | rework/replan；活动 Worker 已明确停止 | planned | 撤销当前验收，传播到下游，保留历史和工作区 |
-| 任意受影响状态 | block，明确原因 | blocked | 阻断依赖并保留诊断 |
+这些阶段是人类流程，不是脚本状态机。工具通过、代理完成、旧 Graph accepted 或 receipt 都不是用户确认。
 
 ## 不变量
 
-submitted 不解锁下游。accepted 与 integrated 是两个事实：accepted 属于 Task Graph；integrated 不新增状态，只由 `result_revision` 是否为当前 HEAD ancestor 推导。IntegrationWave 同样不是持久对象，只是按 Graph 顺序从 `accepted && pending` Task 派生的当前候选集合；wave 预检先在 detached worktree 链式 merge 全部候选，再决定是否写 Main。accepted 可显式重新打开但旧验收只在 history；不能成为新契约验收。每次恢复创建新 attempt，旧报告拒收。
-replan 不自动停止 Worker 或回滚代码；Main 先停止后执行，并使用 --workers-stopped 确认。该参数是操作者声明，不是进程隔离。
+小实现调整自主解决，不以路径或摘要判断授权；实质目标、验收、安全和公共方案变化请用户决定。真实失败不得伪造通过，历史和用户修改必须保全。新代理命名 role_desc，角色 ID 不改。
 
-冻结契约实质变化使用 replan，必须先取得用户明确确认并以 --user-confirmed 留审计标记；普通 rework 不能接受摘要漂移。用户确认前只允许保留证据和停止相关工作，不能修改契约或启动新假设的实现。
-
-## 观测对象
-
-Execution Slice 是显式 root thread/turn 的证据窗口；SDD Task/attempt 是研发单元；多个 Slice 只有经操作者 group 才成为同一需求视图。三者不互相等同。Session 保留原始父线程和已观测角色/模型；委派调用与子线程成功创建分开。
-
-Finding 是固定规则推导的观测、失败、候选或 unknown，不是模型动机或授权。规则文件指纹是事后清单；只有原生注入记录可提供当轮规则证据。元数据存在、文件读取、Skill 执行和业务验收四者不等价。
-
-采集 → 归一化 → 诊断 → 原子保存为可重建旁路，不加入 Task 状态机，不改变已有审批门；重复采集不增加样本，来源不完整时不得据缺席认定违规。
+[人工阶段图](T05-diagrams/T05-04-domain-state.md)。

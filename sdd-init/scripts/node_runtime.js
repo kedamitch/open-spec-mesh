@@ -55,7 +55,8 @@ export async function runSkillCommand(command, argv = process.argv.slice(2), str
   return runCommand(command, argv, streams);
 }
 
-export function isMain(entryUrl = import.meta.url) {
+export function isMain(entryUrl) {
+  if (!entryUrl) throw new TypeError("isMain requires the caller import.meta.url");
   return Boolean(process.argv[1]) && entryUrl === pathToFileURL(path.resolve(process.argv[1])).href;
 }
 

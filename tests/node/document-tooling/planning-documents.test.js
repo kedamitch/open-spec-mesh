@@ -15,49 +15,36 @@ import { validate } from '../../../lib/documents/validate.js';
 
 function project() { return mkdtempSync(path.join(tmpdir(), 'osm document fixture ')); }
 
-test('Change/Task, Research and ADR preserve templates, names and planned Graph schema', async () => {
-  const root = project();
-  await initialize(root);
-  const change = await createChange(root, 'feature-change');
-  const changeId = path.basename(change);
-  const task = await createTask(root, changeId, 'document-work');
-  const taskId = path.basename(task).split('-', 2).slice(0, 2).join('-');
-  const graphPath = path.join(change, 'C03-tasks/C03-task-graph.json');
-  const graph = parseLosslessJson(readFileSync(graphPath, 'utf8'));
-  assert.deepEqual(graph.tasks.map((entry) => ({ id: entry.id, state: entry.state, depends_on: entry.depends_on, history: entry.history })), [
-    { id: taskId, state: 'planned', depends_on: [], history: [] },
-  ]);
-  assert.equal(Object.hasOwn(graph, 'acceptance'), false);
+test('Change and macro Tasks are incremental, preserve user design and never create execution Graph or empty Delivery', async () => {
+  const root = project(); await initialize(root);
+  const change = await createChange(root, 'feature-change'); const id = path.basename(change);
+  assert.ok(existsSync(path.join(change, 'C01-change.md')));
+  assert.equal(existsSync(path.join(change, 'C02-design.md')), false);
+  assert.equal(existsSync(path.join(change, 'C03-tasks')), false);
+  const design = await ensureDesign(root, id); writeFileSync(design, '# User design\n');
+  assert.equal(await ensureDesign(root, id), design); assert.equal(readFileSync(design, 'utf8'), '# User design\n');
+  const task = await createTask(root, id, 'document-work');
   assert.ok(existsSync(path.join(task, 'C03-01-01-task.md')));
-  assert.ok(existsSync(path.join(task, 'C03-01-02-delivery.md')));
-  const generatedTask = readFileSync(path.join(task, 'C03-01-01-task.md'), 'utf8');
-  assert.ok(generatedTask.includes('Task `' + taskId + '`'));
-  assert.doesNotMatch(generatedTask, /Path Contract|allow\/deny|^\|\s*(?:allow|deny)\s*\|/imu);
-  for (const requiredSection of [
-    '### 要做', '### 不做', '### 输入 / 依赖', '### 代码结构 / 模块落点',
-    '## Task 实现流程', '### Components', '### 接口变化', '### 领域模型 / 状态变化',
-    '### 数据与表结构变化', '### 失败与兼容', '### Tests', '### 验收标准',
-    '## 实现自由度', '### Expected Output',
-  ]) assert.ok(generatedTask.includes(requiredSection), `generated Task is missing ${requiredSection}`);
-  const writingContract = readFileSync(path.resolve('sdd-init/references/document-contract.md'), 'utf8');
-  const taskWritingRules = writingContract.split('## Task\n')[1]?.split('\n## Delivery')[0];
-  assert.ok(taskWritingRules, 'document contract must define Task writing rules');
-  assert.doesNotMatch(taskWritingRules, /Path Contract/u);
-  assert.match(taskWritingRules, /不生成文件路径 allow\/deny 清单/u);
-  assert.equal(await ensureDesign(root, changeId), path.join(change, 'C02-design.md'));
-
-  assert.throws(() => createTask(root, changeId, 'duplicate-dependency', [taskId, taskId]), /Duplicate dependencies/u);
-  await assert.rejects(createTask(root, changeId, 'unknown-dependency', ['C99-99']), /Unknown dependency/u);
-
+  assert.equal(existsSync(path.join(task, 'C03-01-02-delivery.md')), false);
+  assert.equal(existsSync(path.join(change, 'C03-tasks/C03-task-graph.json')), false);
+  assert.match(readFileSync(path.join(change, 'C03-tasks/C03-task-plan.md'), 'utf8'), /C03-01/);
+  const next = await createTask(root, id, 'second', ['C03-01', 'C03-01']);
+  assert.match(readFileSync(path.join(next, 'C03-02-01-task.md'), 'utf8'), /C03-01/);
+  assert.throws(() => createTask(root, id, 'invalid', ['../escape']), /Dependencies/);
   const research = await createResearch(root, 'evidence-note');
-  const researchFile = path.join(research, 'R01-01-research-report.md');
-  assert.deepEqual(readFileSync(researchFile), readFileSync(path.resolve('sdd-research/references/research-template.md')));
-  const adr = await createAdr(root, '长期兼容决策');
-  assert.match(path.basename(adr), /^ADR-001-decision\.md$/u);
-  const sourceAdr = readFileSync(path.resolve('sdd-research/references/adr-template.md'), 'utf8');
-  const expectedAdr = `# 长期兼容决策\n${sourceAdr.slice(sourceAdr.indexOf('\n') + 1)}`;
-  assert.equal(readFileSync(adr, 'utf8'), expectedAdr);
+  assert.deepEqual(readFileSync(path.join(research, 'R01-01-research-report.md')), readFileSync(path.resolve('sdd-research/references/research-template.md')));
+  const adr = await createAdr(root, '长期兼容决策'); assert.match(path.basename(adr), /^ADR-001-decision\.md$/u);
   assert.deepEqual(validate(root), []);
+});
+
+test('product and architecture references retain required semantics while legacy templates stay compact', () => {
+  const product = readFileSync(path.resolve('sdd-init/references/product-writing.md'), 'utf8');
+  const architecture = readFileSync(path.resolve('sdd-init/references/architecture-writing.md'), 'utf8');
+  for (const value of ['产品架构', '模块', '核心能力', '权限', '失败', '产品定位与边界']) assert.ok(product.includes(value), value);
+  for (const value of ['API', 'Schema', 'Domain Model', 'stateDiagram-v2', 'sequenceDiagram', '幂等', '失败 / 恢复']) assert.ok(architecture.includes(value), value);
+  for (const file of ['prd-spec/references/product-template.md', 'design-overview/references/architecture-template.md']) {
+    assert.ok(readFileSync(path.resolve(file), 'utf8').length < 400, file);
+  }
 });
 
 test('number allocation remains unique under concurrent writers', async () => {
@@ -110,6 +97,7 @@ test('two independent processes allocate distinct consecutive document numbers',
 test('resource paths decode spaces in installed module locations', async () => {
   const root = project();
   const library = path.join(root, 'lib');
+  writeFileSync(path.join(root, 'package.json'), JSON.stringify({ type: 'module' }));
   cpSync(path.resolve('lib'), library, { recursive: true });
   const module = await import(pathToFileURL(path.join(library, 'documents/create.js')).href);
   assert.equal(module.readResource('common.js'), readFileSync(path.join(library, 'documents/common.js'), 'utf8'));

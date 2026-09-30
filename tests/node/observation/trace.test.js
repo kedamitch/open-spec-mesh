@@ -58,3 +58,10 @@ test('unsafe paths, command parsing, status, and policy parsing are conservative
   assert.equal(policySignal('| Explorer / Librarian | 已批准 Complex 需要独立证据 |'), 'explorer_requires_complex');
   assert.equal(policySignal('```md\n| Explorer / Librarian | 已批准 Complex |\n```'), null);
 });
+
+
+test('new stage skill reads are classified separately while historical sdd-change traces remain readable', () => {
+  for (const skill of ['sdd-req', 'sdd-requirements', 'sdd-design', 'sdd-plan', 'sdd-change']) {
+    assert.deepEqual(commandFact(['cat', '/installed/skills/' + skill + '/SKILL.md']), { kind: 'skill.read', skills: [skill] });
+  }
+});

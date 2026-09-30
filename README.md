@@ -1,228 +1,154 @@
-<div align="center">
-
 # Open Spec Mesh
 
-**Spec-Driven Multi-Agent Development**
+Node.js tools and reusable Agent/Skill guidance for **Quick** and **human-driven SDD** development. Automatic SDD lifecycle commands are retired.
 
-Specs define the truth. Agents plan and execute. Scripts enforce state.
+[中文说明](README.zh-CN.md)
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+## Requirements
 
-[![SDD](https://img.shields.io/badge/SDD-Spec--Driven-111827?style=flat-square)](docs/index.md)
-[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-Mesh-4F46E5?style=flat-square)](AGENTS.md)
-[![Node.js](https://img.shields.io/badge/Node.js-24.21%2B-339933?style=flat-square)](package.json)
+- Node.js **22.0.0 or newer**, a compatible npm, and Git.
+- Linux/macOS host configuration paths. Minimum-version validation uses Node 22.0.0 with npm 10; installing the newest npm is not required.
+- An existing Codex, OpenCode or Claude Code installation. This package does not install the host application or supply model credentials.
 
-</div>
+## Install from the public npm registry
 
----
+Public npm release **0.0.1 is published**. The commands below install that version. If a mirror returns E404, verify the registry rather than treating a local pack as publication.
 
-Open Spec Mesh is a lightweight **Spec-Driven Development framework for multi-agent software engineering**, with native host adapters for **Codex, OpenCode, and Claude Code**.
+```sh
+# 1. Install the command (does not modify host configuration).
+npm install --global open-spec-mesh@0.0.1 --registry=https://registry.npmjs.org/
+open-spec-mesh --version
 
-It keeps the model focused on semantic work—understanding, design, implementation and review—while deterministic scripts own lifecycle state, task contracts, evidence, validation and recovery.
-
-## Why Open Spec Mesh?
-
-| Principle | What it means |
-| --- | --- |
-| **Spec first** | Change, Design and Task contracts are the persistent source of truth. |
-| **Agent mesh** | Main, Architect, Worker, Reviewer, Explorer and Librarian collaborate by responsibility—not by a rigid pipeline. |
-| **Human-readable** | Documents are written for review first; machine state stays small and explicit. |
-| **Deterministic control** | Scripts enforce state transitions, contract drift, workspace boundaries and validation receipts. |
-| **Lean by default** | Quick work stays quick. SDD is used when durable planning or independent execution actually helps. |
-| **Evidence over claims** | Delivery, acceptance and closeout are tied to real revisions, tests and generated evidence. |
-
-## Two execution modes
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### ⚡ Quick
-
-For work that one Main agent can complete continuously.
-
-- implement directly
-- test and self-review
-- use Explorer / Librarian only when evidence is missing
-- no Change or Task ceremony
-
-</td>
-<td width="50%" valign="top">
-
-### 🕸️ SDD
-
-For work that needs durable planning or independent execution.
-
-- Architect produces the complete plan first
-- Task Graph captures dependencies
-- Workers implement isolated Tasks
-- Main integrates and performs final validation
-
-</td>
-</tr>
-</table>
-
-## The mesh
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/agent-mesh-dark.svg">
-  <img src="assets/agent-mesh-light.svg" alt="Open Spec Mesh agent collaboration: Main coordinates Architect, Worker, Reviewer, Explorer and Librarian around spec-driven development." width="100%">
-</picture>
-
-**Main coordinates. Architect owns SDD planning. Workers own implementation. Scripts own mechanics.**
-
-## SDD flow
-
-```text
-Change
-  ↓
-Design
-  ↓
-Task Graph + Task Designs
-  ↓
-Freeze
-  ↓
-Worker execution
-  ↓
-Delivery
-  ↓
-Integration waves
-  ↓
-Current Truth sync
-  ↓
-Full validation
-  ↓
-Close / Release
+# 2. Preview and explicitly configure Codex.
+open-spec-mesh install --host codex --skip-tools --dry-run
+open-spec-mesh install --host codex --skip-tools
 ```
 
-The Task Graph stores topology and runtime state. Human design detail stays in Markdown.
+The expected command version is `0.0.1`. Start a new host session after installation so it loads the updated rules, roles and Skills.
 
-## Quick start
+`--skip-tools` installs the core toolkit without installing Research tools. It does not claim Research MCP availability and does not enable System One. npm installation has no `postinstall` hook that configures Home; the explicit `open-spec-mesh install` step is required.
 
-### Requirements
+### Choose a host or configuration directory
 
-- Python 3.11+
-- Git
-- Linux or macOS
-- Node.js 20.18.1+ / npm when installing optional research tools
-- Codex, OpenCode, or Claude Code as the agent host
+```sh
+# Default homes: ~/.codex, ~/.config/opencode, ~/.claude.
+open-spec-mesh install --host codex --skip-tools
+open-spec-mesh install --host opencode --skip-tools
+open-spec-mesh install --host claude --skip-tools
 
-### Install
-
-Codex remains the backward-compatible default:
-
-```bash
-./install.sh --dry-run
-./install.sh
+# Optional custom configuration home (quote paths containing spaces).
+open-spec-mesh install --host codex --host-home "/path/to/codex home" --skip-tools
 ```
 
-Install for another host explicitly:
+Default homes also honor `CODEX_HOME`, `OPENCODE_CONFIG_DIR` and `CLAUDE_CONFIG_DIR`. `--codex-home` remains a Codex compatibility option. Host startup examples are in the [operations guide](docs/04-operations/O02-applications/O02-01-local-toolkit.md).
 
-```bash
-./install.sh --host opencode
-./install.sh --host claude
+### Run without a global install
+
+```sh
+npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.0.1 -- \
+  open-spec-mesh install --host codex --skip-tools
 ```
 
-Useful options:
+### Source or offline-distribution alternative
 
-```bash
-./install.sh --host <codex|opencode|claude> --host-home /path/to/runtime-home
-./install.sh --skip-tools
-./install.sh --include-project-docs
-./install.sh --with-laya       # Codex host only
-./install.sh --without-laya
-./install.sh --codex-home /path/to/runtime-home   # Codex compatibility flag
+```sh
+# From this repository: globally link the checkout; retain its directory.
+npm ci
+npm install --global .
+open-spec-mesh install --host codex --skip-tools
+
+# Or build a portable artifact; dependencies still need npm access/cache.
+npm pack
+npm install --global ./open-spec-mesh-0.0.1.tgz
+open-spec-mesh install --host codex --skip-tools
 ```
 
-The installer keeps credentials and user provider/model settings outside package ownership. OpenCode receives native Rules / Skills / Agent Markdown plus the same canonical roles in the package-owned config overlay for released-runtime compatibility; Claude Code receives native Rules / Skills / Agents plus an Open Spec Mesh-owned MCP overlay. Existing user config is not rewritten.
+### Upgrade, uninstall and troubleshoot
 
-Start the Open Spec Mesh Main agent with the host-native entry:
+```sh
+# Upgrade the command, then explicitly upgrade the managed host assets.
+npm install --global open-spec-mesh@latest --registry=https://registry.npmjs.org/
+open-spec-mesh install --host codex --skip-tools --dry-run
+open-spec-mesh install --host codex --skip-tools
 
-```bash
-# Codex: start a normal configured Codex session.
-
-# OpenCode
-OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/open-spec-mesh.opencode.json" \
-  opencode --agent main
-
-# Claude Code
-claude --agent main \
-  --mcp-config "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/open-spec-mesh.mcp.json"
+# Remove only the global command; this does not remove configured host assets.
+npm uninstall --global open-spec-mesh
 ```
 
-## Core workflow
+- Before host upgrades, back up the affected managed paths and configuration. The installer rolls back a failed transaction but does not keep a persistent backup after success.
+- Upgrades replace package-owned Skill directories, removing their old Python scripts and caches, and apply known legacy Skill/role retirements. Recognized managed Python MCP launches migrate to Node; their old helpers/caches are removed. Custom MCP launches, unrelated Python tools, user model/provider settings and credentials are preserved.
+- Same-name unmanaged assets are not overwritten. Resolve the reported ownership conflict before retrying; do not delete your entire host Home.
+- If the command is not found, add your npm global executable directory to `PATH` (on Linux/macOS, typically `$(npm prefix -g)/bin`). For permission errors, use a user-owned Node installation/global prefix rather than automatically running host configuration with `sudo`.
+- The [publication guide](docs/04-operations/O02-applications/O02-02-npm-publication.md) distinguishes a verified local artifact, authentication, and a successful registry publication.
 
-| Stage | Entry point | Responsibility |
-| --- | --- | --- |
-| Plan | `sdd-change` | Change, Design, Task Graph and Task Designs |
-| Execute | `sdd-do` | Workspace preparation, Worker delivery, observation |
-| Close | `sdd-close` | Acceptance, revision-bound validation, archive |
-| Initialize | `sdd-init` | Canonical project structure |
-| Migrate | `sdd-migrate` | Safe migration from older documentation layouts |
-| Research | `sdd-research` | Evidence collection |
-| Diagnose | `sdd-diagnose` | Script-only diagnostic bundles |
-| Release | `sdd-release` | Release checks and records |
+## osm shortcut (local source only; not published yet)
 
-## Contract structure
+Public npm 0.0.1 still uses open-spec-mesh. The local source now includes osm; run npm ci and npm install -g . in the checkout to use it (not a registry upgrade).
 
-```text
-C01 Change
-├── goal / scope / acceptance criteria
-│
-C02 Design
-├── Current Truth delta
-├── architecture / API / domain / schema
-├── main flow / sequence
-└── Task relationships
-│
-C03 Tasks
-├── Task Graph
-└── Task Design + Delivery
+```sh
+osm --dry-run  # Preview the default Codex install without writing Home.
+osm            # Equivalent to open-spec-mesh install --host codex --skip-tools.
+osm --help
+osm --version
+osm install --host opencode --skip-tools
 ```
 
-A Task is split around a meaningful business capability or independently verifiable result—not merely because files overlap.
+Running osm explicitly performs installation; it is not an npm postinstall. The legacy entry still shows help with no arguments. A clear request such as “publish 0.0.2” automatically selects `$sdd-release` and authorizes npm publication of that target version; users need not type a skill invocation. Requests for release materials alone do not authorize upload.
 
-## Validation
+## Workflow
 
-One canonical local entry point:
+- Quick: the current Agent implements, tests and self-reviews continuously; prefer useful Explorer/Librarian read-only investigation over repeated Main file traversal.
+- SDD: requirements → overall design → execution plan (task breakdown and task-level design) → implementation → delivery. Human confirmation controls each stage; an explicit user instruction may authorize multiple stages.
+- Single-task/serial implementation stays in the current Agent and checkout. Only explicitly selected parallel writes use Workers and isolated worktrees.
+- Design constrains goals and public behavior, not file lists, functions or coding steps. Small implementation adjustments are autonomous.
+- Name new agents `role_desc`, for example `explorer_module_flow` or `librarian_node_backend`; keep configured role IDs unchanged.
+- Documents and checks assist review, not machine approval. Real tests and security protections remain. Installing/upgrading the package does not advance a workflow stage.
 
-```bash
-node scripts/sdd_validate.js --profile core
+## SDD skill guidance
+
+When you select SDD mode, Main explains the current stage, suggests the matching `sdd-*` skill with a ready-to-use invocation, and points to the next entry when the stage is complete. Skill completion does not approve another stage.
+
+| Stage or need | Skill | Example |
+|---|---|---|
+| Document scaffolding, only when needed | `$sdd-init` | `$sdd-init Initialize the project document scaffold` |
+| Requirements | `$sdd-req` | `$sdd-req Create or refine the requirements for this Change` |
+| Overall design | `$sdd-design` | `$sdd-design Requirements are confirmed; write the overall design` |
+| Execution plan: task breakdown and task-level design | `$sdd-plan` | `$sdd-plan Overall design is confirmed; write the execution plan and task designs` |
+| Implementation and validation | `$sdd-do` | `$sdd-do The execution plan is confirmed; implement serially and validate` |
+| Delivery and archiving after confirmation | `$sdd-close` | `$sdd-close Summarize actual implementation and validation for my confirmation` |
+
+Skip initialization if a suitable scaffold already exists. Use `$sdd-migrate` for conflicting legacy document structures, `$sdd-research` for reusable research/long-term ADRs when needed, and `$sdd-diagnose` only when diagnostics are requested. A clear request to publish a target version automatically selects `$sdd-release` and authorizes that version’s npm upload; requests for materials alone do not authorize publication. Natural-language authorization is also valid. If a skill is not installed or available in the session, Main must say so and guide installation/loading rather than claim it was invoked.
+
+The broad `$sdd-change` skill and former `sdd-requirements` name are no longer managed; use `$sdd-req` for requirements. Old `sdd-change/scripts/` entrypoints have been removed. During upgrade, a previously registered old directory is preserved in a private local ZIP under `open-spec-mesh/retired-skills/` before leaving skill discovery, including local edits. Recovery archives are not automatically cleaned up; unregistered user directories are retained with a warning rather than removed by name.
+
+## Auxiliary commands
+
+```sh
+open-spec-mesh --help
+open-spec-mesh init-project --root /path/to/project
+open-spec-mesh new-change feature --root /path/to/project
+# After human confirmation:
+open-spec-mesh ensure-design CHG-YYYYMMDD-feature --root /path/to/project
+open-spec-mesh new-task CHG-YYYYMMDD-feature capability --root /path/to/project
+open-spec-mesh validate-docs --root /path/to/project
 ```
 
-Pull requests run the core validation path. Main-branch and manual full runs add Mermaid, Docker, Codex/OpenCode/Claude runtime smokes, Research tools, Node MCP, and the explicit GPU factory Python lane. Host runtime smokes parse real native CLI/config without making model calls.
+Change creation writes only requirements; task creation writes macro Markdown and a human-readable plan. Neither creates execution state. `observe`/`diagnose` collect read-only evidence. Release commands prepare documents, not deployment. Integration and validation use ordinary Git/project tools.
 
-## Optional semantic decision layer
+## Optional services and validation
 
-Open Spec Mesh can optionally use the **System One** bridge for repeated semantic decisions. In this release the managed Laya/System One bridge remains a Codex-host capability; OpenCode/Claude installation fails closed if `--with-laya` is requested.
+Research tooling additionally uses `CONTEXT7_API_KEY` / `TAVILY_API_KEY`; export your own values in the invoking environment before running installation without `--skip-tools`. Credentials are not included in the npm package or written by npm installation.
 
-- disabled by default
-- Laya is the default optional provider
-- TypeSafe Jev is explicit opt-in
-- decision tools provide advice only
-- they never expand permissions, approve contract changes or replace acceptance
+System One is optional and disabled by default. The self-hosted GPU service is removed; only the Node.js HTTP/MCP client for an external compatible inference service remains. It does not download models, start local inference or execute Python. The managed bridge is currently Codex-only.
 
-See [typesafe-laya](typesafe-laya/SKILL.md) for the protocol and template model.
+For contributors, from a source checkout:
 
-## Explore the project
+```sh
+npm ci
+npm run validate:core
+npm run validate:full
+```
 
-| Area | Start here |
-| --- | --- |
-| How the workflow works | [Governance](docs/01-governance/G01-sdd-workflow.md) |
-| Product model | [Product modules](docs/02-product/P02-modules/P02-01-sdd-runtime.md) |
-| Technical architecture | [Architecture overview](docs/03-architecture/T01-architecture-overview.md) |
-| Runtime guide | [Runtime guide](sdd-init/references/runtime-guide.md) |
-| Writing standards | [Document contract](sdd-init/references/document-contract.md) |
-| Agent responsibilities | [AGENTS.md](AGENTS.md) |
-| Operations | [Local toolkit](docs/04-operations/O02-applications/O02-01-local-toolkit.md) |
-| Full project documentation | [docs/index.md](docs/index.md) |
+Full validation additionally requires real host CLIs, Docker, Mermaid and Research tooling. Missing prerequisites are failures, not successful placeholders. First-party tools, tests and automation are Node.js-only; the audit requires zero first-party Python sources. Core results do not prove full external-host or inference readiness.
 
----
-
-<div align="center">
-
-**Open Spec Mesh**
-
-*Spec-Driven Multi-Agent Development*
-
-</div>
+See [rules](AGENTS.md), [tool guide](sdd-init/references/runtime-guide.md), [document guidance](sdd-init/references/document-contract.md) and [project documentation](docs/index.md).

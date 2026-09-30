@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -30,23 +30,10 @@ function runWrapper(relativePath, args, { cwd, pathValue }) {
   });
 }
 
-test('close-change shell wrapper dispatches to Node, forwards options, and preserves exit codes', (t) => {
-  const root = temporaryDirectory(t, 'osm close wrapper ');
-  const minimalPath = nodeOnlyPath(t);
-  const wrapper = 'sdd-close/scripts/close_change.sh';
-
-  const help = runWrapper(wrapper, ['--help'], { cwd: root, pathValue: minimalPath });
-  assert.equal(help.status, 0, help.stderr);
-  assert.match(help.stdout, /^Usage: open-spec-mesh close-change CHANGE_ID \[--root PROJECT\]/u);
-
-  const missing = runWrapper(wrapper, [CHANGE_ID, '--root', root], { cwd: REPO_ROOT, pathValue: minimalPath });
-  assert.equal(missing.status, 1, missing.stderr);
-  assert.match(missing.stderr, new RegExp(`Active Change not found: ${CHANGE_ID}`));
-
-  const usage = runWrapper(wrapper, ['--unknown'], { cwd: root, pathValue: minimalPath });
-  assert.equal(usage.status, 2, usage.stderr);
-  assert.match(usage.stderr, /unrecognized arguments: --unknown/u);
+test('automatic close wrapper is removed rather than successfully forwarding an obsolete lifecycle', () => {
+  assert.equal(requireFileExists('sdd-close/scripts/close_change.sh'), false);
 });
+function requireFileExists(p) { return existsSync(path.join(REPO_ROOT,p)); }
 
 test('new-release shell wrapper forwards positional/options and preserves handler exit codes', (t) => {
   const root = temporaryDirectory(t, 'osm release wrapper ');
@@ -54,7 +41,7 @@ test('new-release shell wrapper forwards positional/options and preserves handle
   const wrapper = 'sdd-release/scripts/new_release.sh';
   const help = runWrapper(wrapper, ['--help'], { cwd: root, pathValue: minimalPath });
   assert.equal(help.status, 0, help.stderr);
-  assert.match(help.stdout, /^Usage: open-spec-mesh new-release VERSION TITLE --changes CHANGE_ID\.\.\. \[--root PROJECT\]/u);
+  assert.match(help.stdout, /^Usage: open-spec-mesh new-release VERSION TITLE \[--changes CHANGE_ID\.\.\.\] \[--root PROJECT\]/u);
 
   const completed = path.join(root, 'docs/05-changes/C02-已完成', CHANGE_ID);
   const releases = path.join(root, 'docs/09-delivery/D01-发布记录');

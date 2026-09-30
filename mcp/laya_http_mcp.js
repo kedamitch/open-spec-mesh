@@ -1,9 +1,12 @@
 #!/usr/bin/env node
-import { lstatSync, readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+// Dynamic imports keep this standalone .js launch compatible with Node 22
+// without changing the module scope of unrelated Home/mcp scripts.
+(async () => {
+const { lstatSync, readFileSync, realpathSync } = await import('node:fs');
+const { default: path } = await import('node:path');
+const { pathToFileURL } = await import('node:url');
 
-const entry = fileURLToPath(import.meta.url);
+const entry = realpathSync(process.argv[1]);
 const expectedName = 'open-spec-mesh';
 
 function isRegularPath(root, relative) {
@@ -24,7 +27,7 @@ function validPackage(root) {
     if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) return false;
     if (!isRegularPath(root, 'package.json') || !isRegularPath(root, 'lib/systemone/cli.js')) return false;
     const data = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
-    return data.name === expectedName && data.type === 'module' && data.private === true && typeof data.version === 'string';
+    return data.name === expectedName && data.type === 'module' && typeof data.version === 'string';
   } catch { return false; }
 }
 
@@ -53,3 +56,8 @@ try {
   process.stderr.write('System One MCP runtime unavailable.\n');
   process.exitCode = 1;
 }
+
+})().catch(() => {
+  process.stderr.write('System One MCP runtime unavailable.\n');
+  process.exitCode = 1;
+});

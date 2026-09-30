@@ -1,17 +1,17 @@
 {
   "id": "execution-mode@1",
-  "description": "Quick / SDD 二选一：按是否需要 Worker 分工或独立规划执行判断；Quick 默认。",
+  "description": "Quick / 人工推动的 SDD 两种方式；默认由当前 Agent 连续完成。",
   "required_fields": [
     "request"
   ],
   "questions": {
     "mode": {
       "type": "choice",
-      "instructions": "Quick 为默认：Main 能连续完成就选 quick；可按需用 Explorer / Librarian 调查，不改变模式。实现需要 Worker 分工、多个执行单元、并行执行，或需要先形成独立可执行规划时选 sdd。文件数、技术关键词或测试数量本身不触发 SDD。",
+      "instructions": "Quick 默认，当前 Agent 连续完成，可优先使用有收益的 Explorer/Librarian 只读调查。需要逐阶段人工确认与留档时选 sdd。SDD 单任务/串行仍由当前 Agent 实现；仅用户确认并行时启动 Worker 和独立 worktree。文件数、测试数和关键词不自动升级。建议不是用户授权。",
       "criteria": {
-        "quick": "Main 可连续完成；无需 Worker。可按需使用 Explorer / Librarian",
-        "sdd": "需要 Architect 先形成必要 Design + Task Graph，再由一个或多个 Worker 执行",
-        "uncertain": "缺少判断是否需要 Worker 分工或独立规划的必要事实"
+        "quick": "当前 Agent 连续完成，不强制 Change/Task。",
+        "sdd": "需求、设计、任务、实现、交付分阶段留档且由人确认；不是自动状态机。",
+        "uncertain": "缺少用户希望的阶段验证与任务协作信息。"
       }
     }
   }
