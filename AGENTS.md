@@ -118,7 +118,7 @@ gh workflow run npm-publish.yml \
 
 1. `prepare` job 不授予 `id-token: write`：执行全量 core、发布内容审计及真实 tarball consumer 安装测试，保存 tgz 和 `release-artifact.json`。
 2. `publish` job 使用 environment `npm` 与 `id-token: write`，下载同一 run 的已测试产物；核对源码 commit、SHA-512 / SHA-1，并重新确认目标版本未发布，再执行一次真实上传。不得用旧本机 tgz 冒充新 CI 源码的产物。
-3. 无论上传命令成功或失败，独立核对 registry 目标版本、dist-tags 和 integrity。当前只读传播轮询窗口约两分钟；只允许有限重试查询，不循环上传。上传结果、registry 结果与整个 Actions run 状态必须分别描述。
+3. 无论上传命令成功或失败，独立核对 registry 目标版本、dist-tags 和 integrity。当前只读传播轮询窗口最多约五分钟（15秒间隔、最多21次查询）；版本已可见时立即结束，只允许有限重试查询，不循环上传。上传结果、registry 结果与整个 Actions run 状态必须分别描述。
 4. 下载公开 registry tgz，与已测试 CI artifact 逐字节核对；在隔离 Home/config/cache 中通过官方 registry 按包名及版本执行真实 `npm install`，验证 CLI 与宿主安装。tarball 安装、dry-run 或 staging 均不等于公开发布。
 5. 在用户授权范围内更新本机全局包和 Codex Home/runtime，保留自定义配置。将真实结果、剩余风险及未通过项写入版本记录和运维 Current Truth，不伪造全绿、完整宿主验证或 provenance 结论。
 
@@ -133,3 +133,10 @@ gh workflow run npm-publish.yml \
 - `open-spec-mesh@0.0.2` 已通过 OIDC run `36690250138` 真实发布，核验时 `latest=0.0.2`；发布源码为 `c7af582792386e59ad291aed9a2316e00a5c2782`。公开 tgz 与已测试 CI artifact 字节一致，SHA-1 为 `02c75cb6dadc3497846155e530d80f4a60f5d5cf`。该发布目标已完成，禁止再次上传或用旧本机产物恢复“待发布”状态。
 - 原 run 上传成功，但最后的 25 秒传播验证超时标红，之后独立核验及公开 npm consumer、本机全局包/Home 更新通过；不得称原 run 全绿。后续提交 `1329375` 将只读传播检查扩展到约两分钟，未重新发布。
 - 当次角色基线：Architect 为 `gpt-6.1-sol/xhigh`，Explorer / Librarian 为 `gpt-6-luna/low`，Worker / Reviewer 为 `gpt-6-luna/max`；未发现 `gpt-5.6-luna` 活动配置。用户 Main 自定义覆盖不强制重置。未来发布仍按当次明确授权核对版本与配置。
+
+
+### 7.6 已完成发布基线（2026-10-03）
+
+- open-spec-mesh@0.0.3已真实发布，latest=0.0.3；OIDC run37107915145，发布源码cc7d79909ce729f5749e19f338f8fba88884bd84。公开tgz与已测试CI artifact字节一致，SHA-1 a1c5d6daab837baed338668b08a735fbf526bce6；独立公开npm consumer和本机global/Home更新通过。禁止再次上传0.0.3。
+- 原run的prepare/upload成功，最终约两分钟传播核验超时标红，后续独立核验补足；不能称整条run全绿。之后只修未来只读窗口至最多五分钟/15秒间隔/21次查询，未重发。
+- 当前本机Main自定义gpt-6-astra/medium保留，不重置为历史Main或包默认；默认子代理gpt-6-luna/max，受管五角色一致。第一次config整体hash改变，不冒称全文件字节保持；Home用户规则字节保留，重复安装后config/规则稳定。此次未再测试真实Worker并行写或强制刷新活动宿主。

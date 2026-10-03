@@ -44,3 +44,12 @@ full 未执行，Claude/mmdc 不在 PATH，其他外部环境不声称通过；�
 前述“当前对话仍报旧模型”是08:24（Asia/Shanghai）的历史状态。09:18 configured Explorer新建、09:20同session继续、09:24 configured Librarian新建，均在同一Main与同一daemon中正常完成；实际子会话context三轮均gpt-6-luna/low，无spawn模型覆盖。版本匹配的Codex0.159.3源码确认默认模型校验发生在角色配置加载前，并使用turn配置快照；具体自动刷新触发事件未捕获，不承诺每个新turn或新线程自动生效。
 
 新增旧默认恢复/自定义默认保留/安装不保证会话热更新三项回归后，本轮core为232项Node +5项Agent共237项，零失败/skip，9项required checks全通过；138项JS语法、Python0、358个包文件及隔离真实本地/全局tarball consumer通过。定向安装/核验30项另通过。私有日志/var/tmp/osm-host-dispatch-vg4pgf/core.log；实际派发元数据同目录dispatch-evidence-safe.log。未重复付费两臂对照，未重跑无关full/其他宿主，未测试真实Worker并行写，也未做公共发布或人工close。
+
+
+## 2026-10-03 0.0.3 公开发布核验
+
+本机0.0.3与CI发布源码cc7d799的core均为232项Node +5项Agent共237项、零失败/skip、9项required checks通过；138项JS语法、Python0、361文件范围和真实同产物consumer通过。本机Codex0.159.3 native V2确定性验证另通过，无远程推理。
+
+OIDC run37107915145的prepare和upload成功，原run因发布后约两分钟传播核验超时为failure，不能称全绿。独立公共registry/latest/integrity、公开tgz与同run artifact逐字节对照、按名/版本的全新公共consumer和本机global/Home 0.0.3更新均通过。随后发布helper（不在分发包内）将未来只读窗口改为最多五分钟，15秒间隔、21次查询；新增135秒传播的模拟回归，不真实等待或上传，定向11项通过。历史失败与日志保留，未重发或改版。full与真实Worker并行写未本轮执行，未归档评估Change。
+
+发布后helper与最终材料完整复验：233项Node +5项Agent共238项，零失败/skip，9项core检查通过且显式exit0。首次维护命令外层中断记录保留，以core-maintenance-final.log与core-maintenance-exit.json补足；不改写发布源码237项证据或原Actions失败状态。

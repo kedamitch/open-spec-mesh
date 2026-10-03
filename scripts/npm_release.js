@@ -12,8 +12,10 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REGISTRY = 'https://registry.npmjs.org/';
 export const NAME = 'open-spec-mesh';
-export const REGISTRY_POLL_ATTEMPTS = 25;
-export const REGISTRY_POLL_DELAY_MS = 5_000;
+// Publication can become visible just after the old two-minute window. Bound
+// scheduled waits to five minutes while polling less often; never retry an upload.
+export const REGISTRY_POLL_ATTEMPTS = 21;
+export const REGISTRY_POLL_DELAY_MS = 15_000;
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', timeout: 600_000,

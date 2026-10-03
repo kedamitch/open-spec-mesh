@@ -108,8 +108,23 @@ test('OIDC diagnosis is explicitly dry-run and cannot enter upload or public-ins
   assert.match(yaml, /requestTokenPresent: Boolean\(process\.env\.ACTIONS_ID_TOKEN_REQUEST_TOKEN\)/u);
 });
 
-test('public registry propagation has a bounded two-minute read-only verification window', () => {
+test('public registry propagation has a bounded five-minute window with fewer read requests', () => {
   const budget = (REGISTRY_POLL_ATTEMPTS - 1) * REGISTRY_POLL_DELAY_MS;
-  assert.ok(budget >= 120_000);
-  assert.ok(budget <= 300_000);
+  assert.equal(budget, 300_000);
+  assert.ok(REGISTRY_POLL_ATTEMPTS <= 25);
+  assert.equal(REGISTRY_POLL_DELAY_MS, 15_000);
+});
+
+
+test('default verification tolerates propagation past two minutes without real sleeps or upload calls', async () => {
+  let elapsed = 0, reads = 0, pauses = 0;
+  const published = { name: info.name, versions: { [info.version]: { dist: info } }, 'dist-tags': { latest: info.version } };
+  const result = await waitForPublished(info, {
+    fetcher: async () => { reads++; return { status: 200, json: async () => elapsed >= 135_000 ? published : { name: info.name, versions: {} } }; },
+    pause: async ms => { pauses++; elapsed += ms; },
+  });
+  assert.deepEqual(result, published);
+  assert.equal(elapsed, 135_000);
+  assert.equal(reads, 10);
+  assert.equal(pauses, 9);
 });

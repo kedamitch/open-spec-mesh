@@ -1,6 +1,16 @@
 # npm 公共分发与发布操作
 
-## 当前已核验状态（2026-09-30）
+## 当前已核验状态（2026-10-03）
+
+open-spec-mesh@0.0.3已通过GitHub Actions OIDC run37107915145真实上传；registry时间2026-10-03T07:57:54.916Z，latest=0.0.3。发布源码cc7d79909ce729f5749e19f338f8fba88884bd84的CI artifact与公开tgz逐字节一致，SHA-1 a1c5d6daab837baed338668b08a735fbf526bce6；361个包文件审计、同产物consumer及发布后的独立公开npm consumer通过。
+
+原run的prepare与upload成功，但最终约两分钟传播核验在07:57:49Z超时，registry版本时间在其后约5秒；整条run为failure，不伪造全绿，也不重新上传。未来只读核验已改为最多五分钟、15秒间隔、最多21次查询；已可见时立即结束，网络/认证/指纹错误仍不重试上传。该发布helper不在npm分发包中，后续修正不更换0.0.3产物。
+
+本机global CLI/osm与Codex Home/runtime已从官方registry更新0.0.3。实际Main自定义gpt-6-astra/medium不按包默认强制重置，默认子代理gpt-6-luna/max、受管五角色一致。Home AGENTS字节保留；首次config整体hash发生变化，不能称首次全文件字节保持，重复安装后config/AGENTS字节稳定。没有收费重跑、真实Worker并行、Change归档或其他服务部署。
+
+实际发布与边界见[0.0.3检查清单](../../09-delivery/D01-发布记录/D01-03-v0-0-3/D01-03-02-release-checklist.md)。以下0.0.2及认证诊断段落均为历史，不覆盖当前0.0.3或恢复已完成的旧发布授权。
+
+## 0.0.2 历史已核验状态（2026-09-30）
 
 open-spec-mesh@0.0.2 已通过 GitHub Actions OIDC 真实发布，latest=0.0.2；registry 时间 2026-09-30T08:34:06.836Z。公开 tarball 与提交 c7af582 的已验证 CI artifact 逐字节一致，SHA-1 为 02c75cb6dadc3497846155e530d80f4a60f5d5cf。公共 registry 全新安装、CLI/Codex host smoke 和实际本机 npm/Home 更新均通过。Architect 为 gpt-6.1-sol/xhigh；Explorer/Librarian 为 gpt-6-luna/low，Worker/Reviewer 为 gpt-6-luna/max。当前源码和受管角色未发现 gpt-5.6-luna 活动配置。不得重复上传已发布的 0.0.2，其他版本需新的明确发布意图。
 
@@ -8,7 +18,7 @@ open-spec-mesh@0.0.2 已通过 GitHub Actions OIDC 真实发布，latest=0.0.2�
 
 ## 发布对象与边界
 
-包名 open-spec-mesh，目标版本 0.0.2；Node >=22.0.0，公共 registry 为 https://registry.npmjs.org/。package.json 的 publishConfig 固定 public access 与该 registry，避免误发到默认私有镜像。
+包名 open-spec-mesh，当前稳定版本 0.0.3（每次发布仍须明确目标版本）；Node >=22.0.0，公共 registry 为 https://registry.npmjs.org/。package.json 的 publishConfig 固定 public access 与该 registry，避免误发到默认私有镜像。
 
 npm 包包含第一方 Node 工具、受管 Role/Skill、规范参考和发布锁。不包含用户 Home、npm 凭据、node_modules、测试源码或 Python 实现。根 package-lock 与 npm-shrinkwrap 必须字节相同，根版本与 package.json 一致；依赖固定版本不因此次改版本而升级。
 
@@ -17,7 +27,7 @@ npm 包包含第一方 Node 工具、受管 Role/Skill、规范参考和发布�
 ## 用户安装
 
 ```sh
-npm install -g open-spec-mesh@0.0.2 --registry=https://registry.npmjs.org/
+npm install -g open-spec-mesh@0.0.3 --registry=https://registry.npmjs.org/
 open-spec-mesh --version
 open-spec-mesh install --host codex --skip-tools --dry-run
 open-spec-mesh install --host codex --skip-tools
@@ -25,7 +35,7 @@ open-spec-mesh install --host codex --skip-tools
 
 仅已发布版本可通过包名获取；E404 不得解释为安装成功。可将 --host codex 替换为 opencode 或 claude，并用 --host-home 指定目标根。npm 安装不自动改宿主配置；--skip-tools 跳过 Research 工具安装，System One 保持默认关闭。
 
-不装全局命令时，用 npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.0.2 -- open-spec-mesh install --host codex --skip-tools。升级需先 npm install -g open-spec-mesh@latest，再显式 install 更新宿主；卸载全局命令不清理宿主资产。
+不装全局命令时，用 npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.0.3 -- open-spec-mesh install --host codex --skip-tools。升级需先 npm install -g open-spec-mesh@latest，再显式 install 更新宿主；卸载全局命令不清理宿主资产。
 
 ## 真实上传的人工授权
 
@@ -35,7 +45,7 @@ open-spec-mesh install --host codex --skip-tools
 
 1. 用户明确授权版本与公共发布。确认未覆盖其他未提交工作，不自动提交、打 tag 或归档。
 2. 查询公共 registry 的已发布版本；查询失败不能当作版本不存在，不能复用已发布 name@version。长期流程使用 GitHub Actions OIDC，不要求 CI 的 npm whoami 成功；手工 token 发布才单独检查账户及目标包权限。
-3. package.json、package-lock、npm-shrinkwrap 根版本均为 0.0.2；引擎 >=22.0.0；bin 为 open-spec-mesh 与 osm，private=false，公共 publishConfig 正确。
+3. package.json、package-lock、npm-shrinkwrap 根版本须匹配本次明确目标（当前稳定版0.0.3）；引擎 >=22.0.0；bin 为 open-spec-mesh 与 osm，private=false，公共 publishConfig 正确。
 4. 使用 Node 22.0.0 + 兼容 npm 验证 core，真实 tarball/local/global consumer 可启动。full 的外部前置/结果另记，不伪造外部环境通过。
 5. npm pack 到仓库外的私有准备目录；检查实际 tarball 的文件名单、README、资源、锁文件与敏感文件/常见密钥模式。不得发布 auth.json、.npmrc、私钥、.env、诊断 ZIP、数据库或用户会话。
 
