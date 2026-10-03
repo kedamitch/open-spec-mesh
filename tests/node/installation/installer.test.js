@@ -114,6 +114,9 @@ test('initial Codex default-off plan does not publish baseline Python or Node br
   assert.equal(existsSync(configFile), true);
   const config = parseToml(readFileSync(configFile, 'utf8'));
   assert.equal(Object.hasOwn(config.mcp_servers ?? {}, 'laya'), false);
+  const rules = readFileSync(path.join(hostStage, 'AGENTS.md'), 'utf8');
+  assert.doesNotMatch(rules, /本项目版本发布流程|npm-publish\.yml|36690250138/u);
+  assert.ok(rules.includes(path.join(root, 'codex', 'open-spec-mesh', 'dispatch-contract.md')));
 });
 
 test('owned legacy Python bridge upgrades to disabled Node runtime without enabling Laya', async (t) => {
@@ -341,4 +344,51 @@ test('upgrades refresh managed role selection prompts while preserving user conf
     const unowned = INSTALL_INTERNALS.mergeConfig(REPO_ROOT, input, { ...options, previousCodex: { skills: [], roles: {} } });
     assert.equal(parseToml(unowned.text).agents.architect.description, '半自动 Task Graph');
   }
+});
+
+test('legacy subagent default migration is explicit, narrow, idempotent and preserves Main/custom models', (t) => {
+  const root = tempDirectory(t), home = path.join(root, 'home'); mkdirSync(home);
+  const options = { previousCodex: { skills: [], roles: {} }, toolCommands: {}, effectiveLaya: false, withLaya: false, layaManaged: false, home };
+  const input = 'model="my-main"\nmodel_reasoning_effort="high"\n[agents]\ndefault_subagent_model="gpt-5.6-luna"\ndefault_subagent_reasoning_effort="max"\n';
+  const unchanged = INSTALL_INTERNALS.mergeConfig(REPO_ROOT, input, options);
+  assert.equal(parseToml(unchanged.text).agents.default_subagent_model, 'gpt-5.6-luna');
+  const migrated = INSTALL_INTERNALS.mergeConfig(REPO_ROOT, input, { ...options, migrateLegacyAgentDefaults: true });
+  const result = parseToml(migrated.text);
+  assert.equal(result.model, 'my-main'); assert.equal(result.model_reasoning_effort, 'high');
+  assert.equal(result.agents.default_subagent_model, 'gpt-6-luna'); assert.equal(result.agents.default_subagent_reasoning_effort, 'max');
+  assert.equal(INSTALL_INTERNALS.mergeConfig(REPO_ROOT, migrated.text, { ...options, migrateLegacyAgentDefaults: true }).text, migrated.text);
+  const custom = INSTALL_INTERNALS.mergeConfig(REPO_ROOT, input.replace('gpt-5.6-luna', 'my-subagent'), { ...options, migrateLegacyAgentDefaults: true });
+  assert.equal(parseToml(custom.text).agents.default_subagent_model, 'my-subagent');
+  assert.equal(parseInstallArgs(['--migrate-legacy-agent-defaults']).migrateLegacyAgentDefaults, true);
+});
+
+test('non-Codex legacy-default migration is refused before creating Home', async (t) => {
+  const home = path.join(tempDirectory(t), 'absent');
+  await assert.rejects(installHost({ source: REPO_ROOT, home, host: 'claude', migrateLegacyAgentDefaults: true, dryRun: true }), /only supports codex/u);
+  assert.equal(existsSync(home), false);
+});
+
+test('explicit migration flows through transactional installation and keeps actual Main overrides', async (t) => {
+  const home = path.join(tempDirectory(t), 'home'); mkdirSync(home);
+  writeFileSync(path.join(home, 'config.toml'), 'model="user-main"\nmodel_reasoning_effort="high"\n[agents]\ndefault_subagent_model="gpt-5.6-luna"\ndefault_subagent_reasoning_effort="max"\n');
+  await installHost({ source: REPO_ROOT, home, skipTools: true, migrateLegacyAgentDefaults: true, reporter: () => {} });
+  const config = parseToml(readFileSync(path.join(home, 'config.toml'), 'utf8'));
+  assert.equal(config.model, 'user-main'); assert.equal(config.model_reasoning_effort, 'high');
+  assert.equal(config.agents.default_subagent_model, 'gpt-6-luna');
+  assert.equal(config.agents.default_subagent_reasoning_effort, 'max');
+});
+
+
+test('successful CLI installation reports files only, not automatic live-session activation', async (t) => {
+  const home = path.join(tempDirectory(t), 'codex');
+  const capture = memoryStreams();
+  const { runInstall } = await import('../../../lib/installation/installer.js');
+  const code = await runInstall(['--host', 'codex', '--host-home', home, '--skip-tools'], {
+    ...capture.streams, runtime: { packageRoot: REPO_ROOT },
+  });
+  assert.equal(code, 0, capture.stderr);
+  assert.match(capture.stdout, /installed-file state only/u);
+  assert.match(capture.stdout, /reload configuration in the actual codex host and verify dispatch/u);
+  assert.match(capture.stdout, /existing sessions are not proven updated/u);
+  assert.doesNotMatch(capture.stdout, /start a new codex session/u);
 });

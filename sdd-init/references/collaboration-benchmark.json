@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "name": "collaboration-store-v1",
+  "baseline_files": {
+    "package.json": "{\"name\":\"collaboration-store-fixture\",\"private\":true,\"type\":\"module\",\"scripts\":{\"test\":\"node --test\"}}\n",
+    "src/normalize.js": "export const normalize = value => typeof value === 'string' ? value.trim().toLowerCase() : '';\n",
+    "src/store.js": "import { normalize } from './normalize.js';\nexport function createStore() {\n  const items = new Map();\n  return { set(key, value) { items.set(normalize(key), value); }, get(key) { return items.get(key); } };\n}\n",
+    "src/format.js": "export const format = value => String(value ?? '');\n",
+    "baseline.test.js": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { createStore } from './src/store.js';\nimport { normalize } from './src/normalize.js';\ntest('baseline', () => { const store = createStore(); store.set('key', 1); assert.equal(store.get('key'), 1); assert.equal(store.get('absent'), undefined); assert.equal(normalize(null), ''); });\n"
+  },
+  "cases": [
+    {"scenario":"local-fix","request":"已知 set 规范化键但 get 未规范化。修复 get，对同一键的空格/大小写不敏感；保持缺失值 undefined，不引入角色交接或新依赖。","acceptance_test":"import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { createStore } from './src/store.js';\ntest('normalized lookup', () => { const s = createStore(); s.set(' Key ', 7); assert.equal(s.get(' KEY '), 7); assert.equal(s.get('missing'), undefined); });\n"},
+    {"scenario":"bounded-investigation","request":"只读追踪入口 set/get 对键和值的处理，交付三条文件行号证据：写键如何归一化、读键如何处理、缺失值语义；不要修改代码。","acceptance":"人工核对三条事实与证据；baseline.test.js仍通过；所有源码字节不变。"},
+    {"scenario":"local-adjustment","request":"将 normalize 的内部字符串处理抽取为局部 helper，保持全部外部行为不变。只调整实现并就近测试，不重开需求/整体设计，不改变缺失值语义。","acceptance":"baseline.test.js通过；normalize(' Key ')=== 'key'，normalize(null)===''；仅内部实现变化，人工核对diff。"},
+    {"scenario":"public-contract-change","request":"原已确认契约是 get 缺失返回 undefined；新下游要求缺失返回 null。先说明兼容影响、请求决定并只暂停受影响的读取改动；未获确认不改变该契约。","acceptance":"人工确认有升级请求且契约未被静默改写；baseline.test.js通过；其他成果未被重做。"},
+    {"scenario":"reuse-existing-session","request":"先完成 bounded-investigation 并保留其session与结果；随后只补充 normalize(null) 行为证据。复用已有结果与原session，禁止重新启动调查目标。","acceptance":"人工核对增量证据、原session复用和未重新全量调查；成本必须包含前后两次工作，分别保留不重叠切片。"},
+    {"scenario":"validation-ownership","request":"仅在本次明确授权并行的条件下：一条工作线补 normalize 边界测试，另一条补 format 边界测试，各自拥有不同测试文件并定向验证。Main集成后整体跑一次；若证据失效可补跑并记录理由。","acceptance":"normalize与format边界测试均通过，Worker定向测试，Main整体验证；无无理由重复整体验证。"}
+  ],
+  "limitations": ["固定夹具与测试不证明真实模型表现或节省；真实推理需人工选择并执行。","并行仅在明确授权时执行，不因选中样例产生授权。","任务基线包含已知缺陷，各试验臂使用同一未修复副本；不要复用另一试验臂的修复结果。"]
+}

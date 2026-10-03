@@ -27,3 +27,9 @@ Codex `scan` 保持原 full-trace 能力；OpenCode/Claude 私有 trace `scan` �
 ## 边界
 
 当前文件指纹不证明历史加载；unknown / partial 不计为通过或失败。诊断不从思维链解释动机、不自动修改规则或授权边界。
+
+## 协作证据与评估
+
+现代人工 Task 可无 Graph；历史 first_pass / rework 等没有对应证据时为 null 并附依据，不是零返工。人工返工标注仅 ID 与 assumption / handoff / integration，部分范围不推断总量。用量按会话与不重叠切片去重，缺失身份或冲突显示 unknown；usage_observed 是已知部分，usage_total 仅完整选定观测范围，非整个目标或金额。
+
+evaluate-collaboration 提供六场景规范化动作检查，不新增模型调用；partial/opaque 缺席为 unknown，语义质量、人工授权及真实模型节省未验证。方案见 [协作评估参考](../../../sdd-init/references/collaboration-evaluation.md)。

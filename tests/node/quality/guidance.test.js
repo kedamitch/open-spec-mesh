@@ -60,6 +60,6 @@ test('public workflow guides expose SDD skill invocations without reintroducing 
   assert.match(text, /\$sdd-/u);
  }
  assert.match(read('sdd-req/SKILL.md'), /不自动补齐后续材料/u);
- assert.match(read('sdd-do/SKILL.md'), /Quick 不强制建 Change\/Task/u);
+ assert.match(read('sdd-do/SKILL.md'), /Quick 不建正式 Change\/Task/u);
  assert.match(read('sdd-close/SKILL.md'), /只有用户最终验收后才归档/u);
 });

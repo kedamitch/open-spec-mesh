@@ -35,3 +35,14 @@ Quick 默认由当前 Agent 连续完成；SDD 分阶段留文档、由人确认
 ## 发布授权与本地短命令
 
 明确的自然语言发布指令（如“发布 0.0.2”）会自动使用 `$sdd-release` 并授权该版本的 npm 上传；仅准备材料时不上传。osm 无参数等价 Codex + skip-tools 安装，osm --dry-run 只预览；完整子命令保留。0.0.2 包含短入口，实际发布状态以 registry 结果为准。
+
+## 协作减重与按需核验（当前源码）
+
+现有 docs/01–09、C01/C02/C03、独立 Task/Delivery 完整保留，公共事实引用复用，简单任务短写。委派先判断净收益，同一执行者完成闭环；设计区分约束/方案/假设，关键未知先最小验证，内部实现变化不重开阶段。边界例子见 [协作指南](collaboration-guide.md)。
+
+- `inspect-host [--host HOST] [--home DIR] [--format md|json]`：只核对安装文件的非敏感模型字段，区分包基线与用户覆盖；不读取 auth 文件、不调用 provider、不改配置。当前活动会话始终 unknown，文件一致不证明旧 session 已重载。
+- `evaluate-collaboration --report NORMALIZED_JSON --scenario ID`：只检查已有归一化动作，`--list` 列出六种场景；不调用模型、不路由工作、不批准阶段。incomplete 不是通过全部行为。
+- 人工流程的旧 Graph 首轮通过/返工指标不适用；`usage_observed` 是已知部分，`usage_total` 只在覆盖完整时存在。同 session/slice 去重，缺失/冲突不当作零；金额未知。
+- 可选 `observe collect --rework-mark ID:assumption|handoff|integration` 保存部分人工证据，不从对话推断返工。效果对照见 [评估方案](collaboration-evaluation.md)。
+
+维护者以 `sdd-init/references/workflow-policy.md` 为通用规则唯一来源，`npm run sync:workflow` 同步必要副本，`npm run check:workflow` 只检查；根 AGENTS 的 COMMON 标记外内容保全。安装器不使用根 AGENTS 全文。本节新增能力属于当前源码变更，不代表已发布的 0.0.2 或既有 Home 已升级。

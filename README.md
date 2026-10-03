@@ -152,3 +152,26 @@ npm run validate:full
 Full validation additionally requires real host CLIs, Docker, Mermaid and Research tooling. Missing prerequisites are failures, not successful placeholders. First-party tools, tests and automation are Node.js-only; the audit requires zero first-party Python sources. Core results do not prove full external-host or inference readiness.
 
 See [rules](AGENTS.md), [tool guide](sdd-init/references/runtime-guide.md), [document guidance](sdd-init/references/document-contract.md) and [project documentation](docs/index.md).
+
+## Collaboration efficiency (current source, not yet published)
+
+The complete documentation layout remains: C01/C02/C03, independent Task documents, Delivery, and navigation. Shared facts are referenced instead of rewritten. Delegate only for a plausible net benefit; serial work stays with Main. Designs separate binding behavioral/security/public contracts, adjustable implementation choices, and unverified assumptions. See the [collaboration guide](sdd-init/references/collaboration-guide.md).
+
+```sh
+# Read-only installed-file inspection, not proof of active-session settings
+node bin/open-spec-mesh.js inspect-host --host codex --format json
+# Explicit scenario checks of normalized observations; no model calls or approvals
+node bin/open-spec-mesh.js evaluate-collaboration --list
+node bin/open-spec-mesh.js evaluate-collaboration --report PRIVATE_REPORT --scenario local-fix
+# Readable report; incomplete exits 3 only with this explicit strict option
+node bin/open-spec-mesh.js evaluate-collaboration --report PRIVATE_REPORT --scenario local-fix --format md --fail-on-incomplete
+# Source maintenance; preserves project-specific AGENTS content outside COMMON markers
+npm run check:workflow
+npm run sync:workflow
+```
+
+Without a historical Graph, legacy first-pass/rework measures are not applicable or unknown, never fabricated zeroes. Observed Main/child token deltas are deduplicated per session/slice; complete totals require complete coverage. Pricing and real savings remain unknown. Optional operator rework marks and a fixed-baseline comparison are documented in the [evaluation guide](sdd-init/references/collaboration-evaluation.md). Static checks, deterministic fixtures, trace-action checks, and actual model performance are different evidence levels. These changes do not mean public 0.0.2 or an existing Host Home has been upgraded.
+
+Evaluation defaults to JSON and retains the existing exit behavior: incomplete can exit 0. Opt in to `--fail-on-incomplete` for exit 3; action failures exit 1 and argument errors exit 2. Even `supported_checks_passed` leaves semantic quality and human acceptance unverified.
+
+New goals default to Quick: neither end-to-end requests nor loading sdd-do creates a formal Change/Task/Delivery chain. Preserve existing structure; use [short single-task SDD examples](sdd-init/references/single-task-example.md) only when SDD is explicitly selected. Codex install can explicitly migrate only the legacy fallback with `--migrate-legacy-agent-defaults`, preserving Main and other overrides. `node scripts/verify_codex_live.js --run --output PRIVATE_DIR` opts into paid real inference, never a routine/core/full check.

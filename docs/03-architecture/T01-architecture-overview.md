@@ -20,3 +20,7 @@ Open Spec Mesh 是 Node.js 辅助工具、宿主 Adapter、角色和 Markdown Sk
 Node.js 22.0.0+、ESM、Git、TOML/JSON/Markdown、Mermaid；锁与原子写入保护资源，安全路径与受管 ownership 防止越界覆盖。正式流程无新机器 Graph/摘要/receipt；历史字段可用于只读诊断而非授权。Codex 保持角色模型/effort；其他宿主继承用户模型。
 
 入口：[API](T02-api.md)、[存储](T03-database.md)、[领域模型](T04-domain-model.md)、[主时序](T05-diagrams/T05-03-main-sequence.md)、[运维](../04-operations/O01-operations-overview.md)。
+
+## 通用规则与只读检查
+
+通用规则单源为 sdd-init/references/workflow-policy.md；脚本维护共享副本和根 AGENTS 受管区域，保留区域外用户内容。安装器直接读取单源，不向下游复制本仓库专用发布规则。inspect-host 为按需文件核验；evaluate-collaboration 为确定性动作检查，均不变更授权、自动调度或推理。usage 和返工报告仅说明选定范围的证据，SQLite schema 不变。

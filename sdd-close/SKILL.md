@@ -4,9 +4,11 @@ description: SDD 模式的交付阶段入口；汇总真实结果、引导人工
 ---
 # 人工交付、实际 Current Truth 同步与用户确认后的文档归档。
 
+仅已有 SDD Change 使用本技能；Quick 直接交付，不为关闭创建 Change/Task/Delivery。当前事实按实际实现同步，人工验收状态单列；用户明确一次确认实现与最终交付时可合并关闭，不要求固定两次往返。
+
 当前 Agent 汇总真实实现结果和适用全量验证，交用户确认实现阶段。之后整理最终交付材料并同步实际受影响 Current Truth；用户最终验收后才移动 Change 到已完成目录并更新导航。
 
-不强制启动 Architect，不要求 validation receipt、摘要或 Graph accepted 状态。格式检查只辅助，真实失败不能写通过；实质剩余问题由用户决定并记录。归档不等于发布。保全历史和用户工作区，脏 worktree 不强删。
+不强制启动 Architect，不要求 validation receipt、摘要或 Graph accepted 状态。格式检查只辅助，真实失败不能写通过；实质剩余问题由用户决定并记录。整体交付只汇总跨任务结果与集成验证，引用 Task Delivery，不逐份复制；未通过和未验证项明确可见。独立复审仍需用户明确请求，聚焦真实 diff、未解决问题与新增风险，不重开未变化决策。归档不等于发布。保全历史和用户工作区，脏 worktree 不强删。
 
 ## 阶段引导
 

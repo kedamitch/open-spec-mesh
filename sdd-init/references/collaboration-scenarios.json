@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "purpose": "Explicit evaluation expectations, not runtime routing or authorization",
+  "scenarios": [
+    {"id":"local-fix","intent":"Main 已有定位和修复证据，直接完成局部修复","rules":{"spawn_budget":0,"requires_verification":true},"human_checks":["目标行为与验收通过","不存在交接收益大于直接执行的已知理由"]},
+    {"id":"bounded-investigation","intent":"压缩大量陌生材料的一次定向只读调查","rules":{"spawn_budget":1,"allowed_spawn_roles":["explorer","librarian"]},"human_checks":["结论与最小证据可复用","Main 未再次完整遍历相同材料"]},
+    {"id":"local-adjustment","intent":"不改变已确认契约的内部调整由原执行者完成","rules":{"forbidden_spawn_roles":["architect"],"forbidden_kinds":["change.create","task.create"],"requires_verification":true},"human_checks":["确实未改变目标、验收、安全或重要公共契约","未重开已确认阶段"]},
+    {"id":"public-contract-change","intent":"公共契约实质变化只暂停并协调受影响工作","rules":{},"human_checks":["已向用户说明实质影响并请求决定","未受影响的成果保留","没有未经授权吸收新增范围"]},
+    {"id":"reuse-existing-session","intent":"先复用已有结果，需要补充时仅增量继续","rules":{"spawn_budget":0},"human_checks":["已读取已有结果而非重新调查","继续时复用原会话且只传增量","未把继续执行当作查询状态"]},
+    {"id":"validation-ownership","intent":"已授权并行样例中Worker定向验证，Main集成验证","rules":{"requires_verification":true,"integration_owner":"main","integration_budget":1},"human_checks":["子任务就近完成必要定向测试","未因节约忽略失败","重复检查有证据失效或不足的理由"]}
+  ]
+}

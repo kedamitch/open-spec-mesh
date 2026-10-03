@@ -152,3 +152,26 @@ npm run validate:full
 full 另需真实宿主 CLI、Docker、Mermaid 与 Research 工具。缺失前置条件如实失败，core 全绿不等于外部宿主或推理服务已经全绿。第一方工具、测试和自动化均为 Node.js，Python 源文件审计坚持零例外。
 
 更多说明见 [工作约定](AGENTS.md)、[工具指南](sdd-init/references/runtime-guide.md)、[文档规范](sdd-init/references/document-contract.md) 和 [项目文档](docs/index.md)。
+
+## 协作效率优化（当前源码，尚未发布）
+
+保留完整文档结构，减少重复内容而非删除 C01/C02/C03、独立 Task 或 Delivery。委派先判断净收益，串行由 Main 连续完成；设计只约束稳定的行为、安全和公共契约，内部实现可自主调整。详见 [协作边界](sdd-init/references/collaboration-guide.md)。
+
+```sh
+# 源码目录：只读核对安装文件，不证明活动会话已加载
+node bin/open-spec-mesh.js inspect-host --host codex --format json
+# 六种场景及归一化动作检查，不调用模型或授权阶段
+node bin/open-spec-mesh.js evaluate-collaboration --list
+node bin/open-spec-mesh.js evaluate-collaboration --report PRIVATE_REPORT --scenario local-fix
+# 可读报告；只有显式strict选项才让证据不完整退出3
+node bin/open-spec-mesh.js evaluate-collaboration --report PRIVATE_REPORT --scenario local-fix --format md --fail-on-incomplete
+# 维护共享规则副本；项目专用AGENTS内容不被替换
+npm run check:workflow
+npm run sync:workflow
+```
+
+人工流程没有历史 Graph 时，旧首轮通过/返工指标显示不适用或未知，不显示虚假零返工。用量包括已观测 Main/子会话，按 session/slice 去重，完整总量仅在覆盖完整时提供；金额和真实节省尚未验证。可选人工返工标注与固定基线对照见 [评估方案](sdd-init/references/collaboration-evaluation.md)。文件核验、trace检查、确定性fixture和真实模型评测不是同一层证据。
+
+评估默认JSON并保持既有退出行为：incomplete也可能退出0；自动化可用 `--fail-on-incomplete` 令其退出3，动作检查失败为1、参数错误为2。即使 `supported_checks_passed`，语义质量与人工验收仍未验证。
+
+新目标默认Quick，不因“端到端”或加载sdd-do升级SDD；Quick无正式Change/Task/Delivery链，直接交付摘要。保留完整结构只约束既有文档和明确SDD目标；[单任务短写](sdd-init/references/single-task-example.md)保留必要目标/约束/验收。按需迁移旧回退：`node bin/open-spec-mesh.js install --host codex --migrate-legacy-agent-defaults`（仅旧gpt-5.6-luna，不改Main或其他自定义模型）。本机真实模型验证：`node scripts/verify_codex_live.js --run --output PRIVATE_DIR`，可能计费，不是默认检查。

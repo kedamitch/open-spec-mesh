@@ -12,7 +12,7 @@ Markdown 保存需求、人工确认、整体设计、宏观 Task、任务计划
 
 ## 观测 SQLite
 
-默认在 CODEX_HOME 下 sdd-observe/observations.sqlite3，权限 0600；schema version=1，application_id=0x5344444F。外来库/不支持版本拒绝读写，不自动迁移。
+默认在 OPEN_SPEC_MESH_STATE_HOME 下 observations.sqlite3，否则 XDG_STATE_HOME/open-spec-mesh，再缺省 ~/.local/state/open-spec-mesh，权限 0600；schema version=1，application_id=0x5344444F。外来库/不支持版本拒绝读写，不自动迁移。
 
 ```sql
 CREATE TABLE runs (
@@ -26,3 +26,7 @@ CREATE TABLE runs (
 scope_key 绑定项目、会话与操作者期望，同 ID 不可转移范围；报告仅归一化元数据、事件、指纹和诊断，不复制原始对话、源码或凭据。重复采集原子替换，时间未知保持 null。新 Change 没有 Graph/frontmatter 是正常输入。
 
 通用资源锁和原子写入继续保护文件与库；删除自动生命周期不取消存储权限、路径与身份范围保护。
+
+## 协作指标兼容
+
+SQLite schema version=1 不变；分析报告版本1.2.1。现代无 Graph 指标使用 null + basis，历史 Graph 分 Change 分组，人工标注单独记录来源/覆盖。用量使用精确整数差值、会话/切片去重及冲突检查，报告区分部分 usage_observed 与完整选定范围 usage_total；价格缺失不输出金额。

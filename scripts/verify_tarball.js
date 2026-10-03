@@ -148,7 +148,19 @@ export async function verifyTarball() {
 
     assert.equal(cli(['--version']).stdout.trim(), JSON.parse(fs.readFileSync(path.join(consumerRoot, 'package.json'), 'utf8')).version);
     const help = cli(['--help']).stdout;
-    for (const command of ['init-project', 'validate-docs', 'new-change', 'new-task', 'ensure-design', 'observe', 'diagnose', 'systemone']) assert.ok(help.includes(command), `Installed CLI help omitted ${command}`);
+    for (const command of ['init-project', 'validate-docs', 'new-change', 'new-task', 'ensure-design', 'observe', 'diagnose', 'systemone', 'inspect-host', 'evaluate-collaboration']) assert.ok(help.includes(command), `Installed CLI help omitted ${command}`);
+    assert.equal(JSON.parse(cli(['inspect-host', '--home', path.join(temp, 'absent-host'), '--format', 'json']).stdout).live_session.status, 'unknown');
+    assert.equal(JSON.parse(cli(['evaluate-collaboration', '--list']).stdout).length, 6);
+    assert.match(cli(['evaluate-collaboration', '--list', '--format', 'md']).stdout, /local-fix/u);
+    const evaluationInput = path.join(temp, 'evaluation-report.json');
+    fs.writeFileSync(evaluationInput, JSON.stringify({ events: [], sessions: [], coverage: { status: 'partial' } }));
+    const evaluationArgs = ['evaluate-collaboration', '--report', evaluationInput, '--scenario', 'local-fix'];
+    assert.equal(JSON.parse(cli(evaluationArgs).stdout).status, 'incomplete');
+    const strictEvaluation = cli([...evaluationArgs, '--format', 'md', '--fail-on-incomplete'], { allowFailure: true });
+    assert.equal(strictEvaluation.code, 3);
+    assert.match(strictEvaluation.stdout, /incomplete/u);
+    assert.match(strictEvaluation.stdout, /Semantic quality: unverified/u);
+    assert.equal(globalCli([...evaluationArgs, '--format', 'md', '--fail-on-incomplete'], { allowFailure: true }).code, 3);
     cli(['init-project', '--root', project]);
     cli(['validate-docs', '--root', project]);
     run('git', ['-C', project, 'add', '-A'], { cwd: temp, env });

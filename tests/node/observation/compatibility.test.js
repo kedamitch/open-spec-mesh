@@ -83,7 +83,7 @@ test('diagnostics keep absence unknown, classify explicit restriction and positi
   assert.equal(quick.findings.some((finding) => finding.rule === 'S01' || finding.rule === 'P01'), false);
   const aggregated = summary([{ ...quick, run_id: 'one' }, { ...quick, run_id: 'two' }]);
   assert.match(aggregated, /仅描述关联/);
-  assert.match(aggregated, /0\/0/);
+  assert.match(aggregated, /unknown \/ 不适用/u);
 });
 
 test('history without timestamps stays null; grouping rejects duplicate or cross-project slices', async (t) => {

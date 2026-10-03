@@ -5,4 +5,5 @@
 - [CHG-20260927-compact-docs-delivery](CHG-20260927-compact-docs-delivery/index.md)
 - [CHG-20260927-multi-host-runtime](CHG-20260927-multi-host-runtime/index.md)
 - [CHG-20260927-wave-integration](CHG-20260927-wave-integration/index.md)
+- [CHG-20260930-collaboration-efficiency](CHG-20260930-collaboration-efficiency/index.md)
 <!-- INDEX:END -->
