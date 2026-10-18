@@ -31,14 +31,26 @@ The expected command version is `0.0.1`. Start a new host session after installa
 ### Choose a host or configuration directory
 
 ```sh
-# Default homes: ~/.codex, ~/.config/opencode, ~/.claude.
+# Default homes: ~/.codex, ~/.config/opencode, ~/.claude, ~/.dsh.
 open-spec-mesh install --host codex --skip-tools
 open-spec-mesh install --host opencode --skip-tools
 open-spec-mesh install --host claude --skip-tools
+open-spec-mesh install --host dsh --skip-tools
 
 # Optional custom configuration home (quote paths containing spaces).
 open-spec-mesh install --host codex --host-home "/path/to/codex home" --skip-tools
 ```
+
+### Install as a DeepSeek Harness (DSH) Plugin
+
+`open-spec-mesh` natively supports running as a DSH bundle plugin, providing the **sdd模式** agent preset:
+
+```sh
+# Install to DSH web profile
+dsh plugin --profile web add open-spec-mesh
+```
+
+Once installed, select **sdd模式** in the DSH Web UI preset picker. It provides automated L0/L1/L2 complexity triage with progressive skill gating.
 
 Default homes also honor `CODEX_HOME`, `OPENCODE_CONFIG_DIR` and `CLAUDE_CONFIG_DIR`. `--codex-home` remains a Codex compatibility option. Host startup examples are in the [operations guide](docs/04-operations/O02-applications/O02-01-local-toolkit.md).
 

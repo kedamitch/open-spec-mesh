@@ -1,6 +1,6 @@
 {
   "name": "open-spec-mesh",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "private": false,
   "type": "module",
   "description": "Node.js runtime for Open Spec Mesh first-party tools",
@@ -15,9 +15,24 @@
     ".": "./lib/runtime/location.js",
     "./cli": "./lib/cli/registry.js",
     "./runtime/*": "./lib/runtime/*.js",
-    "./documents/*": "./lib/documents/*.js"
+    "./documents/*": "./lib/documents/*.js",
+    "./dsh": "./dsh/index.mjs",
+    "./dsh/patch": "./dsh/cordis.patch.yml",
+    "./dsh/icon": "./dsh/icon.svg",
+    "./dsh/locale/*": "./dsh/locale/*.json"
   },
+  "dsh": {
+    "bundle": {
+      "patch": "./dsh/cordis.patch.yml"
+    }
+  },
+  "icon": "./dsh/icon.svg",
   "files": [
+    "dsh/**/*.mjs",
+    "dsh/**/*.yml",
+    "dsh/**/*.md",
+    "dsh/**/*.json",
+    "dsh/**/*.svg",
     "bin/open-spec-mesh.js",
     "bin/osm.js",
     "lib/**/*.js",

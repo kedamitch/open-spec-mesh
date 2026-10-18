@@ -6,10 +6,11 @@ import { managedLayaConfig, managedNodeLayaConfig } from '../../../lib/installat
 import { REPO_ROOT } from './helpers.js';
 
 test('host profiles retain canonical host-specific locations', () => {
-  assert.deepEqual(HOSTS, ['codex', 'opencode', 'claude']);
+  assert.deepEqual(HOSTS, ['codex', 'opencode', 'claude', 'dsh']);
   assert.equal(hostProfile('codex', '/tmp/codex').rulesFile, 'AGENTS.md');
   assert.equal(hostProfile('opencode', '/tmp/opencode').mcpOverlay, 'open-spec-mesh.opencode.json');
   assert.equal(hostProfile('claude', '/tmp/claude').mcpOverlay, 'open-spec-mesh.mcp.json');
+  assert.equal(hostProfile('dsh', '/tmp/dsh').rulesFile, 'AGENTS.md');
   assert.throws(() => hostProfile('unsupported', '/tmp/host'), /Unknown host/);
 });
 

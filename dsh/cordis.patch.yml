@@ -1,0 +1,34 @@
+# preset-sdd (sdd模式) - Open Spec Mesh for DeepSeek Harness
+- insert:
+    - id: preset-sdd
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: sdd
+        name: sdd模式
+        description: 规范驱动开发 (SDD) 与敏捷 Quick 双流一体化架构模式，带自动复杂度定级
+        order: 15
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: ./prompts/sdd-persona.md
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+          - id: tool-read
+            name: '@deepseek-ai/dsh-tool-read'
+          - id: tool-edit
+            name: '@deepseek-ai/dsh-tool-edit'
+          - id: tool-write
+            name: '@deepseek-ai/dsh-tool-write'
+          - id: tool-glob
+            name: '@deepseek-ai/dsh-tool-glob'
+          - id: tool-grep
+            name: '@deepseek-ai/dsh-tool-grep'
+          - id: subagent
+            name: '@deepseek-ai/dsh-subagent'
+          - id: ask-user-question
+            name: '@deepseek-ai/dsh-tool-ask-user-question'
+          - id: plan-mode
+            name: '@deepseek-ai/dsh-plan-mode'
+          - id: sdd-gatekeeper
+            name: ./gatekeeper.mjs

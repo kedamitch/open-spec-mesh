@@ -31,14 +31,29 @@ open-spec-mesh install --host codex --skip-tools
 ### 选择宿主与配置目录
 
 ```sh
-# 默认分别使用 ~/.codex、~/.config/opencode、~/.claude。
+# 默认分别使用 ~/.codex、~/.config/opencode、~/.claude、~/.dsh。
 open-spec-mesh install --host codex --skip-tools
 open-spec-mesh install --host opencode --skip-tools
 open-spec-mesh install --host claude --skip-tools
+open-spec-mesh install --host dsh --skip-tools
 
 # 自定义配置根；有空格的路径必须加引号。
 open-spec-mesh install --host codex --host-home "/path/to/codex home" --skip-tools
 ```
+
+### 在 DeepSeek Harness (DSH) 中作为插件安装
+
+open-spec-mesh 原生支持作为 DSH Cordis Bundle 插件运行，提供全功能「sdd模式」Agent 预设：
+
+```sh
+# 方式一：通过 DSH Plugin CLI 安装到 Web profile
+dsh plugin --profile web add open-spec-mesh
+
+# 方式二：通过 osm CLI 配置到 DSH
+osm install --host dsh --skip-tools
+```
+
+安装后启动或刷新 DSH Web UI，新建会话时即可在预设选择器中直接选择 **「sdd模式」**。该预设具备 L0/L1/L2 自动档位识别与渐进式门控。
 
 默认目录同时支持 `CODEX_HOME`、`OPENCODE_CONFIG_DIR`、`CLAUDE_CONFIG_DIR`。Codex 兼容参数 `--codex-home` 保留。具体宿主启动方法见 [运行指南](docs/04-operations/O02-applications/O02-01-local-toolkit.md)。
 
