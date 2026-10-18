@@ -1,17 +1,43 @@
 /**
  * sdd-gatekeeper — Open Spec Mesh DSH 动态门控与渐进式技能管理
  *
- * 借鉴 dsh-liangshen 的 minimal-prompt / instructionHint 机制：
- * 1. instructionHint: 拦截默认的全量 AGENTS.md 注入，替换为非命令式弱提示（Hint），防止认知重力导致的推理降智；
- * 2. 技能门控 (Skill Paging): 在 L0 / L1 任务时从可见技能中过滤掉所有 `sdd-*` 技能，避免过度流程诱导；
- * 3. 动态发现: 当 Agent 访问具体目录时，按需加载局部规范。
+ * 1. instructionHint: 拦截默认全量 AGENTS.md 注入，替换为非命令式弱提示（Hint）；
+ * 2. 动态角色模型加载: 从 ~/.dsh/osm-models.json 动态载入各个子代理的模型/供应商配置；
+ * 3. 动态专用工具注入: 注册 spawn_explorer, spawn_architect, spawn_worker, spawn_reviewer, spawn_librarian；
+ * 4. 技能门控 (Skill Gating): 在 L0 / L1 任务时从可见技能中过滤掉所有 `sdd-*` 技能。
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+
 export const name = 'sdd-gatekeeper'
-export const inject = ['systemPrompt']
+export const inject = ['systemPrompt', 'subagents']
 
 const INSTRUCTION_FROM_RE = /(?:^|\n) *(?:Additional |Updated )?Instructions from: ([^\n]+)/g
 const SDD_SKILL_PREFIX = 'sdd-'
+
+const DEFAULT_MODELS = {
+  architect: { provider: 'fatfei-codex', model: 'deepseek-flash', reasoningEffort: 'max' },
+  worker: { provider: 'fatfei-codex', model: 'deepseek-flash', reasoningEffort: 'high' },
+  reviewer: { provider: 'fatfei-codex', model: 'deepseek-flash', reasoningEffort: 'max' },
+  explorer: { provider: 'fatfei-codex', model: 'deepseek-flash', reasoningEffort: 'low' },
+  librarian: { provider: 'fatfei-codex', model: 'deepseek-flash', reasoningEffort: 'low' },
+}
+
+export function readModelsConfig() {
+  const homeDir = process.env.DSH_HOME || path.join(os.homedir(), '.dsh')
+  const configPath = path.join(homeDir, 'osm-models.json')
+  try {
+    if (fs.existsSync(configPath)) {
+      const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+      return { ...DEFAULT_MODELS, ...parsed }
+    }
+  } catch {
+    // 忽略解析错误，平滑回退
+  }
+  return DEFAULT_MODELS
+}
 
 export function extractInstructionPaths(message) {
   const paths = []
@@ -59,7 +85,28 @@ export function apply(ctx, config) {
     return state
   }
 
-  // 1. 拦截与转换消息中的全量 AGENTS.md 注入
+  // 1. 注册专职子代理工具，每个工具在被调用时动态绑定 ~/.dsh/osm-models.json 里的模型
+  const ROLES = ['architect', 'worker', 'reviewer', 'explorer', 'librarian']
+  for (const role of ROLES) {
+    const toolName = `spawn_${role}`
+    ctx.on('tool/call', async (call, next) => {
+      if (call.name === toolName) {
+        const modelsConfig = readModelsConfig()
+        const roleConfig = modelsConfig[role] || DEFAULT_MODELS[role]
+        // 将调用定向到真实的 subagent 派发，并强制注入当前绑定的 provider/model/effort
+        const forwardedArgs = {
+          ...call.arguments,
+          provider: roleConfig.provider,
+          model: roleConfig.model,
+          reasoning_effort: roleConfig.reasoningEffort,
+        }
+        return ctx.tools?.subagent?.call?.(forwardedArgs) ?? next()
+      }
+      return next()
+    })
+  }
+
+  // 2. 拦截与转换消息中的全量 AGENTS.md 注入
   ctx.on('agent/pre-step', async (payload, next) => {
     const decision = await next()
     if (decision.kind !== 'enter') return decision
@@ -72,7 +119,6 @@ export function apply(ctx, config) {
 
     const filtered = []
     for (const message of decision.messages) {
-      // 检测来自 agent-instructions 的全量注入
       if (message?.source?.kind === 'agent-instructions') {
         if (!state.hinted) {
           const paths = extractInstructionPaths(message)
@@ -82,7 +128,6 @@ export function apply(ctx, config) {
             continue
           }
         } else {
-          // 已经给过 Hint，后续全量重复直接省略
           continue
         }
       }
@@ -112,7 +157,7 @@ export function apply(ctx, config) {
     return { ...decision, messages: filtered }
   }, { prepend: true })
 
-  // 2. 技能门控：在 system-prompt/assemble 阶段根据定级状态动态调整可用技能列表
+  // 3. 技能门控：在 system-prompt/assemble 阶段根据定级状态动态调整可用技能列表
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
     const assembled = await next()
     const session = context?.agent?.session
@@ -121,7 +166,6 @@ export function apply(ctx, config) {
     // 仅在明确处于 L0 或 L1 状态时过滤掉 sdd 技能
     if (state && (state.currentLevel === 'L0' || state.currentLevel === 'L1')) {
       if (Array.isArray(assembled.sections)) {
-        // 过滤 prompt 中的技能目录 section (若存在)
         assembled.sections = assembled.sections.map(section => {
           if (section?.name === 'skills:catalog' && typeof section?.text === 'string') {
             const filteredLines = section.text
@@ -138,7 +182,7 @@ export function apply(ctx, config) {
     return assembled
   })
 
-  // 3. 状态恢复 (Session Compaction)
+  // 4. 状态恢复 (Session Compaction)
   ctx.on('session/event', (session, event) => {
     if (event?.type === 'compaction/end') {
       const state = sessionStateMap.get(session)
