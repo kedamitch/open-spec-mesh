@@ -50,6 +50,20 @@
 - 端到端：在 `$HOME/.osm-selftest`（不用 `/tmp`，它是符号链接）下建 `home/.dsh` 与 `proj`，**不覆盖 `TMPDIR`** 跑 `install --host dsh`，exit=0，输出 `installed: /Users/zhangyefei/.osm-selftest/home/.dsh`，`<home>/.dsh/skills` 出现 `sdd-*`（`sdd-close`、`sdd-design`、`sdd-do`、`sdd-init`、`sdd-migrate` 等）；跑完 `rm -rf` 该目录并确认已删除。
 - 残余风险：发布失败时故意保留的锁目录（无 `owner.json`）不会自动清理，需人工删除；本次复验就被上一次复现留下的此类孤儿目录挡过一次，报 `Lock owner is missing or invalid; manual recovery is required`，人工 `rm -rf` 那个 `.lock` 目录后 exit=0。同类符号链接风险：任何把 `os.tmpdir()` 结果直接交给 `atomicWrite` 的路径都会在 macOS 上踩同一个坑，本次只修锁根目录。
 
+## 孤儿锁恢复通道（追加，已实现并通过测试，未发布）
+
+- 触发条件：进程在 `mkdirSync(<dir>.lock)` 成功之后、`owner.json` 原子改名之前退出（或其它人为干预），会留下一个**没有** `owner.json` 的空 `.lock` 目录。此后同目标的安装一律失败于 `install failed: Lock owner is missing or invalid; manual recovery is required: <tmp>/open-spec-mesh-locks-<uid>/install/<sha256>.lock`，而原 `recover-lock` 只认 token —— token 恰好存在那份丢失的 `owner.json` 里，用户只能手工 `rm -rf`。
+- 新语义（`lib/runtime/locks.js` 的 `recoverLock(namespace, target, ownerToken, { writersStopped, allowOrphan })`）：仅当 `owner.json` 不存在（`ENOENT`）且调用方显式传 `allowOrphan: true` 时，删除该锁目录并返回 `{ recovered: true, orphan: true, directory, namespace, target }`；锁目录必须仍是非符号链接的真实目录，路径必须来自 `lockPath(namespace, target)`，不接受调用方给的任意路径；删除用非递归的 `rmdirSync`——若这个窗口里写者刚发布 `owner.json`，删除会以 `ENOTEMPTY` 失败并提示人工处理，不会连带删掉活锁。
+- 新 CLI（`lib/runtime/recover-lock.js`）：`--force` 把 `allowOrphan` 置真，且**必须**同时给 `--writers-stopped`（CLI 与 `recoverLock` 两层都校验）；不带 `--force` 时 `allowOrphan: false`，孤儿锁维持原报错 `Lock owner is missing or unsafe; manual recovery is required`，仅在括号里追加可加 `--force` 的提示。成功孤儿清理输出一行 `recovered orphan lock: <dir>`；token 路径仍输出既有 JSON，`tests/node/runtime/paths-locks.test.js` 里那条 CLI 断言未改。
+- 仍然 fail-closed 的部分：`owner.json` 存在时行为完全不变——token/namespace/PID 校验、PID 活着即拒绝、`--writers-stopped` 前置；`--force` 不替代 token，对「有 owner」的锁执行 `recover-lock --home <home> --force --writers-stopped` 实测 exit=1 报 `A nonempty owner token is required`，锁目录与 `owner.json` 原样保留；`withLock` 获取逻辑与 `atomicWrite` 未改动。
+- 回归测试（并入 `tests/node/runtime/paths-locks.test.js`，不新建文件）：(a) 无 `owner.json` 时 `recoverLock(..., { writersStopped: true })` 抛错且锁目录仍在；(b) 加 `allowOrphan: true` 后成功、返回 `orphan: true`、目录被删除；(c) 有 `owner.json` 但 token 错、缺 token、PID 活着时，即使 `allowOrphan: true` 也一律拒绝且证据保留；(d) 未传 `writersStopped` 时任何恢复都拒绝。孤儿锁目录按真实锁规则构造：先用 `withLock` 取锁证明派生目录正确，再留下空目录。
+- 实测：`node --test tests/node/runtime/paths-locks.test.js` → tests 13 / pass 13 / fail 0；`node --test tests/node/dsh/*.test.js tests/node/installation/host-adapter.test.js` → tests 26 / pass 26 / fail 0；`node scripts/check_runtime.js` → `Runtime audit passed: syntax=143, Python-sources=0, package-files=382, lock=3, static-files=92`；`node bin/osm.js validate-docs` → `docs: valid`。
+- 端到端（目标建在 `$HOME/.osm-selftest-orphan/home`；不用 /tmp，它在本机是符号链接）：`withLock('install', ...)` 取锁后删掉 `owner.json` 造出空锁目录 →
+  - `node bin/osm.js recover-lock --home <home> --writers-stopped` → exit=1，stderr 为 `Lock owner is missing or unsafe; manual recovery is required (if no process holds this resource, re-run with --force to remove the ownerless lock directory)`，锁目录仍在；
+  - 同一命令加 `--force` → exit=0，stdout 为 `recovered orphan lock: /private/var/folders/.../open-spec-mesh-locks-501/install/<sha256>.lock`，锁目录消失；跑完 `rm -rf` 该 selftest 目录并确认已删除。
+- 参数口径：`recover-lock` 仍用 `--root/--home/--db` 派生 namespace 与目标（`install` 对应 `--home`），不新增 `--namespace/--target`，避免接受调用方给的任意锁路径。
+- 残余风险：若残留的是「有内容但没有 `owner.json`」的锁目录（例如 `atomicWrite` 的 `.owner.json.<pid>.<hex>.tmp` 残留），`--force` 会以 `Orphan lock directory is not empty; manual recovery is required: <dir>` 拒绝而不是递归删除，仍需人工处理。
+
 ## 记录边界
 
 本 Change 在 `C01-进行中`，因为修复尚未提交、尚未发版。文档只记录已发生的事实与实测输出（含失败与未验证项），不把"能挂载"写成"运行生效"，也不把未执行的验证写成通过。

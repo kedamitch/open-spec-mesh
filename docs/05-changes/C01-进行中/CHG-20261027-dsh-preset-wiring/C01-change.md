@@ -46,3 +46,4 @@
 
 - 2026-10-27 更名（不改路由语义）：预设显示名 `sdd模式` → `sdd`，与 `id: sdd` 一致、picker 显示更短（`dsh/cordis.patch.yml:7`；persona 首行标题同步为 `# sdd (Open Spec Mesh SDD & Quick)`）；角色模型 id `opencode-go/deepseek-flash` → `opencode-go/deepseek-v4.1-flash`，provider 与 reasoningEffort 不变。
 - 2026-10-27 顺带修复：本次验收中发现 macOS 默认 `TMPDIR` 下真实安装被锁发布阻断（`/var` 符号链接 + `atomicWrite` 父链检查），已在 `lib/runtime/locks.js` 修好并复验 exit=0，详见 [C04-delivery.md](C04-delivery.md) 的「顺带修复」；尚未发布。
+- 2026-10-27 孤儿锁恢复通道：`recover-lock --force --writers-stopped` 可显式清理没有 `owner.json` 的残留锁目录（有 owner 时仍必须给 token，`--force` 不能替代；未传 `--writers-stopped` 一律拒绝），已实现并通过 `tests/node/runtime/paths-locks.test.js`（13/13）与 CLI 端到端复验，详见 [C04-delivery.md](C04-delivery.md) 的「孤儿锁恢复通道」；尚未发布。

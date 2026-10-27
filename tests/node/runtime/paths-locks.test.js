@@ -226,3 +226,91 @@ test('a lock is not reentrant and is acquirable again after release', async () =
   await withStoreLock(root, async () => { order.push('again'); });
   assert.deepEqual(order, ['outer', 'again']);
 });
+
+function lockDirectoryFor(namespace, canonical) {
+  const uid = typeof process.getuid === 'function' ? process.getuid() : 'user';
+  const key = createHash('sha256').update(canonical, 'utf8').digest('hex');
+  return path.join(lockRootDir(), `open-spec-mesh-locks-${uid}`, namespace, `${key}.lock`);
+}
+
+function clearLockFixture(lockDirectory) {
+  if (!existsSync(lockDirectory)) return;
+  try { rmSync(path.join(lockDirectory, 'owner.json'), { force: true }); } catch { /* preserve evidence */ }
+  try { rmdirSync(lockDirectory); } catch { /* preserve evidence */ }
+}
+
+// An ownerless lock directory is what a crash between the exclusive mkdir and the owner rename
+// leaves behind. The path comes from the real lock rule: take the lock once to prove the derived
+// directory is the one the module uses, then leave that directory behind with no owner record.
+async function orphanLockFixture(namespace, root) {
+  const lockDirectory = lockDirectoryFor(namespace, root);
+  const ownerPath = path.join(lockDirectory, 'owner.json');
+  let observed;
+  await withLock(namespace, root, async () => { observed = JSON.parse(readFileSync(ownerPath, 'utf8')); });
+  assert.equal(observed.namespace, namespace);
+  assert.equal(observed.target, root);
+  assert.equal(existsSync(lockDirectory), false);
+  mkdirSync(lockDirectory, { recursive: true, mode: 0o700 });
+  return { lockDirectory, ownerPath };
+}
+
+test('(a) an ownerless lock directory fails closed without allowOrphan', async () => {
+  const root = rootPath(tempRoot());
+  const { lockDirectory } = await orphanLockFixture('install', root);
+  try {
+    assert.throws(
+      () => recoverLock('install', root, 'any-token', { writersStopped: true }),
+      /manual recovery is required/u,
+    );
+    assert.equal(existsSync(lockDirectory), true);
+    assert.equal(existsSync(path.join(lockDirectory, 'owner.json')), false);
+  } finally { clearLockFixture(lockDirectory); }
+});
+
+test('(b) allowOrphan removes the ownerless lock directory without a token', async () => {
+  const root = rootPath(tempRoot());
+  const { lockDirectory } = await orphanLockFixture('install', root);
+  try {
+    const result = recoverLock('install', root, undefined, { writersStopped: true, allowOrphan: true });
+    assert.equal(result.recovered, true);
+    assert.equal(result.orphan, true);
+    assert.equal(result.namespace, 'install');
+    assert.equal(result.target, root);
+    assert.equal(result.directory, lockDirectory);
+    assert.equal(existsSync(lockDirectory), false);
+  } finally { clearLockFixture(lockDirectory); }
+});
+
+test('(c) allowOrphan never overrides a present owner record', async () => {
+  const root = rootPath(tempRoot());
+  const { lockDirectory, ownerPath } = await orphanLockFixture('install', root);
+  try {
+    writeFileSync(ownerPath, `${JSON.stringify({ token: 'fixture-token', pid: process.pid, namespace: 'install', target: root })}\n`, { mode: 0o600 });
+    assert.throws(
+      () => recoverLock('install', root, 'wrong-token', { writersStopped: true, allowOrphan: true }),
+      /token or namespace does not match/u,
+    );
+    assert.throws(
+      () => recoverLock('install', root, undefined, { writersStopped: true, allowOrphan: true }),
+      /nonempty owner token is required/u,
+    );
+    assert.throws(
+      () => recoverLock('install', root, 'fixture-token', { writersStopped: true, allowOrphan: true }),
+      /still alive/u,
+    );
+    assert.equal(existsSync(ownerPath), true);
+    assert.equal(existsSync(lockDirectory), true);
+  } finally { clearLockFixture(lockDirectory); }
+});
+
+test('(d) every recovery path, orphan included, requires writersStopped', async () => {
+  const root = rootPath(tempRoot());
+  const { lockDirectory, ownerPath } = await orphanLockFixture('install', root);
+  try {
+    assert.throws(() => recoverLock('install', root, undefined, { allowOrphan: true }), /writers-stopped/u);
+    assert.equal(existsSync(lockDirectory), true);
+    writeFileSync(ownerPath, `${JSON.stringify({ token: 'fixture-token', pid: process.pid, namespace: 'install', target: root })}\n`, { mode: 0o600 });
+    assert.throws(() => recoverLock('install', root, 'fixture-token'), /writers-stopped/u);
+    assert.equal(existsSync(ownerPath), true);
+  } finally { clearLockFixture(lockDirectory); }
+});
