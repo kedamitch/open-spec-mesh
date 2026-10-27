@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readdirSync, realpathSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -52,7 +52,8 @@ test('lock mismatch fails closed before any install stage is created', (t) => {
 });
 
 test('runtime dependency failure is isolated, key-clean, and does not leak npm output', async (t) => {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'osm-runtime-failure-'));
+  // the stage path is reported canonically, so the fixture has to be canonical too
+  const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'osm-runtime-failure-')));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const capture = path.join(root, 'npm-call.json');
   const fakeNpm = path.join(root, 'npm');

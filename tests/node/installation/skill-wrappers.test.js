@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -9,7 +9,8 @@ import { REPO_ROOT } from './helpers.js';
 const CHANGE_ID = 'CHG-20260928-wrapper-smoke';
 
 function temporaryDirectory(t, prefix) {
-  const directory = mkdtempSync(path.join(os.tmpdir(), prefix));
+  // wrappers print canonical paths, so fixtures below /var/folders cannot be compared unresolved
+  const directory = realpathSync(mkdtempSync(path.join(os.tmpdir(), prefix)));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   return directory;
 }

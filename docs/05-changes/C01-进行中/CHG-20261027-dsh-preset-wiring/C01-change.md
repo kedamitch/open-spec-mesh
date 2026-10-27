@@ -38,12 +38,13 @@
 
 - 2026-10-27：用户要求"分析 open-spec-mesh 的 DSH 集成、对照梁神模式找出优化点和问题"，并明确先出报告、不改代码。
 - 2026-10-27：报告提交后，用户同意按报告内容修复，并授权进行真实挂载冒烟与补充本次 Change 文档。
-- 本次授权覆盖"修复 + 冒烟 + 文档"，不包含 commit、推送、发布或归档；因此本 Change 留在 `C01-进行中`，`docs/05-changes/index.md` 按进行中登记。
+- 本次授权覆盖"修复 + 冒烟 + 文档"，最初不含 commit；后续用户明确授权本地提交（不发布、不推送），因此已按 `d712192` / `42e0ecc` / `715078e` / `e7c06f7` 与本次 `fix(install)` 提交，Change 仍留在 `C01-进行中`（未发版即未归档）。
 
 ## 当前实施状态
 
-三段修复已落地，定向测试与静态审计结果见 [C04-delivery.md](C04-delivery.md)。安装器全流程、`npm run validate:core` 与真实会话中的运行时效果未验证，逐条列在 C04 的未验证清单，不写成通过。
+三段修复已落地，定向测试与静态审计结果见 [C04-delivery.md](C04-delivery.md)。安装器整目录测试（65/65）与 `--host dsh` 真实安装已跑通；`npm run validate:core` 仍未通过，但 47 条失败在干净 HEAD 上同样失败，属另一条特性线，未在本次修；真实会话中的运行时效果仍未观察。逐条列在 C04 的未验证清单，不写成通过。
 
 - 2026-10-27 更名（不改路由语义）：预设显示名 `sdd模式` → `sdd`，与 `id: sdd` 一致、picker 显示更短（`dsh/cordis.patch.yml:7`；persona 首行标题同步为 `# sdd (Open Spec Mesh SDD & Quick)`）；角色模型 id `opencode-go/deepseek-flash` → `opencode-go/deepseek-v4.1-flash`，provider 与 reasoningEffort 不变。
 - 2026-10-27 顺带修复：本次验收中发现 macOS 默认 `TMPDIR` 下真实安装被锁发布阻断（`/var` 符号链接 + `atomicWrite` 父链检查），已在 `lib/runtime/locks.js` 修好并复验 exit=0，详见 [C04-delivery.md](C04-delivery.md) 的「顺带修复」；尚未发布。
+- 2026-10-27 父链守卫规范化：`atomicWrite`/`safePath` 不再拒绝祖先里的符号链接，而是把祖先 `realpath` 后再写（直接父目录与目标本身的防护不变），同批修好 `tests/node/installation` 的 16 条失败与 `migrations.js` 的 catalog 路径比较，详见 [C04-delivery.md](C04-delivery.md) 的「父链守卫规范化与锁目录残留清理」。
 - 2026-10-27 孤儿锁恢复通道：`recover-lock --force --writers-stopped` 可显式清理没有 `owner.json` 的残留锁目录（有 owner 时仍必须给 token，`--force` 不能替代；未传 `--writers-stopped` 一律拒绝），已实现并通过 `tests/node/runtime/paths-locks.test.js`（13/13）与 CLI 端到端复验，详见 [C04-delivery.md](C04-delivery.md) 的「孤儿锁恢复通道」；尚未发布。

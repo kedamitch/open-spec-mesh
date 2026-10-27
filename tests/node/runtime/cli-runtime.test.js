@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, cpSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, cpSync, readFileSync, writeFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -84,7 +84,9 @@ test('explicit CLI works from a different cwd and with a project path containing
 test('source and installed skill layouts resolve a fixed runtime, not cwd or npm cache', () => {
   const source = resolveRuntime(import.meta.url);
   assert.equal(source.packageRoot, repo);
-  const home = mkdtempSync(path.join(tmpdir(), 'osm installed layout '));
+  // resolveRuntime canonicalizes the location, so the fixture must be canonical too: on macOS
+  // tmpdir() is /var/folders/... reached through the /var -> /private/var symlink.
+  const home = realpathSync(mkdtempSync(path.join(tmpdir(), 'osm installed layout ')));
   const runtimeRoot = path.join(home, 'open-spec-mesh/runtime');
   const skillEntry = path.join(home, 'skills/sdd-init/scripts/node_runtime.js');
   mkdirSync(path.dirname(skillEntry), { recursive: true });
