@@ -100,6 +100,16 @@
 
 附带的结构性观察：`.github/workflows/validate.yml:22` 与 `npm-publish.yml:48` 的矩阵只有 `ubuntu-latest`，而 Linux 上 `/var`、`/tmp` 是真目录，因此这类「祖先符号链接」平台缺陷在 CI 永远不可见。是否补一个 `macos-latest` job 属独立取舍，本次未动工作流。
 
+## 真实挂载失败的根因与修复：preset 行名按 profile 目录解析（追加，已提交、未发布）
+
+- 现象：GUI 预设选择器里 `sdd` 卡片显示「加载失败 — sdd-gatekeeper (./gatekeeper.mjs): never started」。
+- 消息来源：`dsh-agent-preset-registry/lib/index.js:158-165` 的 `auditRows`——只有 `entry.fiber === undefined` 才输出 `never started`；而 `cordis-plugin-loader/lib/index.js:452-463` 的 `_init()` 仅在 import 抛错时走 catch 分支并直接返回（错误只写日志），fiber 因此永远不建立。也就是说这不是 apply 里抛错（那会显示真实错误），而是**这一行根本没 import 成功**。
+- 根因：preset 里每一行的 `name` 按**声明它的 profile 目录**解析，而不是按 patch 文件所在目录。`dsh-app-boot/lib/index.js:4525` 设定 `ctx.baseUrl = pathToFileURL(dirname(absoluteConfigPath)).href + "/"`，loader 的 `.`-分支再用 `new URL(name, this.ctx.baseUrl)`（`cordis-plugin-loader/lib/index.js:218-221`）解析，于是 `./gatekeeper.mjs` 变成 `<profile>/gatekeeper.mjs`。实测该 URL：`ERR_MODULE_NOT_FOUND: Cannot find module '/Users/zhangyefei/.dsh/profiles/web/gatekeeper.mjs'`。
+- 为什么之前没发现：`anchorInsertedPluginNames`（`dsh-app-boot/lib/index.js:3962-3972`）只对**顶层 insert 行**（以及 `group: true` 行的 config）做 file URL 锚定；`@deepseek-ai/dsh-agent-preset` 这一行不带 `group` 标志，它的 `config.plugins` 从不被访问，相对名原样进入组合。因此 `dsh --profile web --dump-config` 只会打印 `name: ./gatekeeper.mjs`，从不 import——上一轮所谓「挂载闭环实测」实际只到 dump-config，这是本次之前口径不实的地方。
+- 修法：该行改为包内子路径 `open-spec-mesh/dsh`（`package.json` 的 `exports["./dsh"] = "./dsh/index.mjs"`），按 profile 的 node_modules 解析。同一条命令下的前后对照：旧名解析到 `<profile>/gatekeeper.mjs` 并 `ERR_MODULE_NOT_FOUND`；新名从 profile 目录 `import('open-spec-mesh/dsh')` 成功并导出 `apply`。
+- 回归守卫：新增 `tests/node/dsh/preset-rows.test.js`（2 个用例）——preset 行的 `name` 一律不得以 `.` 或 `/` 开头（相对名必然按 profile 目录解析），且 gatekeeper 行必须等于 `open-spec-mesh/dsh`、`exports["./dsh"]` 必须存在。`node --test tests/node/dsh/*.test.js` → **tests 22 / pass 22 / fail 0**。
+- 仍未验证：配置在 boot 时读入内存，这条修复要宿主**重启**后重新组合才生效；本次没有重启用户正在运行的宿主，因此「picker 里 sdd 卡片能加载、gatekeeper 能 started」仍待重启后确认。`dsh headless --patch` 无法代验——headless profile 没有 `agentPresets` 服务，实测只得到 `preset-sdd (@deepseek-ai/dsh-agent-preset): pending (waiting for service: agentPresets)`。
+
 ## 记录边界
 
-本 Change 在 `C01-进行中`，因为修复尚未提交、尚未发版。文档只记录已发生的事实与实测输出（含失败与未验证项），不把"能挂载"写成"运行生效"，也不把未执行的验证写成通过。
+本 Change 在 `C01-进行中`，因为修复已提交但尚未发版。文档只记录已发生的事实与实测输出（含失败与未验证项），不把"能挂载"写成"运行生效"，也不把未执行的验证写成通过。

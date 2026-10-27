@@ -161,4 +161,8 @@
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
           - id: sdd-gatekeeper
-            name: ./gatekeeper.mjs
+            # A preset row resolves against the PROFILE directory, not this file, so a
+            # relative './gatekeeper.mjs' became <profile>/gatekeeper.mjs and the row
+            # failed to import (picker showed "never started"). The package subpath
+            # resolves through the profile's node_modules instead.
+            name: open-spec-mesh/dsh
