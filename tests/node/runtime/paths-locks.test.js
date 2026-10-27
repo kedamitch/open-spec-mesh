@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, statSync, readFileSync, symlinkSync, existsSync, unlinkSync, rmdirSync, realpathSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, statSync, lstatSync, readFileSync, symlinkSync, existsSync, unlinkSync, rmdirSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
@@ -313,4 +313,108 @@ test('(d) every recovery path, orphan included, requires writersStopped', async 
     assert.throws(() => recoverLock('install', root, 'fixture-token'), /writers-stopped/u);
     assert.equal(existsSync(ownerPath), true);
   } finally { clearLockFixture(lockDirectory); }
+});
+
+// A crash can leave more than an empty directory: a half-written owner temp file, an abandoned
+// scratch directory, or a link someone dropped in. --force clears only the first two shapes.
+test('(e) allowOrphan clears first-level regular files and empty subdirectories', async () => {
+  const root = rootPath(tempRoot());
+  const { lockDirectory } = await orphanLockFixture('install', root);
+  try {
+    writeFileSync(path.join(lockDirectory, 'owner.json.1234.abcd.tmp'), 'half written\n', { mode: 0o600 });
+    mkdirSync(path.join(lockDirectory, 'scratch'), { mode: 0o700 });
+    const result = recoverLock('install', root, undefined, { writersStopped: true, allowOrphan: true });
+    assert.equal(result.recovered, true);
+    assert.equal(result.orphan, true);
+    assert.equal(result.namespace, 'install');
+    assert.equal(result.target, root);
+    assert.equal(result.directory, lockDirectory);
+    assert.deepEqual(result.removed, ['owner.json.1234.abcd.tmp', 'scratch']);
+    assert.equal(existsSync(lockDirectory), false);
+  } finally { rmSync(lockDirectory, { recursive: true, force: true }); }
+});
+
+test('(f) allowOrphan refuses a symlink and leaves the whole directory untouched', async () => {
+  const root = rootPath(tempRoot());
+  const outside = tempRoot();
+  const { lockDirectory } = await orphanLockFixture('install', root);
+  const linkPath = path.join(lockDirectory, 'escape');
+  try {
+    writeFileSync(path.join(outside, 'keep.txt'), 'must survive\n');
+    symlinkSync(path.join(outside, 'keep.txt'), linkPath);
+    writeFileSync(path.join(lockDirectory, 'removable.tmp'), 'clearable\n', { mode: 0o600 });
+    assert.throws(
+      () => recoverLock('install', root, undefined, { writersStopped: true, allowOrphan: true }),
+      /will not remove[\s\S]*escape/u,
+    );
+    assert.equal(lstatSync(linkPath).isSymbolicLink(), true);
+    assert.equal(readFileSync(path.join(outside, 'keep.txt'), 'utf8'), 'must survive\n');
+    // The refusal is decided before any removal, so a clearable neighbour survives too.
+    assert.equal(existsSync(path.join(lockDirectory, 'removable.tmp')), true);
+    assert.equal(existsSync(lockDirectory), true);
+  } finally {
+    rmSync(lockDirectory, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test('(g) allowOrphan refuses a non-empty subdirectory and preserves its contents', async () => {
+  const root = rootPath(tempRoot());
+  const { lockDirectory } = await orphanLockFixture('install', root);
+  const nested = path.join(lockDirectory, 'nested');
+  try {
+    mkdirSync(nested, { mode: 0o700 });
+    writeFileSync(path.join(nested, 'evidence.txt'), 'keep me\n', { mode: 0o600 });
+    writeFileSync(path.join(lockDirectory, 'removable.tmp'), 'clearable\n', { mode: 0o600 });
+    assert.throws(
+      () => recoverLock('install', root, undefined, { writersStopped: true, allowOrphan: true }),
+      /will not remove[\s\S]*nested/u,
+    );
+    assert.equal(readFileSync(path.join(nested, 'evidence.txt'), 'utf8'), 'keep me\n');
+    assert.equal(existsSync(path.join(lockDirectory, 'removable.tmp')), true);
+    assert.equal(existsSync(lockDirectory), true);
+  } finally { rmSync(lockDirectory, { recursive: true, force: true }); }
+});
+
+test('(i) allowOrphan refuses a special file and preserves it', (t) => {
+  if (process.platform === 'win32') return t.skip('mkfifo is POSIX only');
+  const root = rootPath(tempRoot());
+  return (async () => {
+    const { lockDirectory } = await orphanLockFixture('install', root);
+    const fifo = path.join(lockDirectory, 'pipe');
+    try {
+      const made = spawnSync('mkfifo', [fifo], { encoding: 'utf8' });
+      if (made.status !== 0) { t.skip(`mkfifo unavailable: ${made.error?.message ?? made.stderr}`); return; }
+      writeFileSync(path.join(lockDirectory, 'removable.tmp'), 'clearable\n', { mode: 0o600 });
+      assert.throws(
+        () => recoverLock('install', root, undefined, { writersStopped: true, allowOrphan: true }),
+        /will not remove[\s\S]*pipe/u,
+      );
+      assert.equal(lstatSync(fifo).isFIFO(), true);
+      assert.equal(existsSync(path.join(lockDirectory, 'removable.tmp')), true);
+    } finally { rmSync(lockDirectory, { recursive: true, force: true }); }
+  })();
+});
+
+test('(h) recover-lock --force clears leftovers through the CLI and still refuses an owner record', async () => {
+  const home = rootPath(tempRoot());
+  const bin = path.resolve('bin/osm.js');
+  const { lockDirectory, ownerPath } = await orphanLockFixture('install', home);
+  try {
+    writeFileSync(path.join(lockDirectory, 'owner.json.dead.tmp'), 'stale\n', { mode: 0o600 });
+    mkdirSync(path.join(lockDirectory, 'scratch'), { mode: 0o700 });
+    const cli = spawnSync(process.execPath, [bin, 'recover-lock', '--home', home, '--force', '--writers-stopped'], { encoding: 'utf8' });
+    assert.equal(cli.status, 0, cli.stderr);
+    assert.equal(cli.stdout.trim(), `recovered orphan lock: ${lockDirectory}`);
+    assert.equal(existsSync(lockDirectory), false);
+
+    // A live owner record is never reachable from --force, whatever else the directory holds.
+    mkdirSync(lockDirectory, { recursive: true, mode: 0o700 });
+    writeFileSync(ownerPath, `${JSON.stringify({ token: 'fixture-token', pid: process.pid, namespace: 'install', target: home })}\n`, { mode: 0o600 });
+    const refused = spawnSync(process.execPath, [bin, 'recover-lock', '--home', home, '--force', '--writers-stopped'], { encoding: 'utf8' });
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stderr, /A nonempty owner token is required/u);
+    assert.equal(existsSync(ownerPath), true);
+    assert.equal(existsSync(lockDirectory), true);
+  } finally { rmSync(lockDirectory, { recursive: true, force: true }); }
 });
