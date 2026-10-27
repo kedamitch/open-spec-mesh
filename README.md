@@ -8,15 +8,15 @@ Node.js tools and reusable Agent/Skill guidance for **Quick** and **human-driven
 
 - Node.js **22.0.0 or newer**, a compatible npm, and Git.
 - Linux/macOS host configuration paths. Minimum-version validation uses Node 22.0.0 with npm 10; installing the newest npm is not required.
-- An existing Codex, OpenCode or Claude Code installation. This package does not install the host application or supply model credentials.
+- An existing Codex, OpenCode, Claude Code or DeepSeek Harness (DSH) installation. This package does not install the host application or supply model credentials.
 
 ## Install from the public npm registry
 
-Public npm release **0.0.1 is published**. The commands below install that version. If a mirror returns E404, verify the registry rather than treating a local pack as publication.
+Public npm release **0.1.0 is published**. The commands below install that version. If a mirror returns E404, verify the registry rather than treating a local pack as publication.
 
 ```sh
 # 1. Install the command (does not modify host configuration).
-npm install --global open-spec-mesh@0.0.1 --registry=https://registry.npmjs.org/
+npm install --global open-spec-mesh@0.1.0 --registry=https://registry.npmjs.org/
 open-spec-mesh --version
 
 # 2. Preview and explicitly configure Codex.
@@ -24,7 +24,7 @@ open-spec-mesh install --host codex --skip-tools --dry-run
 open-spec-mesh install --host codex --skip-tools
 ```
 
-The expected command version is `0.0.1`. Start a new host session after installation so it loads the updated rules, roles and Skills.
+The expected command version is `0.1.0`. Start a new host session after installation so it loads the updated rules, roles and Skills.
 
 `--skip-tools` installs the core toolkit without installing Research tools. It does not claim Research MCP availability and does not enable System One. npm installation has no `postinstall` hook that configures Home; the explicit `open-spec-mesh install` step is required.
 
@@ -43,21 +43,33 @@ open-spec-mesh install --host codex --host-home "/path/to/codex home" --skip-too
 
 ### Install as a DeepSeek Harness (DSH) Plugin
 
-`open-spec-mesh` natively supports running as a DSH bundle plugin, providing the **sdd模式** agent preset:
+`open-spec-mesh` ships a DSH bundle preset. It requires **DSH 0.2.1-rc.4 or newer** (`engines.dsh` is `>=0.2.1-rc.4`): the preset mounts the `@deepseek-ai/dsh-tool-subagent-control/list-agents` subpath that this release introduces. DSH reads `engines.dsh` and refuses to install or activate the plugin outside that range.
 
 ```sh
-# Install to DSH web profile
-dsh plugin --profile web add open-spec-mesh
+# Mount the bundle into a profile. The argument is a registry package name or a path to
+# a checkout; DSH forwards it to pnpm inside the profile directory.
+dsh plugin --profile <profile> add open-spec-mesh
+# Unmount.
+dsh plugin --profile <profile> remove open-spec-mesh
 ```
 
-Once installed, select **sdd模式** in the DSH Web UI preset picker. It provides automated L0/L1/L2 complexity triage with progressive skill gating.
+Restart the profile, then choose **sdd** in the preset picker; it adds L0/L1/L2 complexity triage with progressive skill gating.
+
+The two DSH entry points cover different work and do not overlap:
+
+| Command | Writes | Does not write |
+|---|---|---|
+| `dsh plugin --profile <profile> add open-spec-mesh` | The package in the DSH profile plugin set that supplies the **sdd** preset | Project `AGENTS.md`; skills under `$DSH_HOME/skills` |
+| `osm install --host dsh` | The managed section of the target project `AGENTS.md`; the `sdd-*` skills into `$DSH_HOME/skills` | `agents/*.md` (DSH does not read them); Research tools (DSH configures MCP inside the preset); `--with-laya` fails closed |
+
+Role routing: the preset `osm:role-routes` section renders `~/.dsh/osm-models.json` (`$DSH_HOME` overrides the base directory) into a role → `provider` / `model` / `reasoning_effort` table, and the agent dispatches with the native `subagent` tool by passing those three values explicitly. `osm models list|set|reset` only edits that file; `osm` validates no allowlist, so a route the DSH session does not allow is rejected by DSH, not by `osm`.
 
 Default homes also honor `CODEX_HOME`, `OPENCODE_CONFIG_DIR` and `CLAUDE_CONFIG_DIR`. `--codex-home` remains a Codex compatibility option. Host startup examples are in the [operations guide](docs/04-operations/O02-applications/O02-01-local-toolkit.md).
 
 ### Run without a global install
 
 ```sh
-npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.0.1 -- \
+npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.1.0 -- \
   open-spec-mesh install --host codex --skip-tools
 ```
 
@@ -71,7 +83,7 @@ open-spec-mesh install --host codex --skip-tools
 
 # Or build a portable artifact; dependencies still need npm access/cache.
 npm pack
-npm install --global ./open-spec-mesh-0.0.1.tgz
+npm install --global ./open-spec-mesh-0.1.0.tgz
 open-spec-mesh install --host codex --skip-tools
 ```
 
@@ -93,9 +105,9 @@ npm uninstall --global open-spec-mesh
 - If the command is not found, add your npm global executable directory to `PATH` (on Linux/macOS, typically `$(npm prefix -g)/bin`). For permission errors, use a user-owned Node installation/global prefix rather than automatically running host configuration with `sudo`.
 - The [publication guide](docs/04-operations/O02-applications/O02-02-npm-publication.md) distinguishes a verified local artifact, authentication, and a successful registry publication.
 
-## osm shortcut (local source only; not published yet)
+## osm shortcut (shipped since 0.1.0)
 
-Public npm 0.0.1 still uses open-spec-mesh. The local source now includes osm; run npm ci and npm install -g . in the checkout to use it (not a registry upgrade).
+The public package **0.1.0** provides both `osm` and `open-spec-mesh`. Every published version from 0.1.0 onward ships `osm`, so no local checkout is required; `osm` is a shorter equivalent entry point, not a separate registry upgrade.
 
 ```sh
 osm --dry-run  # Preview the default Codex install without writing Home.
@@ -165,7 +177,7 @@ Full validation additionally requires real host CLIs, Docker, Mermaid and Resear
 
 See [rules](AGENTS.md), [tool guide](sdd-init/references/runtime-guide.md), [document guidance](sdd-init/references/document-contract.md) and [project documentation](docs/index.md).
 
-## Collaboration efficiency (current source, not yet published)
+## Collaboration efficiency (shipped since 0.0.3)
 
 The complete documentation layout remains: C01/C02/C03, independent Task documents, Delivery, and navigation. Shared facts are referenced instead of rewritten. Delegate only for a plausible net benefit; serial work stays with Main. Designs separate binding behavioral/security/public contracts, adjustable implementation choices, and unverified assumptions. See the [collaboration guide](sdd-init/references/collaboration-guide.md).
 
@@ -182,7 +194,7 @@ npm run check:workflow
 npm run sync:workflow
 ```
 
-Without a historical Graph, legacy first-pass/rework measures are not applicable or unknown, never fabricated zeroes. Observed Main/child token deltas are deduplicated per session/slice; complete totals require complete coverage. Pricing and real savings remain unknown. Optional operator rework marks and a fixed-baseline comparison are documented in the [evaluation guide](sdd-init/references/collaboration-evaluation.md). Static checks, deterministic fixtures, trace-action checks, and actual model performance are different evidence levels. These changes do not mean public 0.0.2 or an existing Host Home has been upgraded.
+Without a historical Graph, legacy first-pass/rework measures are not applicable or unknown, never fabricated zeroes. Observed Main/child token deltas are deduplicated per session/slice; complete totals require complete coverage. Pricing and real savings remain unknown. Optional operator rework marks and a fixed-baseline comparison are documented in the [evaluation guide](sdd-init/references/collaboration-evaluation.md). Static checks, deterministic fixtures, trace-action checks, and actual model performance are different evidence levels. These documents ship in the published package from 0.0.3 onward; installing or upgrading the package does not upgrade an existing Host Home.
 
 Evaluation defaults to JSON and retains the existing exit behavior: incomplete can exit 0. Opt in to `--fail-on-incomplete` for exit 3; action failures exit 1 and argument errors exit 2. Even `supported_checks_passed` leaves semantic quality and human acceptance unverified.
 

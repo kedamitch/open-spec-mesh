@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Node.js runtime for Open Spec Mesh first-party tools",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.0.0",
+    "dsh": ">=0.2.1-rc.4"
   },
   "bin": {
     "open-spec-mesh": "./bin/open-spec-mesh.js",
@@ -19,7 +20,7 @@
     "./dsh": "./dsh/index.mjs",
     "./dsh/patch": "./dsh/cordis.patch.yml",
     "./dsh/icon": "./dsh/icon.svg",
-    "./dsh/locale/*": "./dsh/locale/*.json"
+    "./package.json": "./package.json"
   },
   "dsh": {
     "bundle": {
@@ -31,7 +32,6 @@
     "dsh/**/*.mjs",
     "dsh/**/*.yml",
     "dsh/**/*.md",
-    "dsh/**/*.json",
     "dsh/**/*.svg",
     "bin/open-spec-mesh.js",
     "bin/osm.js",

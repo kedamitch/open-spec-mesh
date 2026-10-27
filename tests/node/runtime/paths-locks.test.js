@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, statSync, readFileSync, symlinkSync, existsSync, unlinkSync, rmdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, statSync, readFileSync, symlinkSync, existsSync, unlinkSync, rmdirSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
@@ -9,9 +9,13 @@ import { once } from 'node:events';
 import { safeInside, rootPath } from '../../../lib/runtime/paths.js';
 import { atomicWrite } from '../../../lib/runtime/io.js';
 import { readTextCompat } from '../../../lib/runtime/text.js';
-import { withProjectLock, withStoreLock, recoverLock } from '../../../lib/runtime/locks.js';
+import { pathToFileURL } from 'node:url';
+import { withLock, withProjectLock, withStoreLock, recoverLock } from '../../../lib/runtime/locks.js';
 
-function tempRoot() { return mkdtempSync(path.join(tmpdir(), 'osm runtime test space ')); }
+// TMPDIR is spelled through a symlink on macOS (/var -> /private/var); atomicWrite refuses any
+// symlinked ancestor, so both the lock root and the test fixtures use the real path.
+function lockRootDir() { return realpathSync(tmpdir()); }
+function tempRoot() { return mkdtempSync(path.join(lockRootDir(), 'osm runtime test space ')); }
 
 test('safe path resolution accepts spaces but rejects traversal and symlinks', (t) => {
   const root = tempRoot();
@@ -58,7 +62,7 @@ test('a lock contender waits for an incomplete owner publication without deletin
   const root = rootPath(tempRoot());
   const uid = typeof process.getuid === 'function' ? process.getuid() : 'user';
   const key = createHash('sha256').update(root, 'utf8').digest('hex');
-  const lockDirectory = path.join(tmpdir(), `open-spec-mesh-locks-${uid}`, 'store', `${key}.lock`);
+  const lockDirectory = path.join(lockRootDir(), `open-spec-mesh-locks-${uid}`, 'store', `${key}.lock`);
   const ownerPath = path.join(lockDirectory, 'owner.json');
   mkdirSync(lockDirectory, { recursive: true, mode: 0o700 });
   const incomplete = Buffer.from('{"token":"initializing"', 'utf8');
@@ -121,7 +125,7 @@ test('a missing or persistently incomplete owner fails closed and preserves lock
     const root = rootPath(tempRoot());
     const uid = typeof process.getuid === 'function' ? process.getuid() : 'user';
     const key = createHash('sha256').update(root, 'utf8').digest('hex');
-    const lockDirectory = path.join(tmpdir(), `open-spec-mesh-locks-${uid}`, 'store', `${key}.lock`);
+    const lockDirectory = path.join(lockRootDir(), `open-spec-mesh-locks-${uid}`, 'store', `${key}.lock`);
     const ownerPath = path.join(lockDirectory, 'owner.json');
     mkdirSync(lockDirectory, { recursive: true, mode: 0o700 });
     if (incomplete) writeFileSync(ownerPath, incomplete, { mode: 0o600 });
@@ -163,7 +167,7 @@ test('killed lock owner remains fail-closed until exact-token recovery', async (
   await assert.rejects(withProjectLock(root, () => {}), /explicit recovery required/);
   const uid = typeof process.getuid === 'function' ? process.getuid() : 'user';
   const key = createHash('sha256').update(root, 'utf8').digest('hex');
-  const ownerPath = path.join(tmpdir(), `open-spec-mesh-locks-${uid}`, 'project', `${key}.lock`, 'owner.json');
+  const ownerPath = path.join(lockRootDir(), `open-spec-mesh-locks-${uid}`, 'project', `${key}.lock`, 'owner.json');
   const owner = JSON.parse(readFileSync(ownerPath, 'utf8'));
   assert.throws(() => recoverLock('project', root, owner.token), /writers-stopped/);
   const bin = path.resolve('bin/open-spec-mesh.js');
@@ -171,4 +175,54 @@ test('killed lock owner remains fail-closed until exact-token recovery', async (
   assert.equal(cli.status, 0, cli.stderr);
   assert.deepEqual(JSON.parse(cli.stdout), { recovered: true, namespace: 'project', target: root });
   await withProjectLock(root, () => 'ok');
+});
+
+
+test('a symlinked TMPDIR publishes the owner under the real lock root', async () => {
+  const root = mkdtempSync(path.join(lockRootDir(), 'osm tmpdir link '));
+  const real = path.join(root, 'real');
+  const link = path.join(root, 'link');
+  const target = path.join(root, 'target');
+  mkdirSync(real);
+  mkdirSync(target);
+  symlinkSync(real, link, 'dir');
+  const uid = typeof process.getuid === 'function' ? process.getuid() : 'user';
+  const key = createHash('sha256').update(rootPath(target), 'utf8').digest('hex');
+  const lockDirectory = path.join(real, `open-spec-mesh-locks-${uid}`, 'install', `${key}.lock`);
+  const previous = process.env.TMPDIR;
+  process.env.TMPDIR = link;
+  try {
+    // Re-import under the symlinked TMPDIR so the module-level lock root is recomputed.
+    const moduleUrl = pathToFileURL(path.resolve('lib/runtime/locks.js')).href;
+    const reloaded = await import(`${moduleUrl}?tmpdir=${encodeURIComponent(link)}`);
+    let calls = 0;
+    let held;
+    await reloaded.withLock('install', target, async () => {
+      calls += 1;
+      held = JSON.parse(readFileSync(path.join(lockDirectory, 'owner.json'), 'utf8'));
+    });
+    assert.equal(calls, 1);
+    assert.equal(held.namespace, 'install');
+    assert.equal(held.target, rootPath(target));
+    assert.equal(existsSync(lockDirectory), false);
+  } finally {
+    if (previous === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = previous;
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('a lock is not reentrant and is acquirable again after release', async () => {
+  const root = rootPath(tempRoot());
+  const uid = typeof process.getuid === 'function' ? process.getuid() : 'user';
+  const key = createHash('sha256').update(root, 'utf8').digest('hex');
+  const lockDirectory = path.join(lockRootDir(), `open-spec-mesh-locks-${uid}`, 'store', `${key}.lock`);
+  const order = [];
+  await withStoreLock(root, async () => {
+    order.push('outer');
+    await assert.rejects(withStoreLock(root, () => {}), /Lock is not reentrant/u);
+    assert.equal(existsSync(path.join(lockDirectory, 'owner.json')), true);
+  });
+  assert.equal(existsSync(lockDirectory), false);
+  await withStoreLock(root, async () => { order.push('again'); });
+  assert.deepEqual(order, ['outer', 'again']);
 });

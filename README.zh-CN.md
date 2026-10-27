@@ -8,15 +8,15 @@ Node.js 工具集与 **Quick / 人工推动的 SDD 研发规范**。旧自动 SD
 
 - **Node.js 22.0.0 及以上**、兼容的 npm、Git。
 - Linux/macOS 宿主配置路径；最低版本使用 Node 22.0.0 + npm 10 验证，不要求安装最新版 npm。
-- 已安装 Codex、OpenCode 或 Claude Code。本包不安装这些宿主，不提供模型账号或密钥。
+- 已安装 Codex、OpenCode、Claude Code 或 DeepSeek Harness (DSH)。本包不安装这些宿主，不提供模型账号或密钥。
 
 ## 从 npm 公共仓库安装
 
-公共 npm **0.0.1 已发布**；以下命令按该版本安装。若使用镜像遇到 E404，请核对 registry，不要把本地打包成功当成发布成功。
+公共 npm **0.1.0 已发布**；以下命令按该版本安装。若使用镜像遇到 E404，请核对 registry，不要把本地打包成功当成发布成功。
 
 ```sh
 # 第一步：安装全局命令，不会自动改动宿主配置。
-npm install -g open-spec-mesh@0.0.1 --registry=https://registry.npmjs.org/
+npm install -g open-spec-mesh@0.1.0 --registry=https://registry.npmjs.org/
 open-spec-mesh --version
 
 # 第二步：预览并显式配置 Codex。
@@ -24,7 +24,7 @@ open-spec-mesh install --host codex --skip-tools --dry-run
 open-spec-mesh install --host codex --skip-tools
 ```
 
-预期命令版本为 `0.0.1`。安装后新开宿主会话，让其读取最新 Rules、Role 和 Skill。
+预期命令版本为 `0.1.0`。安装后新开宿主会话，让其读取最新 Rules、Role 和 Skill。
 
 `--skip-tools` 只安装核心工具包，不额外安装 Research 工具，不宣称 Research MCP 可用，也不启用 System One。npm 安装没有擅改 Home 的 postinstall；**全局命令安装与宿主配置安装是两步**。
 
@@ -43,24 +43,33 @@ open-spec-mesh install --host codex --host-home "/path/to/codex home" --skip-too
 
 ### 在 DeepSeek Harness (DSH) 中作为插件安装
 
-open-spec-mesh 原生支持作为 DSH Cordis Bundle 插件运行，提供全功能「sdd模式」Agent 预设：
+open-spec-mesh 提供 DSH Bundle 预设，要求 **DSH 0.2.1-rc.4 或更新版本**（`engines.dsh` 为 `>=0.2.1-rc.4`）：预设挂载的 `@deepseek-ai/dsh-tool-subagent-control/list-agents` 子路径从该版本才提供。DSH 读取 `engines.dsh`，低于该范围会拒绝安装或激活插件。
 
 ```sh
-# 方式一：通过 DSH Plugin CLI 安装到 Web profile
-dsh plugin --profile web add open-spec-mesh
-
-# 方式二：通过 osm CLI 配置到 DSH
-osm install --host dsh --skip-tools
+# 把 Bundle 挂载到某个 profile。参数是 registry 包名或本地仓库路径，
+# DSH 会把它转发给 profile 目录内的 pnpm。
+dsh plugin --profile <profile> add open-spec-mesh
+# 卸载挂载。
+dsh plugin --profile <profile> remove open-spec-mesh
 ```
 
-安装后启动或刷新 DSH Web UI，新建会话时即可在预设选择器中直接选择 **「sdd模式」**。该预设具备 L0/L1/L2 自动档位识别与渐进式门控。
+重启该 profile 后，在预设选择器中选择 **「sdd」**；该预设带 L0/L1/L2 自动定级与渐进式门控。
+
+DSH 的两个入口分工不同、互不重叠：
+
+| 命令 | 写入 | 不写入 |
+|---|---|---|
+| `dsh plugin --profile <profile> add open-spec-mesh` | 该 DSH profile 的插件集合，由此提供 **「sdd」** 预设 | 项目 `AGENTS.md`；`$DSH_HOME/skills` 下的技能 |
+| `osm install --host dsh` | 目标项目 `AGENTS.md` 的受管章节；`sdd-*` 技能装到 `$DSH_HOME/skills` | `agents/*.md`（DSH 不读）；Research 工具（DSH 的 MCP 在 preset 内配置）；`--with-laya` 直接失败 |
+
+角色路由：预设里的 `osm:role-routes` section 把 `~/.dsh/osm-models.json`（`$DSH_HOME` 可覆盖基目录）渲染成「角色 → `provider` / `model` / `reasoning_effort`」表，模型派发时用原生 `subagent` 工具显式传这三项。`osm models list|set|reset` 只写这份文件；osm 自身不校验 allowlist，超出 DSH 会话允许范围的路由由 DSH 拒绝，而不是由 osm 拒绝。
 
 默认目录同时支持 `CODEX_HOME`、`OPENCODE_CONFIG_DIR`、`CLAUDE_CONFIG_DIR`。Codex 兼容参数 `--codex-home` 保留。具体宿主启动方法见 [运行指南](docs/04-operations/O02-applications/O02-01-local-toolkit.md)。
 
 ### 不安装全局命令，直接运行
 
 ```sh
-npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.0.1 -- \
+npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.1.0 -- \
   open-spec-mesh install --host codex --skip-tools
 ```
 
@@ -74,7 +83,7 @@ open-spec-mesh install --host codex --skip-tools
 
 # 或生成便携 tarball；依赖安装仍需 npm 网络或缓存。
 npm pack
-npm install -g ./open-spec-mesh-0.0.1.tgz
+npm install -g ./open-spec-mesh-0.1.0.tgz
 open-spec-mesh install --host codex --skip-tools
 ```
 
@@ -96,9 +105,9 @@ npm uninstall -g open-spec-mesh
 - 命令找不到时检查 npm 全局 bin 的 `PATH`，Linux/macOS 通常为 `$(npm prefix -g)/bin`。权限问题优先使用用户自有的 Node/global prefix，不自动用 sudo 改写宿主配置。
 - 发布者操作见 [npm 发布指南](docs/04-operations/O02-applications/O02-02-npm-publication.md)；登录、打包、dry-run、真实上传是不同状态。
 
-## osm 短命令（本地源码已实现，尚未发布）
+## osm 短命令（自 0.1.0 起随发布提供）
 
-当前 npm 0.0.1 仍使用 open-spec-mesh。osm 已在本地源码提供；需在源码目录 npm ci 后 npm install -g . 才可使用（这不是 registry 升级）。
+公共 npm **0.1.0** 已同时提供 `osm` 与 `open-spec-mesh`。0.1.0 及以后的发布版本都带 `osm`，不需要本地源码安装；osm 是更短的等价入口，不是另一种 registry 升级。
 
 ```sh
 osm --dry-run  # 默认 Codex 安装预览，不写 Home
@@ -168,7 +177,7 @@ full 另需真实宿主 CLI、Docker、Mermaid 与 Research 工具。缺失前�
 
 更多说明见 [工作约定](AGENTS.md)、[工具指南](sdd-init/references/runtime-guide.md)、[文档规范](sdd-init/references/document-contract.md) 和 [项目文档](docs/index.md)。
 
-## 协作效率优化（当前源码，尚未发布）
+## 协作效率优化（自 0.0.3 起随发布提供）
 
 保留完整文档结构，减少重复内容而非删除 C01/C02/C03、独立 Task 或 Delivery。委派先判断净收益，串行由 Main 连续完成；设计只约束稳定的行为、安全和公共契约，内部实现可自主调整。详见 [协作边界](sdd-init/references/collaboration-guide.md)。
 
@@ -185,7 +194,7 @@ npm run check:workflow
 npm run sync:workflow
 ```
 
-人工流程没有历史 Graph 时，旧首轮通过/返工指标显示不适用或未知，不显示虚假零返工。用量包括已观测 Main/子会话，按 session/slice 去重，完整总量仅在覆盖完整时提供；金额和真实节省尚未验证。可选人工返工标注与固定基线对照见 [评估方案](sdd-init/references/collaboration-evaluation.md)。文件核验、trace检查、确定性fixture和真实模型评测不是同一层证据。
+人工流程没有历史 Graph 时，旧首轮通过/返工指标显示不适用或未知，不显示虚假零返工。用量包括已观测 Main/子会话，按 session/slice 去重，完整总量仅在覆盖完整时提供；金额和真实节省尚未验证。可选人工返工标注与固定基线对照见 [评估方案](sdd-init/references/collaboration-evaluation.md)。文件核验、trace检查、确定性fixture和真实模型评测不是同一层证据。这些文档自 0.0.3 起随发布包提供；安装或升级本包不会自动升级已有的 Host Home。
 
 评估默认JSON并保持既有退出行为：incomplete也可能退出0；自动化可用 `--fail-on-incomplete` 令其退出3，动作检查失败为1、参数错误为2。即使 `supported_checks_passed`，语义质量与人工验收仍未验证。
 
