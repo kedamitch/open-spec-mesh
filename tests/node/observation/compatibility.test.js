@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { realpathSync } from 'node:fs';
 import { chmod, copyFile, mkdir, mkdtemp, rm, symlink } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,7 +12,7 @@ import { baseRows, endRow, envelope, writeRows } from './helpers.js';
 
 const fixture = (name) => new URL(`../../fixtures/migration/observation/${name}`, import.meta.url);
 async function setup(t) {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-compat-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-compat-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const project = path.join(temp, 'project'), rules = path.join(temp, 'rules'), sessions = path.join(temp, 'sessions');
   await Promise.all([mkdir(project), mkdir(rules), mkdir(sessions)]);
@@ -127,7 +128,7 @@ test('scan splits turns, enforces bounds, and records malformed header omissions
 });
 
 test('migration fixtures with foreign ownership and unsupported schema remain byte-identical', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-compat-db-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-compat-db-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   for (const name of ['foreign.sqlite3', 'unsupported-version.sqlite3']) {
     const target = path.join(temp, name); await copyFile(fixture(name), target); await chmod(target, 0o600);
@@ -138,7 +139,7 @@ test('migration fixtures with foreign ownership and unsupported schema remain by
 });
 
 test('failed export/publish after transaction commit keeps the prior SQLite bytes', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-compat-db-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-compat-db-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const db = path.join(temp, 'store.sqlite3');
   const run = { project_key: 'p', root_session: 'r', turn: null, expectation: { mode: 'unknown', roles: [], source: 'operator_not_model' }, sdd: { association: 'unknown' }, collected_at: '2026-09-28T00:00:00Z', events: [], sessions: [], findings: [], metrics: {} };

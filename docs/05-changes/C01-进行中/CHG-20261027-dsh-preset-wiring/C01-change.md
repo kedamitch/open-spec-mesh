@@ -42,7 +42,7 @@
 
 ## 当前实施状态
 
-三段修复已落地，定向测试与静态审计结果见 [C04-delivery.md](C04-delivery.md)。安装器整目录测试（65/65）与 `--host dsh` 真实安装已跑通；`npm run validate:core` 仍未通过，但 47 条失败在干净 HEAD 上同样失败，属另一条特性线，未在本次修；真实会话中的运行时效果仍未观察。逐条列在 C04 的未验证清单，不写成通过。
+三段修复已落地，定向测试与静态审计结果见 [C04-delivery.md](C04-delivery.md)。安装器整目录测试（65/65）与 `--host dsh` 真实安装已跑通；`npm run validate:core` 原先的 47 条失败已查明同属 macOS 祖先符号链接根因，按「只改测试夹具、产品语义不动」修完，现为 tests 269 / pass 269 / fail 0；仍待处理的是三条已登记的产品设计议题（见 C04），真实会话中的运行时效果仍未观察。逐条列在 C04 的未验证清单，不写成通过。
 
 - 2026-10-27 更名（不改路由语义）：预设显示名 `sdd模式` → `sdd`，与 `id: sdd` 一致、picker 显示更短（`dsh/cordis.patch.yml:7`；persona 首行标题同步为 `# sdd (Open Spec Mesh SDD & Quick)`）；角色模型 id `opencode-go/deepseek-flash` → `opencode-go/deepseek-v4.1-flash`，provider 与 reasoningEffort 不变。
 - 2026-10-27 顺带修复：本次验收中发现 macOS 默认 `TMPDIR` 下真实安装被锁发布阻断（`/var` 符号链接 + `atomicWrite` 父链检查），已在 `lib/runtime/locks.js` 修好并复验 exit=0，详见 [C04-delivery.md](C04-delivery.md) 的「顺带修复」；尚未发布。

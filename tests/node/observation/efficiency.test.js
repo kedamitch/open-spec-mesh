@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { realpathSync } from 'node:fs';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -36,7 +37,7 @@ test('disjoint grouped slices can reuse a session and exact token arithmetic sta
 });
 
 test('manual task inventory has no inferred state or zero-rework metric', async (t) => {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'osm-efficiency-')); t.after(() => rm(root, { recursive: true, force: true }));
+  const root = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-efficiency-'))); t.after(() => rm(root, { recursive: true, force: true }));
   const id = 'CHG-20260930-efficiency', dir = path.join(root, 'docs/05-changes/C01-进行中', id);
   await mkdir(path.join(dir, 'C03-tasks/C03-01-work'), { recursive: true });
   await writeFile(path.join(dir, 'index.md'), '# index\n'); await writeFile(path.join(dir, 'C01-change.md'), '# contract\n');
@@ -68,7 +69,7 @@ test('grouped usage includes Main and child deltas and does not turn manual hist
 });
 
 test('annotation CLI uses existing private store and preserves operator provenance', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-rework-cli-')); t.after(() => rm(temp, { recursive: true, force: true }));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-rework-cli-'))); t.after(() => rm(temp, { recursive: true, force: true }));
   const project = path.join(temp, 'project'), rules = path.join(temp, 'rules'), state = path.join(temp, 'state');
   await Promise.all([mkdir(project), mkdir(rules), mkdir(state, { mode: 0o700 })]);
   const db = path.join(state, 'obs.sqlite3'); let output = '', errors = '';

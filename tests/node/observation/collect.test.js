@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { realpathSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import { diagnose } from '../../../lib/observation/diagnose.js';
 import { baseRows, endRow, envelope, writeRows } from './helpers.js';
 
 async function setup(t) {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-collect-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-collect-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const project = path.join(temp, 'project'), rules = path.join(temp, 'rules'), sessions = path.join(temp, 'sessions');
   await Promise.all([mkdir(project), mkdir(rules), mkdir(sessions)]);

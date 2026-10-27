@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { migrate } from '../../../lib/documents/migrate.js';
 import { initialize } from '../../../lib/documents/init.js';
 import { validate } from '../../../lib/documents/validate.js';
 
-function project() { return mkdtempSync(path.join(tmpdir(), 'osm migration fixture ')); }
+function project() { return realpathSync(mkdtempSync(path.join(tmpdir(), 'osm migration fixture '))); }
 
 test('migration moves legacy documentation without changing original bytes and writes an explicit map', async () => {
   const root = project();

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { realpathSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, symlink, lstat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import { collectRecent, discover, sha, writeBundle } from '../../../lib/diagnost
 import { baseRows, endRow, envelope, SECRET, writeRows } from '../observation/helpers.js';
 
 async function fixture(t) {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-bundle-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-bundle-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const project = path.join(temp, 'project'), home = path.join(temp, 'codex'), rules = path.join(temp, 'rules'), sessions = path.join(home, 'sessions');
   await Promise.all([mkdir(project, { recursive: true }), mkdir(path.join(project, '.git'), { recursive: true }), mkdir(sessions, { recursive: true }), mkdir(rules, { recursive: true })]);

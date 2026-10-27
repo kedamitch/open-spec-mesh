@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { realpathSync } from 'node:fs';
 import { mkdtemp, rm, writeFile, readFile, readdir, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -37,7 +38,7 @@ test('reuse and validation ownership expose unnecessary model work and repeated 
 });
 
 test('synthetic native trace replay checks actual parsed actions and explicitly does not prove model quality', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-eval-fixture-')); t.after(() => rm(temp, { recursive: true, force: true }));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-eval-fixture-'))); t.after(() => rm(temp, { recursive: true, force: true }));
   const file = path.join(temp, 'fixture.jsonl');
   await writeRows(file, [...baseRows('main'),
     envelope('response_item', { type: 'function_call', call_id: 'test', name: 'exec_command', arguments: JSON.stringify({ cmd: 'node --test tests/fix.test.js', private: SECRET }) }, 3),
@@ -51,7 +52,7 @@ test('synthetic native trace replay checks actual parsed actions and explicitly 
 });
 
 test('evaluation CLI is read-only and parser errors do not include input text', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-eval-cli-')); t.after(() => rm(temp, { recursive: true, force: true }));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-eval-cli-'))); t.after(() => rm(temp, { recursive: true, force: true }));
   const file = path.join(temp, 'report.json'); const bytes = JSON.stringify(run([event('verification.run')]));
   await writeFile(file, bytes); let output = '';
   const code = await runEvaluateCollaboration(['--report', file, '--scenario', 'local-fix'], { stdout: { write: text => { output += text; } } });
@@ -68,7 +69,7 @@ test('unknown role or absent normalized fact is not evidence of compliant routin
 });
 
 async function cliFixture(t, report, scenario = 'local-fix') {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-eval-pilot-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-eval-pilot-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const file = path.join(temp, 'report.json');
   await writeFile(file, JSON.stringify(report));

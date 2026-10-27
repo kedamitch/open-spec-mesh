@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { chmod, copyFile, lstat, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -25,7 +26,7 @@ const runChild = (database, id, project) => new Promise((resolve, reject) => {
 });
 
 test('imports Python sqlite3 baseline bytes and preserves exact Python scope-key encoding', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-store-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-store-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const db = path.join(temp, 'golden.sqlite3');
   await copyFile(new URL('golden.sqlite3', fixtureDir), db); await chmod(db, 0o600);
@@ -42,7 +43,7 @@ test('imports Python sqlite3 baseline bytes and preserves exact Python scope-key
 });
 
 test('foreign DB, malformed schema, permissions, and recovery sidecars are refused without replacing bytes', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-store-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-store-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const foreign = path.join(temp, 'foreign.sqlite3');
   await writeFile(foreign, Buffer.from('SQLite format 3\0foreign synthetic fixture'));
@@ -64,7 +65,7 @@ test('foreign DB, malformed schema, permissions, and recovery sidecars are refus
 });
 
 test('run IDs are idempotent only within the same scope and conflicts do not alter persisted bytes', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-store-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-store-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const db = path.join(temp, 'observations.sqlite3');
   await withStore(db, (store) => store.save('same-id', minimalRun('project', 'root-a')));
@@ -77,7 +78,7 @@ test('run IDs are idempotent only within the same scope and conflicts do not alt
 });
 
 test('directory lock prevents concurrent processes from losing distinct run updates', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-store-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-store-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const db = path.join(temp, 'nested', 'observations.sqlite3');
   const ids = Array.from({ length: 8 }, (_, index) => `run-${index}`);
@@ -87,7 +88,7 @@ test('directory lock prevents concurrent processes from losing distinct run upda
 });
 
 test('ancestor symlink is refused before the target database is touched', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-store-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-store-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const actual = path.join(temp, 'actual'); await import('node:fs/promises').then(({ mkdir }) => mkdir(actual));
   const link = path.join(temp, 'link'); await symlink(actual, link);

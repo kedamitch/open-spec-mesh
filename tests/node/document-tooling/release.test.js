@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, readdirSync, realpathSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { initialize } from '../../../lib/documents/init.js';
@@ -8,7 +8,7 @@ import { createRelease, runNewRelease } from '../../../lib/release/new-release.j
 import { checkRelease } from '../../../lib/release/check-release.js';
 
 async function project(t) {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'osm-release-test-'));
+  const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'osm-release-test-')));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   await initialize(root);
   return root;

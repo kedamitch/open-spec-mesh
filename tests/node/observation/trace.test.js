@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { realpathSync } from 'node:fs';
 import { mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,7 +8,7 @@ import { commandFact, outputStatus, policySignal, readRollout } from '../../../l
 import { baseRows, endRow, SECRET, writeRows, envelope } from './helpers.js';
 
 test('trace reduces native calls and never retains raw arguments, output, cwd, or instructions', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-trace-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-trace-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const file = path.join(temp, 'rollout.jsonl');
   const rows = [
@@ -29,7 +30,7 @@ test('trace reduces native calls and never retains raw arguments, output, cwd, o
 });
 
 test('lossless cumulative usage and malformed lines remain distinguishable', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-trace-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-trace-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const file = path.join(temp, 'rollout.jsonl');
   const rows = [
@@ -45,7 +46,7 @@ test('lossless cumulative usage and malformed lines remain distinguishable', asy
 });
 
 test('unsafe paths, command parsing, status, and policy parsing are conservative', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-trace-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-trace-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const real = path.join(temp, 'real.jsonl');
   await writeRows(real, [...baseRows(), endRow()]);
@@ -75,7 +76,7 @@ test('current Node verification and document commands are classified without ret
 });
 
 test('native followup target aliases resolve the existing child without retaining messages', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-trace-alias-')); t.after(() => rm(temp, { recursive: true, force: true }));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-trace-alias-'))); t.after(() => rm(temp, { recursive: true, force: true }));
   const file = path.join(temp, 'rollout.jsonl');
   await writeRows(file, [...baseRows(),
     envelope('response_item', { type: 'function_call', call_id: 'spawn', namespace: 'agents', name: 'spawn_agent', arguments: JSON.stringify({ task_name: 'explorer_known', agent_type: 'explorer', fork_turns: 'none', message: SECRET }) }, 3),
@@ -89,7 +90,7 @@ test('native followup target aliases resolve the existing child without retainin
 
 test('V2 task-name-only spawn metadata resolves only against confirmed unique parent-role-alias headers', async (t) => {
   const { linkTaskAliases, sessionIdentity } = await import('../../../lib/observation/trace.js');
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-v2-alias-')); t.after(() => rm(temp, { recursive: true, force: true }));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-v2-alias-'))); t.after(() => rm(temp, { recursive: true, force: true }));
   const file = path.join(temp, 'root.jsonl');
   await writeRows(file, [...baseRows('root'),
     envelope('response_item', { type: 'function_call', call_id: 'spawn', namespace: 'agents', name: 'spawn_agent', arguments: JSON.stringify({ task_name: 'explorer_live_store', agent_type: 'explorer', fork_turns: 'none', message: SECRET }) }, 3),
@@ -112,7 +113,7 @@ test('V2 task-name-only spawn metadata resolves only against confirmed unique pa
 });
 
 test('native V2 metadata and inter-agent messages are recognized without copying dialogue or double-counting usage', async (t) => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-v2-meta-')); t.after(() => rm(temp, { recursive: true, force: true }));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-v2-meta-'))); t.after(() => rm(temp, { recursive: true, force: true }));
   const file = path.join(temp, 'trace.jsonl');
   await writeRows(file, [...baseRows('root'),
     { type: 'world_state', payload: { private: SECRET } },

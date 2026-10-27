@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { realpathSync } from 'node:fs';
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import { SECRET, baseRows, endRow, envelope, writeRows } from './helpers.js';
 
 const capture = () => ({ value: '', write(text) { this.value += String(text); } });
 async function fixture(t) {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'osm-cli-'));
+  const temp = realpathSync(await mkdtemp(path.join(os.tmpdir(), 'osm-cli-')));
   t.after(() => rm(temp, { recursive: true, force: true }));
   const project = path.join(temp, 'project'), rules = path.join(temp, 'rules'), sessions = path.join(temp, 'sessions'), state = path.join(temp, 'state');
   await Promise.all([mkdir(project), mkdir(rules), mkdir(sessions), mkdir(state)]);

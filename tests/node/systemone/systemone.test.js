@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync, statSync, unlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync, statSync, unlinkSync, realpathSync } from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -27,7 +27,7 @@ const MODE_QUESTIONS = loadTemplate('execution-mode@1').questions;
 const answer = (choice) => ({ answers: { mode: { type: 'choice', choice } } });
 
 function tempDir(prefix = 'systemone-') {
-  return mkdtempSync(path.join(os.tmpdir(), prefix));
+  return realpathSync(mkdtempSync(path.join(os.tmpdir(), prefix)));
 }
 
 function enabledConfig(directory) {

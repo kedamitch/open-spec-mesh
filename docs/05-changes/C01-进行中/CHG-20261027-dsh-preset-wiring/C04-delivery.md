@@ -24,7 +24,7 @@
 ## 未验证（如实列出）
 
 1. **安装器全流程**：依赖已用 `npm ci --no-audit --no-fund` 装齐（added 109 packages）。此前 `tests/node/installation/*.test.js` 的 16 条失败经定位不是缺依赖，而是 `atomicWrite`/`safePath` 的父链符号链接守卫在 macOS `/var` → `/private/var` 上误杀本机 `/tmp`（守卫语义已改，见下一节）；现在整目录 **tests 65 / pass 65 / fail 0**。`--host dsh` 的真实安装也已在 `$HOME/.osm-selftest` 上跑通（exit=0，落 `AGENTS.md` 受管章节与 12 个 `sdd-*` 技能目录）。
-2. **`npm run validate:core` 未通过，且失败与本 Change 无关**：全量 `node --test "tests/node/**/*.test.js"` → **tests 269 / pass 222 / fail 47**；在干净 HEAD（`git worktree add /tmp/head3 HEAD` + 软链 node_modules）复跑同一命令 → **tests 269 / pass 218 / fail 51**。即 47 条为改动前既有失败（`tests/node/systemone`、`annotation`、`artifact`、`sqlite` 等另一条特性线），本轮只把其中 4 条（安装器与迁移夹具路径规范化）从红转绿。因此没有"全量套件通过"这类结论。
+2. **`npm run validate:core` 已全绿，但只覆盖 Linux 形状的路径**：全量 `node --test "tests/node/**/*.test.js"` → **tests 269 / pass 269 / fail 0**（修复前为 pass 222 / fail 47，干净 HEAD 为 218 / 51）。见下方「测试夹具规范化：47 条既有失败归零」。
 3. **运行时 hook 未在真实会话中观察**：section 注入、pre-step 裁剪、`compaction/end` 重置只在 fake ctx 单测与 `--dump-config` 组合层面验证；真实挂载冒烟只到"预设注册 + 组合通过"，没有新开会话跑一轮。
 4. **未 commit、未发版**：npm 上 `latest` 仍是 0.1.0（0.0.1/0.0.2/0.0.3/0.1.0 已发布）。
 
@@ -37,7 +37,7 @@
 ## 下一步
 
 1. 在真实 profile 会话中按 AC3–AC5 观察一次运行时行为（技能裁剪是否只影响 L0/L1、定级是否读到 L1/L2、压缩后是否重新定级）。
-2. 剩下的 47 条既有失败（systemone / annotation / artifact / sqlite 特性线）需要单独排期，与 DSH 接线无关。
+2. 守卫是否应放过系统级祖先符号链接，是独立的产品设计议题（见 C04「已识别但未纳入的设计议题」），修复方式需先定义「可信基座」，不宜夹在测试修复里。
 3. commit 与发版由人决定：本次未提交、未推送、未发布；发版前需要按仓库发布流程核对版本、锁文件与发布内容。
 
 ## 顺带修复（本次验收中发现的阻断，已修并复验，未发布）
@@ -78,6 +78,27 @@
 - 测试夹具同步规范化（产品输出的是规范化路径，夹具也必须规范化）：`tests/node/installation/runtime-stage.test.js`、`tests/node/installation/skill-wrappers.test.js` 的 `mkdtempSync` 结果包一层 `realpathSync`；`tests/node/runtime/cli-runtime.test.js` 同样处理。
 - 实测：`node --test tests/node/installation/*.test.js` → tests 65 / pass 65 / fail 0；`tests/node/runtime/io.test.js` → 5 / 5；`tests/node/runtime/paths-locks.test.js` → 18 / 18；`node --test "tests/node/**/*.test.js"` → tests 269 / pass 222 / fail 47（对照干净 HEAD 的 218/51）。
 - 残余风险：Windows 的 junction / reparse point 未实测，本轮只在 macOS 上验证；`--force` 不清理第二层及更深的内容，也不清理符号链接、FIFO、非空子目录，遇到这些一律整项放弃并提示人工处理。
+
+## 测试夹具规范化：47 条既有失败归零（追加，已提交、未发布）
+
+`npm run validate:core` 在本机报 47 条红，逐簇只读诊断后收敛到与上一节同源的一条根因。
+
+- 根因：`lib/observation/trace.js:150-158 validRealFile`、`lib/observation/store.js:27-49 ensurePrivateDirectory`、`lib/diagnostics/bundle.js:22-32 safePath`、`lib/observation/collect.js:17-26 noSymlinkPath`、`lib/observation/evaluation.js:101-106`，以及 `lib/systemone/contracts.js:172-187 hasSymlinkInPath`/`readSafeFile`、`lib/systemone/metrics.js:5-20 noSymlinkPath`，都从 `path.parse(x).root`（即 `/`）逐段 `lstat`，任一段是符号链接就拒绝。macOS 上 `/var`、`/tmp`、`/etc` 都是符号链接，而 `os.tmpdir()` 在 `/var/folders/...` 下 → 守卫在任何真实工作之前触发。
+- 决定性反事实（不改一行代码）：`TMPDIR=/private/tmp/<dir> node --test tests/node/observation/*.test.js tests/node/diagnostics/bundle.test.js` → **tests 60 / pass 60 / fail 0**。因此与 sqlite / sql.js / Node 版本 / TZ / umask 均无关（另有独立验证：`sql.js` 1.14.2 可加载，`dependency-smoke` 通过；node v24.22.0 满足 `engines.node >=22`，CI matrix 亦含 24.x）。
+- 裁决：**产品守卫语义不动，只规范化测试夹具基座**。12 个测试文件、37 insertions / 29 deletions，改动形式统一为 `realpathSync(await mkdtemp(path.join(os.tmpdir(), ...)))`（sync 文件同理；`manual.test.js` 用 `await fs.realpath(...)` 以不新增 import），与仓库既有先例 `tests/node/runtime/io.test.js:6`、`tests/node/installation/skill-wrappers.test.js:13`、`tests/node/dsh/install-dsh.test.js:14` 同形。`git diff -U0` 复核：被删的行只有 `mkdtemp` 与 `import` 两类，没有任何断言被改松。
+- 三条「符号链接必须被拒绝」的安全断言原样保留并单独复跑通过：`tests/node/observation/store.test.js:89`（`ancestor symlink is refused before the target database is touched`）、`compatibility.test.js:154`（`artifact inputs reject symlinked trace files ...`）、`evaluation.test.js:161`（`new output and exit options retain report symlink and size safety checks`）——它们都作用在用例内部现造的 `link` 上，与「基座是否规范化」正交。
+- 实测：`node --test "tests/node/**/*.test.js"` → **tests 269 / pass 269 / fail 0**（修复前 269 / 222 / 47，干净 HEAD 269 / 218 / 51）；`node scripts/check_runtime.js` → `syntax=144, package-files=382, lock=3, static-files=92`。
+- 残余风险：修复后是否在 Linux/CI 上仍全绿未实测（本机无 Linux 容器、无网络），仅由「Linux 的 `/var`、`/tmp` 是真目录」与 CI 配置推断；另若日后有人把 `path.parse().root` 那段循环复制到新守卫，同样的 macOS 缺陷会再次出现。
+
+## 已识别但未纳入本次的设计议题
+
+以下三条是诊断期间发现、与本次验收无因果关系且需要产品决策的问题，**未修改代码**，在此登记以免丢失。
+
+1. **守卫是否应放过系统级祖先符号链接**（`lib/observation/*` 5 处 + `lib/systemone/*` 2 处）。现状：任何位于 `$TMPDIR` 或符号链接祖先（外置盘挂载点、软链家目录）下的项目/状态目录都会被拒。安装侧在 `fe6a700` 已经选了「折叠系统祖先、只校验基座以下」；observation / systemone 侧仍是「从 `/` 一路校验」。若统一，需先定义「可信基座」（调用方给的 root / 项目根 / 家目录），并保住上面那三条拒绝断言，属需要安全评审的改动（代价 M/L）。
+2. **`lib/systemone/metrics.js:20` 的失败不可观测**：路径不合法时 `writeMetric` 直接 `return false`，调用方只看到 `metrics_written: false`，与「写成功」无法区分，也没有任何诊断输出。建议补一个 `metrics_error` 之类的字段（属设计取舍）。
+3. **`lib/runtime/paths.js:13-14` 的错误文本会产出误导路径**：`safeInside` 拒绝含 `..` 的相对路径时，用 `path.join(canonicalRoot, ...parts)` 拼消息，把 `../../../../../../private/var/...` 回卷成 `/private/private/var/...`，让人误以为发生了二次逃逸。改用 `path.resolve` 或直接回显原始相对串即可。
+
+附带的结构性观察：`.github/workflows/validate.yml:22` 与 `npm-publish.yml:48` 的矩阵只有 `ubuntu-latest`，而 Linux 上 `/var`、`/tmp` 是真目录，因此这类「祖先符号链接」平台缺陷在 CI 永远不可见。是否补一个 `macos-latest` job 属独立取舍，本次未动工作流。
 
 ## 记录边界
 
