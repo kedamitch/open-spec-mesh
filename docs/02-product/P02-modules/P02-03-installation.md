@@ -43,7 +43,7 @@ DSH 侧由两件互不重叠的事组成：preset 由 DSH 按插件包分发，�
 - 升级：先升级命令（`npm install -g open-spec-mesh@<version>`），再重跑显式安装以更新 `AGENTS.md` 受管章节与 `$DSH_HOME/skills`；preset 随插件包版本变化，需要用 `dsh plugin --profile <profile> add open-spec-mesh@<version>` 重新挂载（pnpm 语义，未做真实挂载实测）。
 - 卸载：`dsh plugin --profile <profile> remove open-spec-mesh` 移除 preset；`npm uninstall -g open-spec-mesh` 只删全局命令，不删除 `AGENTS.md` 受管章节或 `$DSH_HOME/skills`。
 
-角色路由：preset 的 `osm:role-routes` section 把 `~/.dsh/osm-models.json`（`$DSH_HOME` 可覆盖基目录）渲染成「角色 → provider/model/reasoning_effort」表，派发时用原生 `subagent` 工具显式传这三项；`osm models list|set|reset` 写这份配置。osm 不校验 allowlist，越界路由由 DSH 拒绝。
+角色路由：preset 的 `osm:role-routes` section 把 `~/.dsh/osm-models.json`（`$DSH_HOME` 可覆盖基目录）渲染成「角色 → provider/model/reasoning_effort」表，派发时用原生 `subagent` 工具显式传这三项；`osm models list|doctor|check|set|reset` 管理与诊断该配置。其中 `osm models doctor`（别名 `osm models check`）校验配置语法、4 个核心角色完整性与合法思考档位，以轻量字符表格直观呈现并输出一键修复建议。osm 不校验 allowlist，越界路由由 DSH 拒绝。
 
 ## 模型与 Provider
 

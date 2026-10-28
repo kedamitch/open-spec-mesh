@@ -75,7 +75,7 @@ description = "适用：SDD 模式复杂需求（L2）的整体架构方案与�
 config_file = "agents/architect.toml"
 
 [agents.worker]
-description = "适用：已获用户授权的并行实现，按宏观 Task 自主实现、测试、自审、修复和 Delivery；串行由当前 Agent 完成，不启动 Worker；不可委派。"
+description = "适用：并行实现（自动派发）或经用户明确授权的串行实现，按宏观 Task Brief 自主实现、测试、自审、修复和 Delivery；模块边界内自治，免写详设；不可委派。"
 config_file = "agents/worker.toml"
 
 [agents.explorer]

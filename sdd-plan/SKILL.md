@@ -18,6 +18,6 @@ description: SDD 模式的执行计划阶段入口；基于已确认需求和整
 
 ## 阶段交接
 
-前置需求或整体设计存在实质缺口时，分别推荐 `$sdd-req` 或 `$sdd-design`；不自行补批准。完成后交用户确认执行计划，提示需确认的任务设计、依赖和执行方式。下一步示例：`$sdd-do 执行计划已确认，按计划串行实现并验证`。并行计划不等于已授权派发 Worker；只有用户明确确认并行实现时才使用 Worker 和独立 worktree。本技能不实施、不创建工作区、不启动 Worker、不归档或发布。
+前置需求或整体设计存在实质缺口时，分别推荐 `$sdd-req` 或 `$sdd-design`；不自行补批准。完成后交用户确认执行计划，提示需确认的任务设计、依赖和实现方式选择（具备独立边界的多任务将直接并行派发 Worker；纯串行任务向用户明确询问是由主 Agent 就地串行实现还是逐个派发 Worker 串行执行）。本技能不实施、不创建工作区、不启动 Worker、不归档或发布。
 
 写作参考：[执行计划模板](references/execution-plan-template.md)、[任务设计模板](references/task-design-template.md)、[文档契约](../sdd-init/references/document-contract.md)。

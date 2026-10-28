@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
-  DEFAULT_MODELS, getModelsConfigPath, loadModelsConfig, loadModelsConfigWithDiagnostics,
+  DEFAULT_MODELS, VALID_REASONING_EFFORTS, diagnoseModelsConfig, getModelsConfigPath, loadModelsConfig, loadModelsConfigWithDiagnostics,
 } from '../../../lib/installation/models-config.js';
 import { apply, buildRoleRoutesSection } from '../../../dsh/gatekeeper.mjs';
 
@@ -85,4 +85,103 @@ test('apply 注册的路由表在配置损坏时带上 problems 告警行', asyn
   const { provider, model, reasoningEffort } = DEFAULT_MODELS.worker;
   assert.ok(text.includes(`| worker | ${provider} | ${model} | ${reasoningEffort} |`));
   assert.match(text, /⚠ osm-models\.json 解析失败/u);
+});
+
+test('VALID_REASONING_EFFORTS 包含标准档位且只读', () => {
+  assert.ok(Array.isArray(VALID_REASONING_EFFORTS));
+  assert.ok(VALID_REASONING_EFFORTS.includes('none'));
+  assert.ok(VALID_REASONING_EFFORTS.includes('low'));
+  assert.ok(VALID_REASONING_EFFORTS.includes('medium'));
+  assert.ok(VALID_REASONING_EFFORTS.includes('high'));
+  assert.ok(VALID_REASONING_EFFORTS.includes('xhigh'));
+  assert.ok(VALID_REASONING_EFFORTS.includes('max'));
+  assert.ok(VALID_REASONING_EFFORTS.includes('default'));
+  assert.throws(() => { VALID_REASONING_EFFORTS.push('illegal'); });
+});
+
+test('diagnoseModelsConfig: 缺失文件时整体为 ok 且 exitCode 为 0', (t) => {
+  const home = tempHome(t);
+  const report = diagnoseModelsConfig(home);
+  assert.equal(report.exists, false);
+  assert.equal(report.validJson, true);
+  assert.equal(report.topLevelObject, true);
+  assert.equal(report.overallStatus, 'ok');
+  assert.equal(report.exitCode, 0);
+  assert.equal(report.globalIssues.length, 0);
+  assert.equal(Object.keys(report.roles).length, 4);
+  for (const role of Object.keys(DEFAULT_MODELS)) {
+    assert.equal(report.roles[role].configured, false);
+    assert.equal(report.roles[role].status, 'ok');
+    assert.equal(report.roles[role].provider, DEFAULT_MODELS[role].provider);
+  }
+});
+
+test('diagnoseModelsConfig: 语法损坏与顶层非对象时 exitCode 为 1', (t) => {
+  const home = tempHome(t);
+  writeFileSync(getModelsConfigPath(home), '{ broken json');
+  const reportBroken = diagnoseModelsConfig(home);
+  assert.equal(reportBroken.exists, true);
+  assert.equal(reportBroken.validJson, false);
+  assert.equal(reportBroken.overallStatus, 'error');
+  assert.equal(reportBroken.exitCode, 1);
+  assert.ok(reportBroken.suggestions.includes('osm models reset'));
+
+  writeFileSync(getModelsConfigPath(home), '["not", "an", "object"]');
+  const reportArr = diagnoseModelsConfig(home);
+  assert.equal(reportArr.validJson, true);
+  assert.equal(reportArr.topLevelObject, false);
+  assert.equal(reportArr.overallStatus, 'error');
+  assert.equal(reportArr.exitCode, 1);
+  assert.ok(reportArr.suggestions.includes('osm models reset'));
+});
+
+test('diagnoseModelsConfig: 合规配置且全角色覆盖时状态全部为 OK 且 exitCode 为 0', (t) => {
+  const home = tempHome(t);
+  const validConfig = {
+    architect: { provider: 'p1', model: 'm1', reasoningEffort: 'xhigh' },
+    worker: { provider: 'p2', model: 'm2', reasoningEffort: 'max' },
+    explorer: { provider: 'p3', model: 'm3', reasoningEffort: 'low' },
+    librarian: { provider: 'p4', model: 'm4', reasoningEffort: 'default' },
+  };
+  writeFileSync(getModelsConfigPath(home), JSON.stringify(validConfig));
+  const report = diagnoseModelsConfig(home);
+  assert.equal(report.overallStatus, 'ok');
+  assert.equal(report.exitCode, 0);
+  assert.equal(report.globalIssues.length, 0);
+  assert.equal(report.suggestions.length, 0);
+  for (const role of ['architect', 'worker', 'explorer', 'librarian']) {
+    assert.equal(report.roles[role].status, 'ok');
+    assert.equal(report.roles[role].configured, true);
+    assert.equal(report.roles[role].issues.length, 0);
+  }
+});
+
+test('diagnoseModelsConfig: 字段缺失与非法档位时精确指出问题并给出建议，exitCode 为 1', (t) => {
+  const home = tempHome(t);
+  const badConfig = {
+    architect: { provider: 'p1', model: 'm1', reasoningEffort: 'xhigh' },
+    worker: { provider: '', model: 'm2', reasoningEffort: 'invalid-effort' },
+    explorer: { provider: 'p3' }, // 缺少 model
+    // librarian 未配置
+  };
+  writeFileSync(getModelsConfigPath(home), JSON.stringify(badConfig));
+  const report = diagnoseModelsConfig(home);
+  assert.equal(report.overallStatus, 'error');
+  assert.equal(report.exitCode, 1);
+
+  assert.equal(report.roles.architect.status, 'ok');
+
+  // worker 检查
+  assert.equal(report.roles.worker.status, 'error');
+  assert.ok(report.roles.worker.issues.some((i) => i.includes('缺少必填字段 provider')));
+  assert.ok(report.roles.worker.issues.some((i) => i.includes('非法')));
+  assert.ok(report.roles.worker.suggestions.length > 0);
+
+  // explorer 检查
+  assert.equal(report.roles.explorer.status, 'error');
+  assert.ok(report.roles.explorer.issues.some((i) => i.includes('缺少必填字段 model')));
+
+  // librarian 未配置，状态应为 default，不阻断
+  assert.equal(report.roles.librarian.status, 'default');
+  assert.equal(report.roles.librarian.configured, false);
 });
