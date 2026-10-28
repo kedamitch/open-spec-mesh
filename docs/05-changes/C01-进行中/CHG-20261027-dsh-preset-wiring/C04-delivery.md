@@ -110,6 +110,14 @@
 - 回归守卫：新增 `tests/node/dsh/preset-rows.test.js`（2 个用例）——preset 行的 `name` 一律不得以 `.` 或 `/` 开头（相对名必然按 profile 目录解析），且 gatekeeper 行必须等于 `open-spec-mesh/dsh`、`exports["./dsh"]` 必须存在。`node --test tests/node/dsh/*.test.js` → **tests 22 / pass 22 / fail 0**。
 - 仍未验证：配置在 boot 时读入内存，这条修复要宿主**重启**后重新组合才生效；本次没有重启用户正在运行的宿主，因此「picker 里 sdd 卡片能加载、gatekeeper 能 started」仍待重启后确认。`dsh headless --patch` 无法代验——headless profile 没有 `agentPresets` 服务，实测只得到 `preset-sdd (@deepseek-ai/dsh-agent-preset): pending (waiting for service: agentPresets)`。
 
+## 真实挂载第二跳：入口丢了 inject（追加，已修、未发布）
+
+- 现象：行名修好重启后，GUI 卡片从 `never started` 变成 `cannot get property "systemPrompt" without inject`。说明 import 已经成功、行也已进入 cordis，但在访问 `ctx.systemPrompt` 时被服务代理守卫拦截。
+- 根因：`dsh/index.mjs` 是 preset 行实际指向的入口（`exports["./dsh"] = "./dsh/index.mjs"`），原先只转发了 `apply` 与 `name`，漏掉了 `inject`。cordis 创建 Fiber 时通过 `plugin.inject` 决定注入哪些服务（`cordis/lib/index.js:1635` `new Fiber(ctx, config, Inject.resolve(plugin.inject), ...)`）。入口未导出 `inject`，fiber 的 inject 表为空；当 gatekeeper 的 `apply` 执行到 `ctx.systemPrompt.section(...)` 时，cordis 代理拦截器检测到 `systemPrompt` 不在声明的 inject 列表中，直接抛出 `cannot get property "systemPrompt" without inject`（`cordis/lib/index.js:676`）。
+- 修法：`dsh/index.mjs` 改为纯转发 `export { apply, inject, name } from './gatekeeper.mjs'`，确保所有插件元数据（`name`、`inject = ['systemPrompt']` 等）由 gatekeeper 单一源头定义并不丢失。
+- 回归守卫：扩展 `tests/node/dsh/preset-rows.test.js`，断言入口对象原样转发 gatekeeper 导出的元数据键（`apply`、`name`、`inject`、`Config`、`reusable`、`isolate`），并强制校验 `inject` 包含 `systemPrompt`。`node --test tests/node/dsh/*.test.js` → **tests 23 / pass 23 / fail 0**，全量测试 **tests 272 / pass 272 / fail 0**。
+- 仍未验证：需再次重启宿主生效。重启后预设卡片是否转绿无报错、persona 首行定级标记与 L0/L1 技能门控是否生效，均待重启后按清单确认。
+
 ## 记录边界
 
 本 Change 在 `C01-进行中`，因为修复已提交但尚未发版。文档只记录已发生的事实与实测输出（含失败与未验证项），不把"能挂载"写成"运行生效"，也不把未执行的验证写成通过。

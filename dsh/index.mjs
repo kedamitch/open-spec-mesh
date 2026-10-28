@@ -1,12 +1,10 @@
 /**
  * dsh/index.mjs — Open Spec Mesh DSH 插件入口
+ *
+ * preset 行按 profile 目录解析这个子路径，所以这里必须原样转发 gatekeeper 的插件元数据：
+ * cordis 用 plugin.inject 决定服务是否可见（cordis/lib/index.js:1635
+ * `new Fiber(ctx, config, Inject.resolve(plugin.inject), ...)`），漏掉 inject 会让 apply 里的
+ * ctx.systemPrompt 变成 `cannot get property "systemPrompt" without inject`。
  */
 
-import { apply as gatekeeperApply, name as gatekeeperName } from './gatekeeper.mjs'
-
-export const name = 'open-spec-mesh-dsh'
-
-export function apply(ctx, config) {
-  // 挂载动态门控逻辑
-  gatekeeperApply(ctx, config)
-}
+export { apply, inject, name } from './gatekeeper.mjs'

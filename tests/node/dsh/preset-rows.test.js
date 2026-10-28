@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const patch = readFileSync(path.join(repoRoot, 'dsh/cordis.patch.yml'), 'utf8');
@@ -38,4 +38,15 @@ test('the gatekeeper row names the package subpath the profile can resolve', () 
   assert.equal(row?.name, 'open-spec-mesh/dsh');
   assert.equal(JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).exports['./dsh'], './dsh/index.mjs');
   assert.ok(existsSync(path.join(repoRoot, 'dsh/index.mjs')));
+});
+
+test('the row target forwards the plugin metadata cordis reads', async () => {
+  const entry = await import(pathToFileURL(path.join(repoRoot, 'dsh/index.mjs')).href);
+  const gatekeeper = await import(pathToFileURL(path.join(repoRoot, 'dsh/gatekeeper.mjs')).href);
+
+  for (const key of ['apply', 'name', 'inject', 'Config', 'reusable', 'isolate']) {
+    if (key in gatekeeper) assert.deepEqual(entry[key], gatekeeper[key], `entry must forward ${key}`);
+  }
+  assert.equal(typeof entry.apply, 'function');
+  assert.ok(entry.inject.includes('systemPrompt'));
 });
