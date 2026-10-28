@@ -12,11 +12,11 @@ Node.js tools and reusable Agent/Skill guidance for **Quick** and **human-driven
 
 ## Install from the public npm registry
 
-Public npm release **0.1.0 is published**. The commands below install that version. If a mirror returns E404, verify the registry rather than treating a local pack as publication.
+Public npm release **0.2.0 is published**. The commands below install that version. If a mirror returns E404, verify the registry rather than treating a local pack as publication.
 
 ```sh
 # 1. Install the command (does not modify host configuration).
-npm install --global open-spec-mesh@0.1.0 --registry=https://registry.npmjs.org/
+npm install --global open-spec-mesh@0.2.0 --registry=https://registry.npmjs.org/
 open-spec-mesh --version
 
 # 2. Preview and explicitly configure Codex.
@@ -24,7 +24,7 @@ open-spec-mesh install --host codex --skip-tools --dry-run
 open-spec-mesh install --host codex --skip-tools
 ```
 
-The expected command version is `0.1.0`. Start a new host session after installation so it loads the updated rules, roles and Skills.
+The expected command version is `0.2.0`. Start a new host session after installation so it loads the updated rules, roles and Skills.
 
 `--skip-tools` installs the core toolkit without installing Research tools. It does not claim Research MCP availability and does not enable System One. npm installation has no `postinstall` hook that configures Home; the explicit `open-spec-mesh install` step is required.
 
@@ -62,14 +62,14 @@ The two DSH entry points cover different work and do not overlap:
 | `dsh plugin --profile <profile> add open-spec-mesh` | The package in the DSH profile plugin set that supplies the **sdd** preset | Project `AGENTS.md`; skills under `$DSH_HOME/skills` |
 | `osm install --host dsh` | The managed section of the target project `AGENTS.md`; the `sdd-*` skills into `$DSH_HOME/skills` | `agents/*.md` (DSH does not read them); Research tools (DSH configures MCP inside the preset); `--with-laya` fails closed |
 
-Role routing: the preset `osm:role-routes` section renders `~/.dsh/osm-models.json` (`$DSH_HOME` overrides the base directory) into a role → `provider` / `model` / `reasoning_effort` table, and the agent dispatches with the native `subagent` tool by passing those three values explicitly. `osm models list|set|reset` only edits that file; `osm` validates no allowlist, so a route the DSH session does not allow is rejected by DSH, not by `osm`.
+Role routing: the preset `osm:role-routes` section renders `~/.dsh/osm-models.json` (`$DSH_HOME` overrides the base directory) into a role → `provider` / `model` / `reasoning_effort` table, and the agent dispatches with the native `subagent` tool by passing those three values explicitly. `osm models list|doctor|set|reset|export|import` manages that file (with backup/restore via `osm models export [filepath]` and `osm models import <filepath> [--force]`); `osm` validates no allowlist, so a route the DSH session does not allow is rejected by DSH, not by `osm`.
 
 Default homes also honor `CODEX_HOME`, `OPENCODE_CONFIG_DIR` and `CLAUDE_CONFIG_DIR`. `--codex-home` remains a Codex compatibility option. Host startup examples are in the [operations guide](docs/04-operations/O02-applications/O02-01-local-toolkit.md).
 
 ### Run without a global install
 
 ```sh
-npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.1.0 -- \
+npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.2.0 -- \
   open-spec-mesh install --host codex --skip-tools
 ```
 
@@ -83,7 +83,7 @@ open-spec-mesh install --host codex --skip-tools
 
 # Or build a portable artifact; dependencies still need npm access/cache.
 npm pack
-npm install --global ./open-spec-mesh-0.1.0.tgz
+npm install --global ./open-spec-mesh-0.2.0.tgz
 open-spec-mesh install --host codex --skip-tools
 ```
 

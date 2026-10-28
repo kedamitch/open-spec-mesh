@@ -12,11 +12,11 @@ Node.js 工具集与 **Quick / 人工推动的 SDD 研发规范**。旧自动 SD
 
 ## 从 npm 公共仓库安装
 
-公共 npm **0.1.0 已发布**；以下命令按该版本安装。若使用镜像遇到 E404，请核对 registry，不要把本地打包成功当成发布成功。
+公共 npm **0.2.0 已发布**；以下命令按该版本安装。若使用镜像遇到 E404，请核对 registry，不要把本地打包成功当成发布成功。
 
 ```sh
 # 第一步：安装全局命令，不会自动改动宿主配置。
-npm install -g open-spec-mesh@0.1.0 --registry=https://registry.npmjs.org/
+npm install -g open-spec-mesh@0.2.0 --registry=https://registry.npmjs.org/
 open-spec-mesh --version
 
 # 第二步：预览并显式配置 Codex。
@@ -24,7 +24,7 @@ open-spec-mesh install --host codex --skip-tools --dry-run
 open-spec-mesh install --host codex --skip-tools
 ```
 
-预期命令版本为 `0.1.0`。安装后新开宿主会话，让其读取最新 Rules、Role 和 Skill。
+预期命令版本为 `0.2.0`。安装后新开宿主会话，让其读取最新 Rules、Role 和 Skill。
 
 `--skip-tools` 只安装核心工具包，不额外安装 Research 工具，不宣称 Research MCP 可用，也不启用 System One。npm 安装没有擅改 Home 的 postinstall；**全局命令安装与宿主配置安装是两步**。
 
@@ -62,14 +62,14 @@ DSH 的两个入口分工不同、互不重叠：
 | `dsh plugin --profile <profile> add open-spec-mesh` | 该 DSH profile 的插件集合，由此提供 **「sdd」** 预设 | 项目 `AGENTS.md`；`$DSH_HOME/skills` 下的技能 |
 | `osm install --host dsh` | 目标项目 `AGENTS.md` 的受管章节；`sdd-*` 技能装到 `$DSH_HOME/skills` | `agents/*.md`（DSH 不读）；Research 工具（DSH 的 MCP 在 preset 内配置）；`--with-laya` 直接失败 |
 
-角色路由：预设里的 `osm:role-routes` section 把 `~/.dsh/osm-models.json`（`$DSH_HOME` 可覆盖基目录）渲染成「角色 → `provider` / `model` / `reasoning_effort`」表，模型派发时用原生 `subagent` 工具显式传这三项。`osm models list|set|reset` 只写这份文件；osm 自身不校验 allowlist，超出 DSH 会话允许范围的路由由 DSH 拒绝，而不是由 osm 拒绝。
+角色路由：预设里的 `osm:role-routes` section 把 `~/.dsh/osm-models.json`（`$DSH_HOME` 可覆盖基目录）渲染成「角色 → `provider` / `model` / `reasoning_effort`」表，模型派发时用原生 `subagent` 工具显式传这三项。`osm models list|doctor|set|reset|export|import` 统一管理该配置（支持通过 `osm models export [filepath]` 导出与 `osm models import <filepath> [--force]` 还原）；osm 自身不校验 allowlist，超出 DSH 会话允许范围的路由由 DSH 拒绝，而不是由 osm 拒绝。
 
 默认目录同时支持 `CODEX_HOME`、`OPENCODE_CONFIG_DIR`、`CLAUDE_CONFIG_DIR`。Codex 兼容参数 `--codex-home` 保留。具体宿主启动方法见 [运行指南](docs/04-operations/O02-applications/O02-01-local-toolkit.md)。
 
 ### 不安装全局命令，直接运行
 
 ```sh
-npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.1.0 -- \
+npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.2.0 -- \
   open-spec-mesh install --host codex --skip-tools
 ```
 
@@ -83,7 +83,7 @@ open-spec-mesh install --host codex --skip-tools
 
 # 或生成便携 tarball；依赖安装仍需 npm 网络或缓存。
 npm pack
-npm install -g ./open-spec-mesh-0.1.0.tgz
+npm install -g ./open-spec-mesh-0.2.0.tgz
 open-spec-mesh install --host codex --skip-tools
 ```
 

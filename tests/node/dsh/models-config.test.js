@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
-  DEFAULT_MODELS, VALID_REASONING_EFFORTS, diagnoseModelsConfig, getModelsConfigPath, loadModelsConfig, loadModelsConfigWithDiagnostics,
+  DEFAULT_MODELS, VALID_REASONING_EFFORTS, diagnoseModelsConfig, exportModelsConfig, getModelsConfigPath, importModelsConfig, loadModelsConfig, loadModelsConfigWithDiagnostics,
 } from '../../../lib/installation/models-config.js';
 import { apply, buildRoleRoutesSection } from '../../../dsh/gatekeeper.mjs';
 
@@ -184,4 +184,180 @@ test('diagnoseModelsConfig: 字段缺失与非法档位时精确指出问题并�
   // librarian 未配置，状态应为 default，不阻断
   assert.equal(report.roles.librarian.status, 'default');
   assert.equal(report.roles.librarian.configured, false);
+});
+
+test('exportModelsConfig: 默认导出路径为当前工作区下的 osm-models-backup.json', (t) => {
+  const home = tempHome(t);
+  const defaultRes = exportModelsConfig(null, home);
+  const expectedDefaultPath = path.resolve(process.cwd(), 'osm-models-backup.json');
+  t.after(() => rmSync(expectedDefaultPath, { force: true }));
+  assert.equal(defaultRes.success, true);
+  assert.equal(defaultRes.targetPath, expectedDefaultPath);
+  assert.deepEqual(defaultRes.config, DEFAULT_MODELS);
+  assert.ok(existsSync(expectedDefaultPath));
+  assert.equal(readFileSync(expectedDefaultPath, 'utf8'), JSON.stringify(DEFAULT_MODELS, null, 2) + '\n');
+});
+
+test('exportModelsConfig: 自定义目标路径且递归创建不存在的父目录', (t) => {
+  const home = tempHome(t);
+  const customTarget = path.join(home, 'nested', 'deep', 'backup-models.json');
+  const customRes = exportModelsConfig(customTarget, home);
+  assert.equal(customRes.success, true);
+  assert.equal(customRes.targetPath, customTarget);
+  assert.ok(existsSync(customTarget));
+  assert.equal(readFileSync(customTarget, 'utf8'), JSON.stringify(DEFAULT_MODELS, null, 2) + '\n');
+});
+
+test('importModelsConfig: 目标不存在时成功导入', (t) => {
+  const home = tempHome(t);
+  const sourceFile = path.join(home, 'source.json');
+  const validConfig = {
+    architect: { provider: 'fatfei-codex', model: 'gpt-6.1-sol', reasoningEffort: 'xhigh' },
+    worker: { provider: 'opencode-go', model: 'deepseek-v4.1-flash', reasoningEffort: 'max' },
+    explorer: { provider: 'fatfei', model: 'gemini-3.8-flash-high', reasoningEffort: 'high' },
+    librarian: { provider: 'fatfei', model: 'gemini-3.8-flash-high', reasoningEffort: 'high' },
+  };
+  writeFileSync(sourceFile, JSON.stringify(validConfig, null, 2));
+
+  const targetPath = getModelsConfigPath(home);
+  assert.equal(existsSync(targetPath), false);
+
+  const res = importModelsConfig(sourceFile, {}, home);
+  assert.equal(res.success, true);
+  assert.equal(res.targetPath, targetPath);
+  assert.equal(res.count, 4);
+  assert.deepEqual(res.config.worker, validConfig.worker);
+  assert.ok(existsSync(targetPath));
+
+  const loaded = loadModelsConfig(home);
+  assert.equal(loaded.worker.model, 'deepseek-v4.1-flash');
+});
+
+test('importModelsConfig: 目标已存在且无 force 时拦截（原文件保持不变）', (t) => {
+  const home = tempHome(t);
+  const targetPath = getModelsConfigPath(home);
+  const originalConfig = {
+    architect: { provider: 'orig-p', model: 'orig-m', reasoningEffort: 'low' },
+    worker: { provider: 'orig-w', model: 'orig-m', reasoningEffort: 'low' },
+    explorer: { provider: 'orig-e', model: 'orig-m', reasoningEffort: 'low' },
+    librarian: { provider: 'orig-l', model: 'orig-m', reasoningEffort: 'low' },
+  };
+  writeFileSync(targetPath, JSON.stringify(originalConfig, null, 2));
+
+  const sourceFile = path.join(home, 'new-source.json');
+  const newConfig = {
+    architect: { provider: 'new-p', model: 'new-m', reasoningEffort: 'high' },
+    worker: { provider: 'new-w', model: 'new-m', reasoningEffort: 'high' },
+    explorer: { provider: 'new-e', model: 'new-m', reasoningEffort: 'high' },
+    librarian: { provider: 'new-l', model: 'new-m', reasoningEffort: 'high' },
+  };
+  writeFileSync(sourceFile, JSON.stringify(newConfig, null, 2));
+
+  const res = importModelsConfig(sourceFile, {}, home);
+  assert.equal(res.success, false);
+  assert.equal(res.blocked, true);
+  assert.equal(res.targetPath, targetPath);
+  assert.equal(res.reason, '目标配置文件已存在 (~/.dsh/osm-models.json)，若需覆盖请追加 --force 选项。');
+
+  // 原配置保持不变
+  const loaded = JSON.parse(readFileSync(targetPath, 'utf8'));
+  assert.equal(loaded.architect.provider, 'orig-p');
+});
+
+test('importModelsConfig: 目标已存在且 force: true 时成功覆盖', (t) => {
+  const home = tempHome(t);
+  const targetPath = getModelsConfigPath(home);
+  const originalConfig = {
+    architect: { provider: 'orig-p', model: 'orig-m' },
+    worker: { provider: 'orig-w', model: 'orig-m' },
+    explorer: { provider: 'orig-e', model: 'orig-m' },
+    librarian: { provider: 'orig-l', model: 'orig-m' },
+  };
+  writeFileSync(targetPath, JSON.stringify(originalConfig, null, 2));
+
+  const sourceFile = path.join(home, 'force-source.json');
+  const forceConfig = {
+    architect: { provider: 'force-p', model: 'force-m', reasoningEffort: 'high' },
+    worker: { provider: 'force-w', model: 'force-m', reasoningEffort: 'max' },
+    explorer: { provider: 'force-e', model: 'force-m', reasoningEffort: 'low' },
+    librarian: { provider: 'force-l', model: 'force-m', reasoningEffort: 'none' },
+  };
+  writeFileSync(sourceFile, JSON.stringify(forceConfig, null, 2));
+
+  const res = importModelsConfig(sourceFile, { force: true }, home);
+  assert.equal(res.success, true);
+  assert.equal(res.targetPath, targetPath);
+  assert.equal(res.count, 4);
+
+  const loaded = JSON.parse(readFileSync(targetPath, 'utf8'));
+  assert.equal(loaded.architect.provider, 'force-p');
+  assert.equal(loaded.worker.reasoningEffort, 'max');
+});
+
+test('importModelsConfig: 源文件不存在时返回拦截原因', (t) => {
+  const home = tempHome(t);
+  const nonExist = path.join(home, 'not-found.json');
+  const res = importModelsConfig(nonExist, {}, home);
+  assert.equal(res.success, false);
+  assert.equal(res.reason, '源文件不存在: ' + path.resolve(nonExist));
+});
+
+test('importModelsConfig: 源文件 JSON 语法损坏时返回失败原因', (t) => {
+  const home = tempHome(t);
+  const brokenJson = path.join(home, 'broken.json');
+  writeFileSync(brokenJson, '{ bad json');
+  const res = importModelsConfig(brokenJson, {}, home);
+  assert.equal(res.success, false);
+  assert.match(res.reason, /^JSON 解析失败: /u);
+});
+
+test('importModelsConfig: 源文件顶层非对象时返回格式错误原因', (t) => {
+  const home = tempHome(t);
+  const arrayJson = path.join(home, 'array.json');
+  writeFileSync(arrayJson, JSON.stringify([1, 2, 3]));
+  const res = importModelsConfig(arrayJson, {}, home);
+  assert.equal(res.success, false);
+  assert.equal(res.reason, '配置内容格式错误: 顶层必须为非空对象');
+});
+
+test('importModelsConfig: 缺少核心角色时返回缺少角色原因', (t) => {
+  const home = tempHome(t);
+  const missingRoleJson = path.join(home, 'missing.json');
+  writeFileSync(missingRoleJson, JSON.stringify({
+    architect: { provider: 'p', model: 'm' },
+    worker: { provider: 'p', model: 'm' },
+    explorer: { provider: 'p', model: 'm' },
+    // 缺少 librarian
+  }));
+  const res = importModelsConfig(missingRoleJson, {}, home);
+  assert.equal(res.success, false);
+  assert.equal(res.reason, '缺少必要角色配置: librarian');
+});
+
+test('importModelsConfig: 角色缺少必填字段 provider 或 model 时拦截', (t) => {
+  const home = tempHome(t);
+  const missingFieldJson = path.join(home, 'missing-field.json');
+  writeFileSync(missingFieldJson, JSON.stringify({
+    architect: { provider: 'p', model: 'm' },
+    worker: { provider: '', model: 'm' },
+    explorer: { provider: 'p', model: 'm' },
+    librarian: { provider: 'p', model: 'm' },
+  }));
+  const res = importModelsConfig(missingFieldJson, {}, home);
+  assert.equal(res.success, false);
+  assert.equal(res.reason, '角色 worker 缺少必填字段 provider 或 model');
+});
+
+test('importModelsConfig: 角色 reasoningEffort 档位非法时拦截', (t) => {
+  const home = tempHome(t);
+  const badEffortJson = path.join(home, 'bad-effort.json');
+  writeFileSync(badEffortJson, JSON.stringify({
+    architect: { provider: 'p', model: 'm' },
+    worker: { provider: 'p', model: 'm', reasoningEffort: 'ultra' },
+    explorer: { provider: 'p', model: 'm' },
+    librarian: { provider: 'p', model: 'm' },
+  }));
+  const res = importModelsConfig(badEffortJson, {}, home);
+  assert.equal(res.success, false);
+  assert.equal(res.reason, '角色 worker 的 reasoningEffort "ultra" 不合法，有效档位: ' + VALID_REASONING_EFFORTS.join(', '));
 });

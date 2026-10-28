@@ -57,6 +57,6 @@ Codex 延续现有 Role TOML model / effort。OpenCode / Claude 生成的 Agent 
 
 ## Node 22 与全局 npm 分发
 
-最低 Node.js 22.0.0；当前公共发布版本为 open-spec-mesh@0.1.0。npm install -g open-spec-mesh@0.1.0 --registry=https://registry.npmjs.org/ 提供命令；本地源码和 tarball 仍可全局安装。npm 无宿主配置安装钩子，仍需显式 open-spec-mesh install --host codex|opencode|claude|dsh --skip-tools。升级是“更新命令 + 显式更新宿主”两步，卸载命令不自动删 Home。registry 认证/上传/消费验证与文档准备分开记录，不能把尚未完成的发布写作成功。
+最低 Node.js 22.0.0；当前公共发布版本为 open-spec-mesh@0.2.0。npm install -g open-spec-mesh@0.2.0 --registry=https://registry.npmjs.org/ 提供命令；本地源码和 tarball 仍可全局安装。npm 无宿主配置安装钩子，仍需显式 open-spec-mesh install --host codex|opencode|claude|dsh --skip-tools。升级是“更新命令 + 显式更新宿主”两步，卸载命令不自动删 Home。registry 认证/上传/消费验证与文档准备分开记录，不能把尚未完成的发布写作成功。
 
 Skill 自带仅作用于受管目录的 ESM 模块声明；独立 MCP wrapper 在 Node 22 可启动，不修改用户 Home/MCP 整体模块类型。升级真正应用旧资产退役操作，替换受管 Skill，清理已识别 Python bridge 和缓存，保全用户未受管脚本。
