@@ -32,7 +32,7 @@
                   - **判定依据**：涉及 2–5 个文件改动，需求明确，局部链路探索；构建全套 SDD 文档链的收益为负。
                   - **执行纪律**：
                     1. 当前 Agent 连续自闭环完成「调查 → 实现 → 验证 → 简报」，保持极简极客节奏。
-                    2. 遇到陌生本地事实，可按「子代理角色路由表」用 `subagent` 工具派发 explorer 角色做定向只读调研（显式传 provider / model / reasoning_effort），结果由主会话收敛。
+                    2. 遇到陌生事实，可按需用 `subagent` 工具派发 explorer（本地代码/事实探索）或 librarian（外部技术/文档调研），结果由主会话收敛。
                     3. **禁止**建立正式的 Change / Task / Delivery 结构化文档链，**禁止**调用 `$sdd-close` 交付归档。
                     4. 交付时给出真实的变更摘要和验证命令证据。
 
@@ -45,11 +45,11 @@
                     4. **实现阶段**：按需调用 `skill({ name: "sdd-do" })`，串行由当前 Agent 就地完成；用户授权并行时方可按「子代理角色路由表」派发 worker 角色。必须跑通真实测试与工程静态检查。
                     5. **交付阶段**：按需调用 `skill({ name: "sdd-close" })`，汇总实现结果与验证证据，必要时按「子代理角色路由表」派发 reviewer 角色复核；同步已发生变更的 Current Truth（当前事实文档），交由用户最终确认并归档。
 
-                ## 专职子代理与模型自动绑定 (Subagent Delegation)
-                系统提示词里的「子代理角色路由表」给出各专职角色当前的 provider / model / reasoning_effort（默认官方 DeepSeek Flash 4.1，可用 `~/.dsh/osm-models.json` 自定义）。
-                派发时统一使用原生 `subagent` 工具，并**显式传入**这三项；不传参数等于继承主会话路由，角色绑定会失效。
+                ## 专职子代理委派 (Subagent Delegation)
+                系统提示词里的「子代理角色路由表」给出各专职角色的推荐路由与职责说明（可在 `~/.dsh/osm-models.json` 自定义）。
+                派发时统一使用原生 `subagent` 工具：默认可直接派发（继承宿主当前模型配置）；若当前主会话模型能力不足或需要特定思考档位，可按路由表显式传入 provider / model / reasoning_effort 进行覆盖。
 
-                - **explorer**：只读本地代码事实探索（低延迟、低思考档位快速返回）
+                - **explorer**：只读本地代码事实探索（快速只读检索）
                 - **librarian**：只读外部 SDK 与在线技术文档调研
                 - **architect**：方案设计与长逻辑推演（高思考档位）
                 - **worker**：并行实现代码与编写测试
@@ -61,7 +61,6 @@
                 1. **轻量任务过度工程**：在 L0 或 L1 任务中主动创建 SDD 规范文档、推荐 SDD 技能或引导用户确认流程（严重违背极客敏捷原则）。
                 2. **重度任务擅自越级**：在 L2 任务中未获得用户对上一阶段成果的显式确认，擅自跨阶段或直接开始编写业务实现代码。
                 3. **假冒验收与忽略测试**：把“代码未报错”当作验证证据；未跑实际工程测试命令便宣称通过。
-                4. **绕过路由表派发**：派发子代理时不传 provider / model / reasoning_effort，或声称已绑定模型而实际走默认路由。
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
             config:
