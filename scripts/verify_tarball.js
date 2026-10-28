@@ -202,7 +202,7 @@ export async function verifyTarball() {
     for (const file of legacy) assert.equal(fs.existsSync(path.join(managedHome, file)), false, 'Retired resource survived upgrade: ' + file);
     assert.equal(fs.readFileSync(unmanaged, 'utf8'), '# preserve user tool\n');
     assert.match(fs.readFileSync(path.join(managedHome, 'AGENTS.md'), 'utf8'), /role_desc/u);
-    assert.match(fs.readFileSync(path.join(managedHome, 'skills/sdd-do/SKILL.md'), 'utf8'), /当前 Agent 串行/u);
+    assert.match(fs.readFileSync(path.join(managedHome, 'skills/sdd-do/SKILL.md'), 'utf8'), /Worker 边界自治/u);
     for (const entry of ['sdd-init/scripts/init_project.js', 'sdd-req/scripts/new_change.js', 'sdd-design/scripts/ensure_design.js', 'sdd-plan/scripts/new_task.js', 'sdd-release/scripts/new_release.js']) {
       const result = run(process.execPath, [path.join(managedHome, 'skills', entry), '--help'], { cwd: temp, env });
       assert.match(result.stdout, /Usage:/u, 'Installed Skill entrypoint must execute its handler: ' + entry);
