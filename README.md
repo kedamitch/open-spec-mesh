@@ -12,11 +12,11 @@ Node.js tools and reusable Agent/Skill guidance for **Quick** and **human-driven
 
 ## Install from the public npm registry
 
-Public npm release **0.2.0 is published**. The commands below install that version. If a mirror returns E404, verify the registry rather than treating a local pack as publication.
+Public npm release **0.3.0 is published**. The commands below install that version. If a mirror returns E404, verify the registry rather than treating a local pack as publication.
 
 ```sh
 # 1. Install the command (does not modify host configuration).
-npm install --global open-spec-mesh@0.2.0 --registry=https://registry.npmjs.org/
+npm install --global open-spec-mesh@0.3.0 --registry=https://registry.npmjs.org/
 open-spec-mesh --version
 
 # 2. Preview and explicitly configure Codex.
@@ -24,7 +24,7 @@ open-spec-mesh install --host codex --skip-tools --dry-run
 open-spec-mesh install --host codex --skip-tools
 ```
 
-The expected command version is `0.2.0`. Start a new host session after installation so it loads the updated rules, roles and Skills.
+The expected command version is `0.3.0`. Start a new host session after installation so it loads the updated rules, roles and Skills.
 
 `--skip-tools` installs the core toolkit without installing Research tools. It does not claim Research MCP availability and does not enable System One. npm installation has no `postinstall` hook that configures Home; the explicit `open-spec-mesh install` step is required.
 
@@ -69,7 +69,7 @@ Default homes also honor `CODEX_HOME`, `OPENCODE_CONFIG_DIR` and `CLAUDE_CONFIG_
 ### Run without a global install
 
 ```sh
-npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.2.0 -- \
+npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.3.0 -- \
   open-spec-mesh install --host codex --skip-tools
 ```
 
@@ -83,7 +83,7 @@ open-spec-mesh install --host codex --skip-tools
 
 # Or build a portable artifact; dependencies still need npm access/cache.
 npm pack
-npm install --global ./open-spec-mesh-0.2.0.tgz
+npm install --global ./open-spec-mesh-0.3.0.tgz
 open-spec-mesh install --host codex --skip-tools
 ```
 

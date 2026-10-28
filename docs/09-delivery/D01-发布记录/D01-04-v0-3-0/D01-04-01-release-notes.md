@@ -1,10 +1,10 @@
-# 发布说明 (0.2.0)
+# 发布说明 (0.3.0)
 
-> **发布摘要**：Open Spec Mesh 0.2.0 正式发布，提供 DeepSeek Harness (DSH) 预设深度集成、4 角色轻量协同模型重构，以及完善的模型配置可观测性诊断 (doctor) 与配置备份还原 (export/import) 工具链。
+> **发布摘要**：Open Spec Mesh 0.3.0 正式发布，提供 DeepSeek Harness (DSH) 预设深度集成、4 角色轻量协同模型重构，以及完善的模型配置可观测性诊断 (doctor) 与配置备份还原 (export/import) 工具链。
 
 ## 版本
 
-- **Version**：0.2.0
+- **Version**：0.3.0
 - **Release Date**：2026-10-28
 
 ## Highlights

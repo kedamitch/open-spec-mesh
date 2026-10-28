@@ -1,5 +1,5 @@
 ---
-version: 0.2.0
+version: 0.3.0
 title: DSH预设体系与模型管理
 changes: CHG-20261027-dsh-preset-wiring,CHG-20261028-models-doctor,CHG-20261028-models-export-import
 note: D01-04-01-release-notes.md

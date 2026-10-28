@@ -12,11 +12,11 @@ Node.js 工具集与 **Quick / 人工推动的 SDD 研发规范**。旧自动 SD
 
 ## 从 npm 公共仓库安装
 
-公共 npm **0.2.0 已发布**；以下命令按该版本安装。若使用镜像遇到 E404，请核对 registry，不要把本地打包成功当成发布成功。
+公共 npm **0.3.0 已发布**；以下命令按该版本安装。若使用镜像遇到 E404，请核对 registry，不要把本地打包成功当成发布成功。
 
 ```sh
 # 第一步：安装全局命令，不会自动改动宿主配置。
-npm install -g open-spec-mesh@0.2.0 --registry=https://registry.npmjs.org/
+npm install -g open-spec-mesh@0.3.0 --registry=https://registry.npmjs.org/
 open-spec-mesh --version
 
 # 第二步：预览并显式配置 Codex。
@@ -24,7 +24,7 @@ open-spec-mesh install --host codex --skip-tools --dry-run
 open-spec-mesh install --host codex --skip-tools
 ```
 
-预期命令版本为 `0.2.0`。安装后新开宿主会话，让其读取最新 Rules、Role 和 Skill。
+预期命令版本为 `0.3.0`。安装后新开宿主会话，让其读取最新 Rules、Role 和 Skill。
 
 `--skip-tools` 只安装核心工具包，不额外安装 Research 工具，不宣称 Research MCP 可用，也不启用 System One。npm 安装没有擅改 Home 的 postinstall；**全局命令安装与宿主配置安装是两步**。
 
@@ -69,7 +69,7 @@ DSH 的两个入口分工不同、互不重叠：
 ### 不安装全局命令，直接运行
 
 ```sh
-npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.2.0 -- \
+npm exec --yes --registry=https://registry.npmjs.org/ --package=open-spec-mesh@0.3.0 -- \
   open-spec-mesh install --host codex --skip-tools
 ```
 
@@ -83,7 +83,7 @@ open-spec-mesh install --host codex --skip-tools
 
 # 或生成便携 tarball；依赖安装仍需 npm 网络或缓存。
 npm pack
-npm install -g ./open-spec-mesh-0.2.0.tgz
+npm install -g ./open-spec-mesh-0.3.0.tgz
 open-spec-mesh install --host codex --skip-tools
 ```
 
