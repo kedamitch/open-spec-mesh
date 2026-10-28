@@ -3,7 +3,7 @@ import {validate,validateRuntimeConfig,validateAgentName,EXPECTED}from './valida
 import {fixtureCatalog}from '../scripts/verify_codex.js';
 test('canonical native role configuration and mirrors are valid',()=>assert.deepEqual(validate(),[]));
 test('agent names use the actual role prefix and snake_case descriptions',()=>{
- for(const [r,n]of [['explorer','explorer_python_inventory'],['librarian','librarian_node_backend'],['worker','worker_document_tools'],['architect','architect_manual_design'],['reviewer','reviewer_delivery_check']])assert.equal(validateAgentName(r,n),true);
+ for(const [r,n]of [['explorer','explorer_python_inventory'],['librarian','librarian_node_backend'],['worker','worker_document_tools'],['architect','architect_manual_design']])assert.equal(validateAgentName(r,n),true);
  for(const n of ['explorer','task1','worker_doc','explorer_Bad','explorer_a__b','explorer_a-b','explorer_../a'])assert.equal(validateAgentName('explorer',n),false);
 });
 test('model and disabled V2 remain real configuration errors',()=>{assert.ok(validateRuntimeConfig({}).length);assert.match(validateRuntimeConfig({}).join(' '),/Main must use Luna 6 max|Multi-Agent V2/);});

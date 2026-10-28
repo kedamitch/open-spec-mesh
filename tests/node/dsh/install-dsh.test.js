@@ -86,7 +86,7 @@ test('dsh dry-run 说明 research tools 走 preset MCP 并给出下一步命令'
 test('inspect-host 用 AGENTS.md 受管章节与 sdd-* 技能判定 dsh 安装', async (t) => {
   const { home } = sandbox(t);
   const before = inspectHost({ host: 'dsh', home, source: REPO_ROOT });
-  assert.equal(before.roles.length, 5);
+  assert.equal(before.roles.length, 4);
   assert.equal(before.roles.every((role) => role.status === 'not_applicable' && role.file === null), true);
   assert.equal(before.dsh.agents_md_managed_section, false);
   assert.deepEqual(before.dsh.sdd_skills, []);

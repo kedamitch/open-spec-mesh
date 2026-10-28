@@ -97,15 +97,15 @@ test('template validation, digest, path restrictions, permissions and answer gua
   const state = prepareState(loadTemplate('delegation@1'), {
     request: 'ask', current_role: ' Main ', execution_mode: ' SDD ',
     execution_strategy: 'parallel', implementation_authorized: true, reviewer_requested: true,
-    available_roles: ['worker', 'architect', 'explorer', 'librarian', 'reviewer', 'worker'],
+    available_roles: ['worker', 'architect', 'explorer', 'librarian', 'worker'],
   }, { root: ROOT });
-  assert.deepEqual(state.available_roles, ['worker', 'architect', 'explorer', 'librarian', 'reviewer']);
+  assert.deepEqual(state.available_roles, ['worker', 'architect', 'explorer', 'librarian']);
   const questions = prepareQuestions(loadTemplate('delegation@1'), state, { root: ROOT });
-  assert.deepEqual(Object.keys(questions.executor.criteria), ['main', 'worker', 'architect', 'explorer', 'librarian', 'reviewer', 'uncertain']);
+  assert.deepEqual(Object.keys(questions.executor.criteria), ['main', 'worker', 'architect', 'explorer', 'librarian', 'uncertain']);
   assert.equal(typeof questions.executor.criteria.worker, 'string');
   assert.equal(questions.executor.criteria.worker.length > 0, true);
   assert.equal(prepareState(loadTemplate('delegation@1'), {
-    request: 'ask', current_role: 'worker', available_roles: ['main', 'reviewer'], execution_mode: 'sdd',
+    request: 'ask', current_role: 'worker', available_roles: ['main'], execution_mode: 'sdd',
   }, { root: ROOT }).available_roles.length, 0);
   assert.throws(() => prepareState(mode, { request: 'x'.repeat(5000) }, { root: ROOT }), /state too large/);
 
@@ -124,15 +124,15 @@ test('role permission matrix, local descriptions, executor guard, normalization,
   const template = loadTemplate('delegation@1');
   const allowed = (actor, mode, extras = {}) => prepareState(template, {
     request: 'known facts', current_role: actor, execution_mode: mode,
-    available_roles: ['reviewer', 'worker', 'architect', 'explorer', 'librarian'], ...extras,
+    available_roles: ['worker', 'architect', 'explorer', 'librarian'], ...extras,
   }, { root: ROOT }).available_roles;
   assert.deepEqual(allowed('main', 'quick', { task_graph_ready: true, reviewer_requested: true }), ['explorer', 'librarian']);
-  assert.deepEqual(allowed('main', 'sdd', { task_graph_ready: true, execution_strategy: 'serial', reviewer_requested: true }), ['reviewer', 'architect', 'explorer', 'librarian']);
+  assert.deepEqual(allowed('main', 'sdd', { task_graph_ready: true, execution_strategy: 'serial' }), ['architect', 'explorer', 'librarian']);
   assert.deepEqual(allowed('main', 'sdd', { execution_strategy: 'parallel', implementation_authorized: true }), ['worker', 'architect', 'explorer', 'librarian']);
   assert.deepEqual(allowed('main', 'sdd', { task_graph_ready: true }), ['architect', 'explorer', 'librarian']);
-  assert.deepEqual(allowed('main', 'sdd', { execution_strategy: 'parallel', implementation_authorized: true, reviewer_requested: true }), ['reviewer', 'worker', 'architect', 'explorer', 'librarian']);
+  assert.deepEqual(allowed('main', 'sdd', { execution_strategy: 'parallel', implementation_authorized: true }), ['worker', 'architect', 'explorer', 'librarian']);
   assert.deepEqual(allowed('architect', 'sdd'), ['explorer', 'librarian']);
-  for (const actor of ['worker', 'explorer', 'librarian', 'reviewer']) assert.deepEqual(allowed(actor, 'sdd'), []);
+  for (const actor of ['worker', 'explorer', 'librarian']) assert.deepEqual(allowed(actor, 'sdd'), []);
 
   const architect = prepareState(template, { request: 'need facts', current_role: 'architect', execution_mode: 'sdd', available_roles: ['worker', 'librarian', 'explorer'] }, { root: ROOT });
   const questions = prepareQuestions(template, architect, { root: ROOT });

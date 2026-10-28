@@ -46,10 +46,10 @@ test('legacy and Node System One launch forms are recognized without claiming cu
 
 
 test('non-Codex role adapters retain least-privilege permissions and inherit host models', () => {
-  const reviewer = renderRole(REPO_ROOT, 'claude', 'reviewer', '/tmp/claude');
-  assert.match(reviewer, /model: inherit/);
-  assert.match(reviewer, /tools: Read, Bash, Glob, Grep, Skill/);
-  assert.equal(reviewer.includes('Write'), false);
+  const explorer = renderRole(REPO_ROOT, 'claude', 'explorer', '/tmp/claude');
+  assert.match(explorer, /model: inherit/);
+  assert.match(explorer, /tools: Read, Bash, Glob, Grep, Skill/);
+  assert.equal(explorer.includes('Write'), false);
   const architect = renderRole(REPO_ROOT, 'opencode', 'architect', '/tmp/opencode');
   assert.match(architect, /explorer: allow/);
   assert.match(architect, /librarian: allow/);
@@ -69,7 +69,7 @@ test('OpenCode uses V1 input fields and preserves prompts, native role permissio
     assert.equal(Object.hasOwn(agent, 'permissions'), false);
     assert.equal(Object.hasOwn(agent, 'model'), false);
     if (role !== 'main') assert.equal(agent.mode, 'subagent');
-    if (['reviewer', 'explorer', 'librarian'].includes(role)) assert.equal(agent.permission.edit, 'deny');
+    if (['explorer', 'librarian'].includes(role)) assert.equal(agent.permission.edit, 'deny');
     if (!['main', 'architect'].includes(role)) assert.deepEqual(agent.permission.task, { '*': 'deny' });
   }
   const overlay = JSON.parse(renderMcpOverlay('opencode', { codegraph: 'codegraph', context7: 'context7-mcp', tavily: 'tavily-mcp' }));

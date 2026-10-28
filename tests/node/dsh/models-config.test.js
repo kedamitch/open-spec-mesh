@@ -58,10 +58,10 @@ test('未知角色与非法角色项都记入 problems', (t) => {
 
 test('loadModelsConfig 保持兼容签名且补全 description', (t) => {
   const home = tempHome(t);
-  writeFileSync(getModelsConfigPath(home), JSON.stringify({ reviewer: { provider: 'acme', model: 'r-1', reasoningEffort: 'max' } }));
+  writeFileSync(getModelsConfigPath(home), JSON.stringify({ worker: { provider: 'acme', model: 'r-1', reasoningEffort: 'max' } }));
   const config = loadModelsConfig(home);
-  assert.equal(config.reviewer.model, 'r-1');
-  assert.equal(config.reviewer.description, DEFAULT_MODELS.reviewer.description);
+  assert.equal(config.worker.model, 'r-1');
+  assert.equal(config.worker.description, DEFAULT_MODELS.worker.description);
 });
 
 test('buildRoleRoutesSection 把 problems 追加成一条显式告警', () => {

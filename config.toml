@@ -71,16 +71,12 @@ default_subagent_model = "gpt-6-luna"
 default_subagent_reasoning_effort = "max"
 
 [agents.architect]
-description = "适用：SDD 当前已授权阶段的整体设计、执行计划（任务拆分与任务级设计）和文档辅助，可委派 Explorer/Librarian；不适用：实现、自动拆图和最终验收。"
+description = "适用：SDD 模式复杂需求（L2）的整体架构方案与公共契约设计；不适用：简单需求、日常编码实现、详设下钻到模块内部私有逻辑；只可委派 Explorer / Librarian 进行局部只读调研。"
 config_file = "agents/architect.toml"
 
 [agents.worker]
 description = "适用：已获用户授权的并行实现，按宏观 Task 自主实现、测试、自审、修复和 Delivery；串行由当前 Agent 完成，不启动 Worker；不可委派。"
 config_file = "agents/worker.toml"
-
-[agents.reviewer]
-description = "适用：用户明确要求的独立复审，核对目标、真实 diff 和验证证据；不适用：默认审查、设计、实现和最终用户验收；只读不可委派。"
-config_file = "agents/reviewer.toml"
 
 [agents.explorer]
 description = "适用：Quick / SDD 的陌生本地实现、调用链、数据、测试和部署事实；已有证据充分的单点直接读取；只读不可委派。"

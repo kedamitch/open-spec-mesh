@@ -10,9 +10,9 @@ test('macro templates have no path authorization or automatic planning identity'
  const t=read('sdd-plan/references/task-design-template.md');assert.match(t,/总体实现方向/);assert.doesNotMatch(t,/contract_digest|attempt|Path Contract|allow\/deny/);
  for(const p of ['sdd-req/SKILL.md','sdd-design/SKILL.md','sdd-plan/SKILL.md','sdd-do/SKILL.md','sdd-close/SKILL.md'])assert.doesNotMatch(read(p),/python3 |sdd\.py |sdd prepare/);
 });
-test('roles retain local authority, configurable actual-role names and independent reviewer request',()=>{
+test('roles retain local authority, configurable actual-role names and strict delegation boundaries',()=>{
  const role=r=>parseToml(read(`agents/${r}.toml`)).developer_instructions;
- assert.match(role('worker'),/不可委派任何 Agent/);assert.match(role('reviewer'),/用户明确要求/);
+ assert.match(role('worker'),/不可委派任何 Agent/);
  assert.match(role('architect'),/只可委派 Explorer \/ Librarian/);assert.match(read('agents/dispatch-contract.md'),/role_desc/);
 });
 

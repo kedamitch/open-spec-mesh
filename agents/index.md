@@ -6,7 +6,6 @@
 | --- | --- |
 | Architect | [architect.toml](architect.toml) |
 | Worker | [worker.toml](worker.toml) |
-| Reviewer | [reviewer.toml](reviewer.toml) |
 | Explorer | [explorer.toml](explorer.toml) |
 | Librarian | [librarian.toml](librarian.toml) |
 
