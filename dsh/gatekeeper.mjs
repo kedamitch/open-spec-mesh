@@ -38,8 +38,7 @@ export function buildRoleRoutesSection(modelsConfig = readModelsConfig(), proble
   const lines = [
     '## 子代理角色路由表 (role routes)',
     '',
-    '派发子代理只用原生 `subagent` 工具，并按下表显式传入 provider / model / reasoning_effort；',
-    '不传参数等于继承主会话路由，角色绑定会失效。',
+    '派发子代理使用原生 `subagent` 工具：默认可直接派发（继承宿主当前模型配置）；若需特定思考档位或覆盖模型，可按下表传入：',
     '',
     '| 角色 | provider | model | reasoning_effort |',
     '| --- | --- | --- | --- |',
