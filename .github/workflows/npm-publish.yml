@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Exact stable version matching package.json (for example 0.0.2)'
+        description: 'Exact stable version matching package.json (for example 0.3.0)'
         required: true
+        default: '0.3.0'
         type: string
       verify_only:
         description: 'Diagnose OIDC with npm dry-run only; never upload'
